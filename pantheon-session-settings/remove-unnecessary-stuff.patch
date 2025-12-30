@@ -1,0 +1,77 @@
+diff --git a/meson.build b/meson.build
+index 437a8d0..d150663 100644
+--- a/meson.build
++++ b/meson.build
+@@ -6,8 +6,6 @@ i18n = import('i18n')
+ prefix = get_option('prefix')
+ datadir = join_paths(prefix, get_option('datadir'))
+ 
+-gsd_dep = dependency('gnome-settings-daemon', version: '>= 3.36.0')
+-
+ gsd_components = [
+     'org.gnome.SettingsDaemon.A11ySettings',
+     'org.gnome.SettingsDaemon.Color',
+diff --git a/session/meson.build b/session/meson.build
+index 3e23650..de5fd22 100644
+--- a/session/meson.build
++++ b/session/meson.build
+@@ -36,51 +36,20 @@ configure_file(
+ 
+ autostartdir = join_paths(get_option('sysconfdir'), 'xdg', 'autostart')
+ 
+-gsd_dir = gsd_dep.get_pkgconfig_variable('prefix')
+ desktop_file_install = find_program('desktop-file-install')
+ 
+-foreach component : gsd_components
+-  original_filename = component + '.desktop'
+-
+-  if get_option('detect-program-prefixes') == true
+-    original_autostart_file = join_paths(gsd_dir, 'etc/xdg/autostart', original_filename)
+-  else
+-    original_autostart_file = join_paths(autostartdir, original_filename)
+-  endif
+-
+-  patched_filename = 'pantheon-' + component + '.desktop'
+-
+-  custom_target('create-gsd-autostart' + patched_filename,
+-    input: original_autostart_file,
+-    output: patched_filename,
+-    command: [
+-      desktop_file_install,
+-      '--set-key=OnlyShowIn',
+-      '--set-value=Pantheon',
+-      '--vendor=pantheon',
+-      '--dir=@OUTDIR@',
+-      '@INPUT@',
+-    ],
+-    install: true,
+-    install_dir: autostartdir,
+-  )
+-endforeach
+-
+ gnome_keyring = find_program('gnome-keyring-daemon')
+-onboard = find_program('onboard')
+ orca = find_program('orca')
+ 
+ if get_option('detect-program-prefixes') == true
+   # TODO: use fs module in meson 0.53.0
+   gnome_keyring_prefix = gnome_keyring.path().split('/bin')[0]
+-  onboard_prefix = onboard.path().split('/bin')[0]
+   orca_prefix = orca.path().split('/bin')[0]
+ 
+   autostarts = {
+     'gnome-keyring-pkcs11': join_paths(gnome_keyring_prefix, 'etc/xdg/autostart', 'gnome-keyring-pkcs11.desktop'),
+     'gnome-keyring-secrets': join_paths(gnome_keyring_prefix, 'etc/xdg/autostart', 'gnome-keyring-secrets.desktop'),
+     'gnome-keyring-ssh': join_paths(gnome_keyring_prefix, 'etc/xdg/autostart', 'gnome-keyring-ssh.desktop'),
+-    'onboard-autostart': join_paths(onboard_prefix, 'etc/xdg/autostart', 'onboard-autostart.desktop'),
+     'orca-autostart': join_paths(orca_prefix, 'etc/xdg/autostart', 'orca-autostart.desktop'),
+   }
+ else
+@@ -88,7 +57,6 @@ else
+     'gnome-keyring-pkcs11': join_paths(autostartdir, 'gnome-keyring-pkcs11.desktop'),
+     'gnome-keyring-secrets': join_paths(autostartdir, 'gnome-keyring-secrets.desktop'),
+     'gnome-keyring-ssh': join_paths(autostartdir, 'gnome-keyring-ssh.desktop'),
+-    'onboard-autostart': join_paths(autostartdir, 'onboard-autostart.desktop'),
+     'orca-autostart': join_paths(autostartdir, 'orca-autostart.desktop'),
+   }
+ endif
