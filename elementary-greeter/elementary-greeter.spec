@@ -1,18 +1,15 @@
 %global srcname greeter
 %global appname io.elementary.greeter
-
-%global commit      4bcb6ee549d95592f93f26cc1d2faa4a4b269f51
-%global shortcommit %(c=%{commit}; echo ${c:0:7}) 
-%global gitdate     20250611
+%global mutter_api_version 14
 
 Name:           elementary-greeter
 Summary:        LightDM Login Screen for the elementary desktop
-Version:        8.0.1^%{gitdate}.git%{shortcommit}
+Version:        8.1.1
 Release:        %autorelease
 License:        GPL-3.0-only AND GPL-3.0-or-later AND GPL-2.0-or-later
 
 URL:            https://github.com/elementary/greeter
-Source0:        %{url}/archive/%{commit}/%{srcname}-%{shortcommit}.tar.gz
+Source0:        %{url}/archive/%{version}/%{srcname}-%{version}.tar.gz
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
@@ -20,19 +17,10 @@ BuildRequires:  libappstream-glib
 BuildRequires:  meson >= 0.58.0
 BuildRequires:  vala
 
-%if 0%{?fedora} >= 42
-BuildRequires:  pkgconfig(libmutter-16)
-BuildRequires:  pkgconfig(mutter-clutter-16)
-BuildRequires:  pkgconfig(mutter-cogl-16)
-BuildRequires:  pkgconfig(mutter-mtk-16)
-%endif
-%if 0%{?fedora} == 41
-BuildRequires:  pkgconfig(libmutter-15)
-BuildRequires:  pkgconfig(mutter-clutter-15)
-BuildRequires:  pkgconfig(mutter-cogl-15)
-BuildRequires:  pkgconfig(mutter-cogl-pango-15)
-BuildRequires:  pkgconfig(mutter-mtk-15)
-%endif
+BuildRequires:  pkgconfig(libmutter-%{mutter_api_version})
+BuildRequires:  pkgconfig(mutter-clutter-%{mutter_api_version})
+BuildRequires:  pkgconfig(mutter-cogl-%{mutter_api_version})
+BuildRequires:  pkgconfig(mutter-mtk-%{mutter_api_version})
 
 BuildRequires:  pkgconfig(accountsservice)
 BuildRequires:  pkgconfig(clutter-gtk-1.0)
@@ -66,7 +54,7 @@ Requires:       elementary-theme-gtk3
 Requires:       elementary-wallpapers
 
 # requirements for accountsservice extension
-Requires:       pantheon-session-settings >= 30.90
+Requires:       pantheon-session-settings
 
 # all LightDM greeters provide this
 Provides:       lightdm-greeter = 1.2
@@ -80,7 +68,7 @@ The elementary Greeter is a styled Login Screen for LightDM.
 
 
 %prep
-%autosetup -n %{srcname}-%{commit} -p1
+%autosetup -n %{srcname}-%{version} -p1
 
 
 %build
@@ -109,10 +97,13 @@ appstream-util validate-relax --nonet \
 %{_bindir}/%{appname}-session-manager
 %{_sbindir}/%{appname}
 
+%{_datadir}/applications/%{appname}.desktop
 %{_datadir}/glib-2.0/schemas/%{appname}-compositor.gschema.xml
 %{_datadir}/lightdm/lightdm.conf.d/40-io.elementary.greeter.conf
 %{_datadir}/metainfo/%{appname}.metainfo.xml
 %{_datadir}/xgreeters/%{appname}.desktop
+
+%{_iconsdir}/hicolor/*/apps/%{appname}.settings.svg
 
 
 %changelog
