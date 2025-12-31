@@ -1,29 +1,30 @@
 %global __provides_exclude_from ^%{_libdir}/switchboard/.*\\.so$
 
-%global srcname switchboard-plug-bluetooth
+%global srcname settings-bluetooth
 
 %global plug_type network
 %global plug_name bluetooth
-%global plug_rdnn io.elementary.switchboard.bluetooth
+%global plug_rdnn io.elementary.settings.bluetooth
 
 Name:           switchboard-plug-bluetooth
 Summary:        Switchboard Bluetooth plug
-Version:        2.3.6
-Release:        1%{?dist}
-License:        GPLv3+
+Version:        8.0.2
+Release:        %autorelease
+License:        GPL-3.0-or-later
 
-URL:            https://github.com/elementary/switchboard-plug-bluetooth
+URL:            https://github.com/elementary/%{srcname}
 Source0:        %{url}/archive/%{version}/%{srcname}-%{version}.tar.gz
 
 BuildRequires:  gettext
 BuildRequires:  libappstream-glib
 BuildRequires:  meson
-BuildRequires:  vala >= 0.22.0
+BuildRequires:  vala
 
 BuildRequires:  pkgconfig(glib-2.0) >= 2.32
-BuildRequires:  pkgconfig(granite)
-BuildRequires:  pkgconfig(gtk+-3.0)
-BuildRequires:  pkgconfig(switchboard-2.0)
+BuildRequires:  pkgconfig(granite-7)
+BuildRequires:  pkgconfig(gtk4)
+BuildRequires:  pkgconfig(libadwaita-1)
+BuildRequires:  pkgconfig(switchboard-3)
 
 Requires:       bluez
 Requires:       switchboard%{?_isa}
@@ -48,27 +49,25 @@ devices.
 %install
 %meson_install
 
-%find_lang %{plug_name}-plug
+%find_lang %{plug_rdnn}
 
-# remove the specified stock icon from appdata (invalid in libappstream-glib)
-sed -i '/icon type="stock"/d' %{buildroot}/%{_datadir}/metainfo/%{plug_rdnn}.appdata.xml
+# remove the specified stock icon from metainof (invalid in libappstream-glib)
+sed -i '/icon type="stock"/d' %{buildroot}/%{_datadir}/metainfo/%{plug_rdnn}.metainfo.xml
 
 
 %check
 appstream-util validate-relax --nonet \
-    %{buildroot}/%{_datadir}/metainfo/%{plug_rdnn}.appdata.xml
+    %{buildroot}/%{_datadir}/metainfo/%{plug_rdnn}.metainfo.xml
 
 
-%files -f %{plug_name}-plug.lang
+%files -f %{plug_rdnn}.lang
 %doc README.md
 %license COPYING
 
-%{_libdir}/switchboard/%{plug_type}/lib%{plug_name}.so
+%{_libdir}/switchboard-3/%{plug_type}/lib%{plug_name}.so
 
-%{_datadir}/metainfo/%{plug_rdnn}.appdata.xml
+%{_datadir}/metainfo/%{plug_rdnn}.metainfo.xml
 
 
 %changelog
-* Tue Nov 14 2023 Fabio Valentini <decathorpe@gmail.com> - 2.3.6-1
-- Initial packaging
-
+%autochangelog
