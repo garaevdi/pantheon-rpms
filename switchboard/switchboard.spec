@@ -1,30 +1,32 @@
-%global appname io.elementary.switchboard
+%global srcname settings
+%global appname io.elementary.settings
 
 Name:           switchboard
-Version:        6.0.2
-Release:        1%{?dist}
+Version:        8.0.3
+Release:        %autorelease
 Summary:        Modular Desktop Settings Hub
 # - LGPL-2.1-or-later: everything except src/Widgets/*.vala
 # - GPL-2.0-or-later: src/Widgets/*.vala
 License:        LGPL-2.1-or-later and GPL-2.0-or-later
 
-URL:            https://github.com/elementary/switchboard
-Source0:        %{url}/archive/%{version}/switchboard-%{version}.tar.gz
+URL:            https://github.com/elementary/%{srcname}
+Source0:        %{url}/archive/%{version}/%{srcname}-%{version}.tar.gz
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
 BuildRequires:  libappstream-glib
 BuildRequires:  meson
 BuildRequires:  vala
+BuildRequires:  sassc
 
 BuildRequires:  pkgconfig(gee-0.8)
 BuildRequires:  pkgconfig(gio-2.0)
 BuildRequires:  pkgconfig(gio-unix-2.0)
-BuildRequires:  pkgconfig(glib-2.0) >= 2.32
+BuildRequires:  pkgconfig(glib-2.0) >= 2.76
 BuildRequires:  pkgconfig(gmodule-2.0)
-BuildRequires:  pkgconfig(granite) >= 5.4.0
-BuildRequires:  pkgconfig(gtk+-3.0) >= 3.10
-BuildRequires:  pkgconfig(libhandy-1) >= 0.83.0
+BuildRequires:  pkgconfig(granite-7)
+BuildRequires:  pkgconfig(gtk4)
+BuildRequires:  pkgconfig(libadwaita-1) >= 1.4
 
 Requires:       hicolor-icon-theme
 
@@ -44,7 +46,7 @@ switchboard.
 
 
 %prep
-%autosetup -n switchboard-%{version} -p1
+%autosetup -n %{srcname}-%{version} -p1
 
 
 %build
@@ -58,12 +60,12 @@ switchboard.
 %find_lang %{appname}
 
 # create plug directories
-mkdir -p %{buildroot}/%{_libdir}/%{name}
+mkdir -p %{buildroot}/%{_libdir}/%{name}-3
 
-mkdir -p %{buildroot}/%{_libdir}/%{name}/hardware
-mkdir -p %{buildroot}/%{_libdir}/%{name}/network
-mkdir -p %{buildroot}/%{_libdir}/%{name}/personal
-mkdir -p %{buildroot}/%{_libdir}/%{name}/system
+mkdir -p %{buildroot}/%{_libdir}/%{name}-3/hardware
+mkdir -p %{buildroot}/%{_libdir}/%{name}-3/network
+mkdir -p %{buildroot}/%{_libdir}/%{name}-3/personal
+mkdir -p %{buildroot}/%{_libdir}/%{name}-3/system
 
 
 %check
@@ -80,28 +82,27 @@ appstream-util validate-relax --nonet \
 
 %{_bindir}/%{appname}
 
-%dir %{_libdir}/switchboard
-%dir %{_libdir}/switchboard/*
+%dir %{_libdir}/%{name}-3
+%dir %{_libdir}/%{name}-3/*
 
-%{_libdir}/libswitchboard-2.0.so.0
-%{_libdir}/libswitchboard-2.0.so.2.0
+%{_libdir}/libswitchboard-3.so.0
+%{_libdir}/libswitchboard-3.so.2.0
 
 %{_datadir}/applications/%{appname}.desktop
+%{_datadir}/dbus-1/services/%{appname}.service
 %{_datadir}/glib-2.0/schemas/%{appname}.gschema.xml
 %{_datadir}/icons/hicolor/*/apps/%{appname}.svg
 %{_datadir}/metainfo/%{appname}.appdata.xml
 
 %files devel
-%{_includedir}/switchboard-2.0/
+%{_includedir}/switchboard-3/
 
-%{_libdir}/libswitchboard-2.0.so
-%{_libdir}/pkgconfig/switchboard-2.0.pc
+%{_libdir}/libswitchboard-3.so
+%{_libdir}/pkgconfig/switchboard-3.pc
 
-%{_datadir}/vala/vapi/switchboard-2.0.deps
-%{_datadir}/vala/vapi/switchboard-2.0.vapi
+%{_datadir}/vala/vapi/switchboard-3.deps
+%{_datadir}/vala/vapi/switchboard-3.vapi
 
 
 %changelog
-* Tue May 23 2023 Fabio Valentini <decathorpe@gmail.com> - 6.0.2-1
-- Initial packaging
-
+%autochangelog
