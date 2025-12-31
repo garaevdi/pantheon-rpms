@@ -1,18 +1,18 @@
 %global __provides_exclude_from ^%{_libdir}/switchboard/.*\\.so$
 
-%global srcname switchboard-plug-onlineaccounts
+%global srcname settings-onlineaccounts
 
 %global plug_type network
-%global plug_name online-accounts
-%global plug_rdnn io.elementary.switchboard.onlineaccounts
+%global plug_name onlineaccounts
+%global plug_rdnn io.elementary.settings.onlineaccounts
 
 Name:           switchboard-plug-onlineaccounts
 Summary:        Switchboard Online Accounts plug
-Version:        6.5.3
-Release:        1%{?dist}
-License:        GPLv3+
+Version:        8.0.2
+Release:        %autorelease
+License:        GPL-3.0-or-later
 
-URL:            https://github.com/elementary/switchboard-plug-onlineaccounts
+URL:            https://github.com/elementary/%{srcname}
 Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
 
 BuildRequires:  gettext
@@ -23,12 +23,12 @@ BuildRequires:  vala
 BuildRequires:  pkgconfig(camel-1.2) >= 3.28
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(gobject-2.0)
-BuildRequires:  pkgconfig(granite) >= 6.0.0
-BuildRequires:  pkgconfig(gtk+-3.0)
+BuildRequires:  pkgconfig(granite-7)
+BuildRequires:  pkgconfig(gtk4)
 BuildRequires:  pkgconfig(libedataserver-1.2)
 BuildRequires:  pkgconfig(libedataserverui-1.2)
-BuildRequires:  pkgconfig(libhandy-1) >= 1.0.0
-BuildRequires:  pkgconfig(switchboard-2.0)
+BuildRequires:  pkgconfig(libadwaita-1)
+BuildRequires:  pkgconfig(switchboard-3)
 
 Requires:       switchboard%{?_isa}
 Supplements:    switchboard%{?_isa}
@@ -52,9 +52,9 @@ Manage online accounts and connected applications.
 %install
 %meson_install
 
-%find_lang %{plug_name}-plug
+%find_lang %{plug_rdnn}
 
-# remove the specified stock icon from appdata (invalid in libappstream-glib)
+# remove the specified stock icon from metainfo (invalid in libappstream-glib)
 sed -i '/icon type="stock"/d' %{buildroot}/%{_datadir}/metainfo/%{plug_rdnn}.metainfo.xml
 
 
@@ -63,15 +63,15 @@ appstream-util validate-relax --nonet \
     %{buildroot}/%{_datadir}/metainfo/%{plug_rdnn}.metainfo.xml
 
 
-%files -f %{plug_name}-plug.lang
+%files -f %{plug_rdnn}.lang
 %license LICENSE
 %doc README.md
 
 %{_datadir}/metainfo/%{plug_rdnn}.metainfo.xml
-%{_libdir}/switchboard/%{plug_type}/lib%{plug_name}.so
+%{_datadir}/icons/hicolor/*
+
+%{_libdir}/switchboard-3/%{plug_type}/lib%{plug_name}.so
 
 
 %changelog
-* Thu Nov 16 2023 Fabio Valentini <decathorpe@gmail.com> - 6.5.3-1
-- Initial packaging
-
+%autochangelog
