@@ -44,7 +44,7 @@ Suggests:       elementary-wallpapers
 %{_datadir}/polkit-1/actions/io.elementary.pantheon.AccountsService.policy
 %{_datadir}/dbus-1/interfaces/io.elementary.pantheon.AccountsService.xml
 %{_datadir}/accountsservice/interfaces/io.elementary.pantheon.AccountsService.xml
-%{_datadir}/cups/data/default-testpage.pdf
+%ghost %{_datadir}/cups/data/default-testpage.pdf
 %{_datadir}/applications/sessioninstaller.desktop
 %{_datadir}/xdg-desktop-portal/pantheon-portals.conf
 %{_datadir}/glib-2.0/schemas/default-settings.gschema.override
