@@ -2,12 +2,12 @@
 %global appname io.elementary.portals
 
 Name:           xdg-desktop-portal-pantheon
-Version:        7.1.1
-Release:        1%{?dist}
+Version:        8.0.4
+Release:        %autorelease
 Summary:        Portal implementations for Pantheon
-License:        GPLv3+
+License:        GPL-3.0-or-later
 
-URL:            https://github.com/elementary/portals
+URL:            https://github.com/elementary/%{srcname}
 Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
 
 BuildRequires:  desktop-file-utils
@@ -24,6 +24,7 @@ BuildRequires:  pkgconfig(granite-7)
 BuildRequires:  pkgconfig(gtk4)
 BuildRequires:  pkgconfig(gtk4-x11)
 BuildRequires:  pkgconfig(gtk4-wayland)
+BuildRequires:  pkgconfig(pantheon-wayland-1)
 BuildRequires:  pkgconfig(systemd)
 BuildRequires:  pkgconfig(x11)
 
@@ -75,6 +76,4 @@ appstream-util validate-relax --nonet \
 
 
 %changelog
-* Sun Nov 12 2023 Fabio Valentini <decathorpe@gmail.com> - 7.1.1-1
-- Initial packaging
-
+%autochangelog
