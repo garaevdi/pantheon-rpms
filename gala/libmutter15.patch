@@ -59,4 +59,20 @@ index 9d2425db..c3a890be 100644
  #else
          background_color = Clutter.Color.from_string ("Black");
  #endif
+diff --git a/src/BackgroundBlurEffect.vala b/src/BackgroundBlurEffect.vala
+index e9eac3b4..a781d292 100644
+--- a/src/BackgroundBlurEffect.vala
++++ b/src/BackgroundBlurEffect.vala
+@@ -39,11 +39,7 @@ public class Gala.BackgroundBlurEffect : Clutter.Effect {
+     }
+ 
+     construct {
+-#if HAS_MUTTER47
+-        unowned var ctx = actor.context.get_backend ().get_cogl_context ();
+-#else
+         unowned var ctx = Clutter.get_default_backend ().get_cogl_context ();
+-#endif
+ 
+         actor_pipeline = new Cogl.Pipeline (ctx);
+         actor_pipeline.set_layer_null_texture (0);
 
