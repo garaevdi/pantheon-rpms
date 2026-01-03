@@ -3,9 +3,9 @@
 
 Name:           elementary-terminal
 Summary:        The terminal of the 21st century
-Version:        6.1.2
-Release:        1%{?dist}
-License:        LGPLv3
+Version:        7.2.0
+Release:        %autorelease
+License:        LGPL-3.0
 
 URL:            https://github.com/elementary/%{srcname}
 Source0:        %{url}/archive/%{version}/%{srcname}-%{version}.tar.gz
@@ -77,12 +77,13 @@ desktop-file-validate \
     %{buildroot}/%{_datadir}/applications/open-pantheon-terminal-here.desktop
 
 appstream-util validate-relax --nonet \
-    %{buildroot}/%{_datadir}/metainfo/%{appname}.appdata.xml
+    %{buildroot}/%{_datadir}/metainfo/%{appname}.metainfo.xml
 
 
 %files -f %{appname}.lang
 %license COPYING
 %doc README.md
+%doc %{_datadir}/man/man1/%{appname}.1.gz
 
 %{_bindir}/%{appname}
 
@@ -90,13 +91,11 @@ appstream-util validate-relax --nonet \
 %{_datadir}/applications/%{appname}.desktop
 %{_datadir}/glib-2.0/schemas/%{appname}.gschema.xml
 %{_datadir}/%{appname}/
-%{_datadir}/metainfo/%{appname}.appdata.xml
+%{_datadir}/metainfo/%{appname}.metainfo.xml
 
 %files fish
 %{_datadir}/fish/vendor_conf.d/pantheon_terminal_process_completion_notifications.fish
 
 
 %changelog
-* Tue Nov 14 2023 Fabio Valentini <decathorpe@gmail.com> - 6.1.2-1
-- Initial packaging
-
+%autochangelog
