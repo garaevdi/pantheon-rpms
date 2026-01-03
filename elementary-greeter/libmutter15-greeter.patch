@@ -1,0 +1,57 @@
+diff --git a/compositor/Background/Background.vala b/compositor/Background/Background.vala
+index f788508..593ea39 100644
+--- a/compositor/Background/Background.vala
++++ b/compositor/Background/Background.vala
+@@ -90,7 +90,7 @@ namespace GreeterCompositor {
+ #endif
+             if (color == null) {
+ #if HAS_MUTTER47
+-                color = Cogl.Color.from_string ("black");
++                color = Cogl.Color.from_string ("#000000");
+ #else
+                 color = Clutter.Color.from_string ("black");
+ #endif
+@@ -109,7 +109,7 @@ namespace GreeterCompositor {
+ #endif
+                 if (second_color == null) {
+ #if HAS_MUTTER47
+-                    second_color = Cogl.Color.from_string ("black");
++                    second_color = Cogl.Color.from_string ("#000000");
+ #else
+                     second_color = Clutter.Color.from_string ("black");
+ #endif
+diff --git a/compositor/Background/BackgroundContainer.vala b/compositor/Background/BackgroundContainer.vala
+index 844c18c..e602d0b 100644
+--- a/compositor/Background/BackgroundContainer.vala
++++ b/compositor/Background/BackgroundContainer.vala
+@@ -29,7 +29,7 @@ namespace GreeterCompositor {
+ 
+         public void set_black_background (bool black) {
+ #if HAS_MUTTER47
+-            set_background_color (black ? Cogl.Color.from_string ("Black") : null);
++            set_background_color (black ? Cogl.Color.from_string ("#000000") : null);
+ #else
+             set_background_color (black ? Clutter.Color.from_string ("Black") : null);
+ #endif
+diff --git a/compositor/WindowManager.vala b/compositor/WindowManager.vala
+index 396d331..cadf6d5 100644
+--- a/compositor/WindowManager.vala
++++ b/compositor/WindowManager.vala
+@@ -99,7 +99,7 @@ namespace GreeterCompositor {
+             stage = display.get_stage () as Clutter.Stage;
+ #endif
+ #if HAS_MUTTER47
+-            stage.background_color = Cogl.Color.from_string ("black");
++            stage.background_color = Cogl.Color.from_string ("#000000");
+ #else
+             stage.background_color = Clutter.Color.from_rgba (0, 0, 0, 255);
+ #endif
+@@ -120,7 +120,7 @@ namespace GreeterCompositor {
+                 width = width,
+                 height = height,
+ #if HAS_MUTTER47
+-                background_color = Cogl.Color.from_string ("black")
++                background_color = Cogl.Color.from_string ("#000000")
+ #else
+                 background_color = Clutter.Color.from_rgba (0, 0, 0, 255),
+ #endif

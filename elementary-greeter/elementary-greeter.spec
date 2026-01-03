@@ -1,6 +1,5 @@
 %global srcname greeter
 %global appname io.elementary.greeter
-%global mutter_api_version 14
 
 Name:           elementary-greeter
 Summary:        LightDM Login Screen for the elementary desktop
@@ -11,16 +10,34 @@ License:        GPL-3.0-only AND GPL-3.0-or-later AND GPL-2.0-or-later
 URL:            https://github.com/elementary/greeter
 Source0:        %{url}/archive/%{version}/%{srcname}-%{version}.tar.gz
 
+Patch1:          mutter49-greeter.patch
+Patch2:          libmutter15-greeter.patch
+
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
 BuildRequires:  libappstream-glib
 BuildRequires:  meson >= 0.58.0
 BuildRequires:  vala
 
-BuildRequires:  pkgconfig(libmutter-%{mutter_api_version})
-BuildRequires:  pkgconfig(mutter-clutter-%{mutter_api_version})
-BuildRequires:  pkgconfig(mutter-cogl-%{mutter_api_version})
-BuildRequires:  pkgconfig(mutter-mtk-%{mutter_api_version})
+%if 0%{?fedora} >= 43
+BuildRequires:  pkgconfig(libmutter-17)
+BuildRequires:  pkgconfig(mutter-clutter-17)
+BuildRequires:  pkgconfig(mutter-cogl-17)
+BuildRequires:  pkgconfig(mutter-mtk-17)
+%endif
+%if 0%{?fedora} == 42
+BuildRequires:  pkgconfig(libmutter-16)
+BuildRequires:  pkgconfig(mutter-clutter-16)
+BuildRequires:  pkgconfig(mutter-cogl-16)
+BuildRequires:  pkgconfig(mutter-mtk-16)
+%endif
+%if 0%{?fedora} == 41
+BuildRequires:  pkgconfig(libmutter-15)
+BuildRequires:  pkgconfig(mutter-clutter-15)
+BuildRequires:  pkgconfig(mutter-cogl-15)
+BuildRequires:  pkgconfig(mutter-cogl-pango-15)
+BuildRequires:  pkgconfig(mutter-mtk-15)
+%endif
 
 BuildRequires:  pkgconfig(accountsservice)
 BuildRequires:  pkgconfig(clutter-gtk-1.0)
