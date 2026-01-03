@@ -14,6 +14,7 @@ Patch:          mutter49-wingpanel.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
+BuildRequires:  git-core
 BuildRequires:  libappstream-glib
 BuildRequires:  meson
 BuildRequires:  vala
