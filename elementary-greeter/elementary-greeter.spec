@@ -15,6 +15,7 @@ Patch2:          libmutter15-greeter.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
+BuildRequires:  git-core
 BuildRequires:  libappstream-glib
 BuildRequires:  meson >= 0.58.0
 BuildRequires:  vala
@@ -85,7 +86,7 @@ The elementary Greeter is a styled Login Screen for LightDM.
 
 
 %prep
-%autosetup -n %{srcname}-%{version} -p1
+%autosetup -n %{srcname}-%{version} -S git -p1
 
 
 %build

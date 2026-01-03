@@ -63,7 +63,7 @@ Requires:       %{name}%{?_isa} = %{version}-%{release}
 
 
 %prep
-%autosetup -p1
+%autosetup -S git -p1
 
 
 %build
