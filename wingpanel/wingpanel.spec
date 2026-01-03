@@ -1,6 +1,5 @@
 %global appname io.elementary.wingpanel
 %global glib_version 2.32.0
-%global mutter_api_version 14
 
 Name:           wingpanel
 Summary:        Stylish top panel
@@ -11,16 +10,33 @@ License:        GPL-3.0-or-later AND GPL-2.0-or-later AND LGPL-2.1-or-later
 URL:            https://github.com/elementary/%{name}
 Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
 
+Patch:          mutter49-wingpanel.patch
+
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
 BuildRequires:  libappstream-glib
 BuildRequires:  meson
 BuildRequires:  vala
 
-BuildRequires:  pkgconfig(libmutter-%{mutter_api_version})
-BuildRequires:  pkgconfig(mutter-clutter-%{mutter_api_version})
-BuildRequires:  pkgconfig(mutter-cogl-%{mutter_api_version})
-BuildRequires:  pkgconfig(mutter-mtk-%{mutter_api_version})
+%if 0%{?fedora} >= 43
+BuildRequires:  pkgconfig(libmutter-17)
+BuildRequires:  pkgconfig(mutter-clutter-17)
+BuildRequires:  pkgconfig(mutter-cogl-17)
+BuildRequires:  pkgconfig(mutter-mtk-17)
+%endif
+%if 0%{?fedora} == 42
+BuildRequires:  pkgconfig(libmutter-16)
+BuildRequires:  pkgconfig(mutter-clutter-16)
+BuildRequires:  pkgconfig(mutter-cogl-16)
+BuildRequires:  pkgconfig(mutter-mtk-16)
+%endif
+%if 0%{?fedora} == 41
+BuildRequires:  pkgconfig(libmutter-15)
+BuildRequires:  pkgconfig(mutter-clutter-15)
+BuildRequires:  pkgconfig(mutter-cogl-15)
+BuildRequires:  pkgconfig(mutter-cogl-pango-15)
+BuildRequires:  pkgconfig(mutter-mtk-15)
+%endif
 
 BuildRequires:  pkgconfig(gala) >= 8.3.0
 BuildRequires:  pkgconfig(gee-0.8)

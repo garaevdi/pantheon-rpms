@@ -1,0 +1,816 @@
+diff --git a/mutter49-wingpanel.patch b/mutter49-wingpanel.patch
+new file mode 100644
+index 0000000..e432416
+--- /dev/null
++++ b/mutter49-wingpanel.patch
+@@ -0,0 +1,139 @@
++diff --git a/vapi/libmutter.vapi b/vapi/libmutter.vapi
++index 302b780..1b18951 100644
++--- a/vapi/libmutter.vapi
+++++ b/vapi/libmutter.vapi
++@@ -908,7 +908,10 @@ namespace Meta {
++ 		public void activate_with_workspace (uint32 current_time, Meta.Workspace workspace);
++ 		public bool allows_move ();
++ 		public bool allows_resize ();
++-#if HAS_MUTTER46
+++#if HAS_MUTTER49
+++		// Here instead of an object should be a sprite, but adding it would also drag Clutter.Focus in
+++		public bool begin_grab_op (Meta.GrabOp op, GLib.Object? _, uint32 timestamp, Graphene.Point? pos_hint);
+++#elif HAS_MUTTER46
++ 		public bool begin_grab_op (Meta.GrabOp op, Clutter.InputDevice? device, Clutter.EventSequence? sequence, uint32 timestamp, Graphene.Point? pos_hint);
++ #else
++ 		public bool begin_grab_op (Meta.GrabOp op, Clutter.InputDevice? device, Clutter.EventSequence? sequence, uint32 timestamp);
++diff --git a/vapi/meson.build b/vapi/meson.build
++index dd3df5a..5c2902f 100644
++--- a/vapi/meson.build
+++++ b/vapi/meson.build
++@@ -343,3 +343,74 @@ if mutter48_dep.found()
++ 		output: 'libmutter-16.vapi'
++ 	)
++ endif
+++if mutter49_dep.found()
+++	mtk_target = custom_target('mutter-mtk-17',
+++		command: [
+++			vapigen,
+++			mutter_typelib_dir / 'Mtk-17.gir',
+++			'--library=mutter-mtk-17',
+++			'--pkg=gobject-2.0',
+++			'--pkg=gio-2.0',
+++			'--pkg=cairo',
+++			'--pkg=graphene-gobject-1.0',
+++			vapigen_args
+++		],
+++		output: 'mutter-mtk-17.vapi'
+++	)
+++	cogl_target = custom_target('mutter-cogl-17',
+++		command: [
+++			vapigen,
+++			mutter_typelib_dir / 'Cogl-17.gir',
+++			'--library=mutter-cogl-17',
+++			'--pkg=mutter-mtk-17',
+++			'--pkg=gobject-2.0',
+++			'--pkg=gio-2.0',
+++			'--pkg=cairo',
+++			'--pkg=graphene-gobject-1.0',
+++			'--pkg=x11',
+++			vapigen_args,
+++			files('Cogl-17-custom.vala')
+++		],
+++		depends: mtk_target,
+++		output: 'mutter-cogl-17.vapi'
+++	)
+++
+++	clutter_target = custom_target('mutter-clutter-17',
+++		command: [
+++			vapigen,
+++			mutter_typelib_dir / 'Clutter-17.gir',
+++			'--library=mutter-clutter-17',
+++			'--pkg=graphene-gobject-1.0',
+++			'--pkg=mutter-mtk-17',
+++			'--pkg=mutter-cogl-17',
+++			'--pkg=atk',
+++			'--pkg=gio-2.0',
+++			'--pkg=json-glib-1.0',
+++			'--pkg=pango',
+++			'--pkg=x11',
+++			vapigen_args,
+++		],
+++		depends: [ cogl_target, mtk_target ],
+++		output: 'mutter-clutter-17.vapi'
+++	)
+++
+++	libmutter_target = custom_target('libmutter-17',
+++		command: [
+++			vapigen,
+++			mutter_typelib_dir / 'Meta-17.gir',
+++			'--library=libmutter-17',
+++			'--pkg=graphene-gobject-1.0',
+++			'--pkg=mutter-cogl-17',
+++			'--pkg=mutter-clutter-17',
+++			'--pkg=atk',
+++			'--pkg=gio-2.0',
+++			'--pkg=json-glib-1.0',
+++			'--pkg=pango',
+++			'--pkg=x11',
+++			'--pkg=xfixes-4.0',
+++			vapigen_args
+++		],
+++		depends: [ cogl_target, clutter_target ],
+++		output: 'libmutter-17.vapi'
+++	)
+++endif
++\ No newline at end of file
++diff --git a/wingpanel-interface/FocusManager.vala b/wingpanel-interface/FocusManager.vala
++index 92ee10c..68dceed 100644
++--- a/wingpanel-interface/FocusManager.vala
+++++ b/wingpanel-interface/FocusManager.vala
++@@ -133,8 +133,14 @@ public class WingpanelInterface.FocusManager : Object {
++                     if (dx * dx + dy * dy < drag_threshold * drag_threshold) {
++                         return Clutter.EVENT_PROPAGATE;
++                     }
++-
++-#if HAS_MUTTER46
+++#if HAS_MUTTER49
+++                    window.begin_grab_op (
+++                        Meta.GrabOp.MOVING,
+++                        null,
+++                        event.get_time (),
+++                        { x, y }
+++                    );
+++#elif HAS_MUTTER46
++                     window.begin_grab_op (
++                         Meta.GrabOp.MOVING,
++                         event.get_device (),
++diff --git a/wingpanel-interface/meson.build b/wingpanel-interface/meson.build
++index 54eb7f2..642b292 100644
++--- a/wingpanel-interface/meson.build
+++++ b/wingpanel-interface/meson.build
++@@ -49,6 +49,17 @@ if mutter48_dep.found()
++ 	vala_flags = ['--define', 'HAS_MUTTER46', '--define', 'HAS_MUTTER47', '--define', 'HAS_MUTTER48']
++ endif
++ 
+++mutter49_dep = dependency('libmutter-17', version: ['>= 49', '< 50'], required: false)
+++if mutter49_dep.found()
+++	libmutter_dep = dependency('libmutter-17', version: '>= 49')
+++	mutter_dep = [
+++		libmutter_dep,
+++		dependency('mutter-mtk-17'), dependency('mutter-cogl-17'),
+++		dependency('mutter-clutter-17')
+++	]
+++	vala_flags = ['--define', 'HAS_MUTTER43', '--define', 'HAS_MUTTER44', '--define', 'HAS_MUTTER45', '--define', 'HAS_MUTTER46', '--define', 'HAS_MUTTER47', '--define', 'HAS_MUTTER48', '--define', 'HAS_MUTTER49']
+++endif
+++
++ if mutter_dep.length() == 0
++ 	error ('No supported mutter library found!')
++ endif
+diff --git a/vapi/Clutter-17.metadata b/vapi/Clutter-17.metadata
+new file mode 100644
+index 0000000..f7f4205
+--- /dev/null
++++ b/vapi/Clutter-17.metadata
+@@ -0,0 +1,145 @@
++// Non mini-object
++ActorBox struct
++Margin struct
++PaintVolume struct
++Perspective struct
++
++*.ref unowned
++* cheader_filename="clutter/clutter.h"
++
++// Fix the few clutter-pango headers
++Text cheader_filename="clutter/clutter-pango.h"
++TextBuffer cheader_filename="clutter/clutter-pango.h"
++TextNode cheader_filename="clutter/clutter-pango.h"
++Actor
++	.get_pango_context cheader_filename="clutter/clutter-pango.h"
++	.create_pango_context cheader_filename="clutter/clutter-pango.h"
++	.create_pango_layout cheader_filename="clutter/clutter-pango.h"
++
++
++Actor
++	.apply_transform.matrix ref
++	.get_abs_allocation_vertices.verts out=false
++Event.type#method name="get_type"
++
++// ???
++Actor.has_pointer#method name="get_has_pointer"
++
++// Not all backing symbols are deprecated
++Actor.pick deprecated=false
++
++// Nullable return values
++Actor
++	.get_parent nullable
++
++// The original CType has been overridden by the annotations
++Actor
++	.allocate.box ctype="const ClutterActorBox *"
++	.get_stage ctype="ClutterActor *"
++Action.handle_event.event ctype="const ClutterEvent *"
++
++// method/virtual-method/signal don't match
++Actor
++	.event#method name="emit_event"
++	.get_paint_volume#virtual_method name="get_paint_volume_vfunc"
++	.get_paint_volume#virtual_method.volume out
++Text
++	.activate#method name="try_activate"
++	.insert_text#signal skip
++TextBuffer.get_text#virtual_method name="get_text_with_length"
++
++// Default values
++Stage.read_pixels
++	.width default=-1
++	.height default=-1
++Stage.paint_to_buffer
++    .data type="uint8[]"
++Text
++	.position_to_coords.line_height default=null
++
++// Skipped by g-i for unknown reasons
++LayoutManager
++	.create_child_meta skip=false
++
++// We can use static strings
++PaintNode
++	.set_static_name skip=false
++
++// Variadic arguments
++Backend
++	.get_cogl_context skip=false
++Interval
++	.new skip=false
++	.get_interval skip=false
++	.set_final skip=false
++	.set_initial skip=false
++	.set_interval skip=false
++LayoutManager
++	.child_get skip=false
++	.child_set skip=false
++
++// Skipped upstream for unknown reasons
++Interval.register_progress_func skip=false
++
++// struct/class confusion
++ActorBox
++	.new skip
++	.from_vertices skip
++Margin
++	.new skip
++
++// Upstream
++Event
++	.get_position.position out
++
++FrameListenerIface skip
++FrameClock.new skip
++
++// Remove for clutter-2.0
++/////////////////////////
++
++StageView.layout skip
++
++Stage
++	.paint_view.redraw_clip type="Cairo.Region"
++
++// *Event should be compact classes derived from Clutter.Event
++Event.type skip=false
++AnyEvent struct=false base_type="Clutter.Event"
++ButtonEvent struct=false base_type="Clutter.Event"
++CrossingEvent struct=false base_type="Clutter.Event"
++DeviceEvent struct=false base_type="Clutter.Event"
++IMEvent struct=false base_type="Clutter.Event"
++KeyEvent struct=false base_type="Clutter.Event"
++MotionEvent struct=false base_type="Clutter.Event"
++PadButtonEvent struct=false base_type="Clutter.Event"
++PadRingEvent struct=false base_type="Clutter.Event"
++PadStripEvent struct=false base_type="Clutter.Event"
++ProximityEvent struct=false base_type="Clutter.Event"
++ScrollEvent struct=false base_type="Clutter.Event"
++TouchEvent struct=false base_type="Clutter.Event"
++TouchpadHoldEvent struct=false base_type="Clutter.Event"
++TouchpadPinchEvent struct=false base_type="Clutter.Event"
++TouchpadSwipeEvent struct=false base_type="Clutter.Event"
++
++// Keysyms used to be CLUTTER_X instead of CLUTTER_KEY_X
++*#constant skip
++CURRENT_TIME skip=false
++PRIORITY_REDRAW skip=false
++
++// Clutter devs don't like us creating nested namespaces
++value_* name="value_(.+)" parent="Clutter.Value"
++threads_* name="threads_(.+)" parent="Clutter.Threads"
++
++// There is no way to know sealed classes before GLib 2.70
++ColorState sealed
++FrameClock sealed
++TextureContent sealed
++
++TextureContent.new_from_texture symbol_type="constructor"
++
++// Possibly keep
++KEY_* skip=false name="KEY_(.+)" type="uint" parent="Clutter.Key"
++BUTTON_* skip=false name="BUTTON_(.+)" type="uint32" parent="Clutter.Button"
++EVENT_STOP skip=false type="bool"
++EVENT_PROPAGATE skip=false type="bool"
+diff --git a/vapi/Cogl-17-custom.vala b/vapi/Cogl-17-custom.vala
+new file mode 100644
+index 0000000..90d46b3
+--- /dev/null
++++ b/vapi/Cogl-17-custom.vala
+@@ -0,0 +1,66 @@
++namespace Cogl {
++	public struct Color {
++		[CCode (cname="cogl_color_init_from_4f")]
++		public Color.from_4f (float red, float green, float blue, float alpha);
++		[CCode (cname="cogl_color_init_from_hsl")]
++		public Color.from_hsl (float hue, float saturation, float luminance);
++		[CCode (cname = "_vala_cogl_color_from_string")]
++		public static Cogl.Color? from_string (string str) {
++			Cogl.Color color = {};
++			if (color.init_from_string (str))
++				return color;
++
++			return null;
++		}
++	}
++	[CCode (cheader_filename = "cogl/cogl.h", has_type_id = false)]
++	public struct VertexP2 {
++		public float x;
++		public float y;
++	}
++	[CCode (cheader_filename = "cogl/cogl.h", has_type_id = false)]
++	public struct VertexP2C4 {
++		public float x;
++		public float y;
++		public uint8 r;
++		public uint8 g;
++		public uint8 b;
++		public uint8 a;
++	}
++	[CCode (cheader_filename = "cogl/cogl.h", has_type_id = false)]
++	public struct VertexP2T2 {
++		public float x;
++		public float y;
++		public float s;
++		public float t;
++	}
++	[CCode (cheader_filename = "cogl/cogl.h", has_type_id = false)]
++	public struct VertexP2T2C4 {
++		public float x;
++		public float y;
++		public float s;
++		public float t;
++		public uint8 r;
++		public uint8 g;
++		public uint8 b;
++		public uint8 a;
++	}
++	[CCode (cheader_filename = "cogl/cogl.h", has_type_id = false)]
++	public struct VertexP3 {
++		public float x;
++		public float y;
++		public float z;
++	}
++	[CCode (cheader_filename = "cogl/cogl.h", has_type_id = false)]
++	public struct VertexP3T2 {
++		public float x;
++		public float y;
++		public float z;
++		public float s;
++		public float t;
++	}
++	[CCode (cheader_filename = "cogl/cogl.h", cprefix = "COGL_PIXEL_FORMAT_", type_id = "cogl_pixel_format_get_type ()")]
++	public enum PixelFormat {
++		CAIRO_ARGB32_COMPAT;
++	}
++}
+diff --git a/vapi/Cogl-17.metadata b/vapi/Cogl-17.metadata
+new file mode 100644
+index 0000000..ac44471
+--- /dev/null
++++ b/vapi/Cogl-17.metadata
+@@ -0,0 +1,42 @@
++* cheader_filename="cogl/cogl.h"
++
++Color struct
++
++Color.equal.v1 type="Cogl.Color"
++Color.equal.v2 type="Cogl.Color"
++Color.from_string name="init_from_string"
++
++Context.free_timestamp_query.query owned
++
++Bitmap.* skip=false
++Bitmap.new_for_data.data type="owned uint8[]"
++Bitmap.get_buffer type="unowned Cogl.Buffer?"
++
++Primitive.new skip=false
++
++Texture
++  .get_data.data type="uint8[]"
++  .set_data.data type="uint8[]"
++  .set_region.data type="uint8[]"
++
++Texture2D
++  .new_from_data skip=false
++
++Texture.error_quark parent="Cogl.TextureError" name="quark"
++
++RendererError errordomain
++SystemError errordomain
++TextureError errordomain
++FramebufferError errordomain
++ScanoutError errordomain
++
++Onscreen
++  .add_frame_callback unowned
++
++A_BIT parent="Cogl.Bits" name="A"
++BGR_BIT parent="Cogl.Bits" name="BGR"
++AFIRST_BIT parent="Cogl.Bits" name="AFIRST"
++PREMULT_BIT parent="Cogl.Bits" name="PREMULT"
++DEPTH_BIT parent="Cogl.Bits" name="DEPTH"
++STENCIL_BIT parent="Cogl.Bits" name="STENCIL"
++PIXEL_FORMAT_MAX_PLANES parent = "Cogl.PixelFormat" name="MAX_PLANES"
+diff --git a/vapi/Meta-17.metadata b/vapi/Meta-17.metadata
+new file mode 100644
+index 0000000..d4611f1
+--- /dev/null
++++ b/vapi/Meta-17.metadata
+@@ -0,0 +1,180 @@
++* skip=false
++*.* skip=false
++* cheader_filename="meta/main.h"
++
++Backend cheader_filename="meta/meta-backend.h"
++Backend.gpu_added skip
++Background cheader_filename="meta/meta-background.h"
++Background.set_file.file nullable
++BackgroundContent.new symbol_type="constructor"
++BackgroundActor cheader_filename="meta/meta-background-actor.h"
++BackgroundContent cheader_filename="meta/meta-background-content.h"
++BackgroundGroup cheader_filename="meta/meta-background-group.h"
++BackgroundImage cheader_filename="meta/meta-background-image.h"
++BackgroundImageCache cheader_filename="meta/meta-background-image.h"
++Barrier cheader_filename="meta/barrier.h"
++BarrierDirection cheader_filename="meta/barrier.h"
++BarrierEvent cheader_filename="meta/barrier.h"
++BarrierFlags cheader_filename="meta/barrier.h"
++ButtonFunction cheader_filename="meta/common.h"
++ButtonLayout cheader_filename="meta/common.h"
++Compositor cheader_filename="meta/compositor.h"
++CompEffect cheader_filename="meta/compositor.h"
++CloseDialog cheader_filename="meta/meta-close-dialog.h"
++CloseDialogResponse cheader_filename="meta/meta-close-dialog.h"
++Context cheader_filename="meta/meta-context.h"
++CompositorType cheader_filename="meta/meta-enums.h"
++Cursor cheader_filename="meta/common.h"
++CursorTracker cheader_filename="meta/meta-cursor-tracker.h"
++CursorTracker.get_pointer.mods out
++DebugControl cheader_filename="meta/meta-debug-control.h"
++DebugTopic cheader_filename="meta/util.h"
++DebugPaintFlag cheader_filename="meta/util.h"
++Direction cheader_filename="meta/common.h"
++Display cheader_filename="meta/display.h"
++Display.focus_window#signal name="do_focus_window"
++DisplayCorner cheader_filename="meta/display.h"
++DisplayDirection cheader_filename="meta/display.h"
++Dnd cheader_filename="meta/meta-dnd.h"
++EdgeType cheader_filename="meta/boxes.h"
++Edge cheader_filename="meta/boxes.h"
++FrameBorders cheader_filename="meta/common.h"
++FrameType cheader_filename="meta/common.h"
++GrabOp cheader_filename="meta/common.h"
++Gravity cheader_filename="meta/common.h"
++Group cheader_filename="meta/meta-x11-types.h"
++IdleMonitor cheader_filename="meta/meta-idle-monitor.h"
++IdleMonitorWatchFunc cheader_filename="meta/meta-idle-monitor.h"
++InhibitShortcutsDialog cheader_filename="meta/meta-inhibit-shortcuts-dialog.h"
++InhibitShortcutsDialogResponse cheader_filename="meta/meta-inhibit-shortcuts-dialog.h"
++KeyboardA11yFlags cheader_filename="meta/meta-enums.h"
++KeyBinding cheader_filename="meta/keybindings.h"
++keybindings_set_custom_handler parent="Meta.KeyBinding" name="set_custom_handler" cheader_filename="meta/keybindings.h"
++KeyBindingAction cheader_filename="meta/prefs.h"
++KeyBindingFlags cheader_filename="meta/prefs.h"
++KeyHandlerFunc cheader_filename="meta/prefs.h"
++KeyHandlerFunc.event type="Clutter.KeyEvent?"
++KeyHandlerFunc.window nullable
++LaunchContext cheader_filename="meta/meta-launch-context.h"
++Laters cheader_filename="meta/types.h"
++LaterType cheader_filename="meta/util.h"
++MaximizeFlags cheader_filename="meta/window.h"
++MultiTexture cheader_filename="meta/meta-multi-texture.h"
++MultiTextureFormat cheader_filename="meta/meta-multi-texture-format.h"
++MonitorManager cheader_filename="meta/meta-monitor-manager.h"
++MonitorSwitchConfigType cheader_filename="meta/meta-monitor-manager.h"
++MotionDirection cheader_filename="meta/common.h"
++Orientation cheader_filename="meta/meta-orientation-manager.h"
++OrientationManager cheader_filename="meta/meta-orientation-manager.h"
++PadDirection cheader_filename="meta/display.h"
++PadFeatureType cheader_filename="meta/display.h"
++Plugin cheader_filename="meta/meta-plugin.h"
++PowerSaveChangeReason cheader_filename="meta/meta-monitor-manager.h"
++Preference cheader_filename="meta/prefs.h"
++PrefsChangedFunc cheader_filename="meta/prefs.h"
++RemoteAccessController cheader_filename="meta/meta-remote-access-controller.h"
++RemoteAccessHandle cheader_filename="meta/meta-remote-access-controller.h"
++Selection cheader_filename="meta/meta-selection.h"
++SelectionSource cheader_filename="meta/meta-selection-source.h"
++SelectionSourceMemory cheader_filename="meta/meta-selection-source-memory.h"
++SelectionType cheader_filename="meta/meta-selection-source.h"
++Settings cheader_filename="meta/meta-settings.h"
++ShapedTexture cheader_filename="meta/meta-shaped-texture.h"
++Side cheader_filename="meta/common.h"
++SizeChange cheader_filename="meta/compositor.h"
++SoundPlayer cheader_filename="meta/meta-sound-player.h"
++StartupNotification cheader_filename="meta/meta-startup-notification.h"
++StartupNotification.changed.object type="Meta.StartupSequence"
++StartupNotification.get_sequences type_arguments="Meta.StartupSequence"
++StartupSequence cheader_filename="meta/meta-startup-notification.h"
++StackLayer cheader_filename="meta/common.h"
++Stage cheader_filename="meta/meta-stage.h"
++Strut cheader_filename="meta/boxes.h"
++TabList cheader_filename="meta/display.h"
++TabShowType cheader_filename="meta/display.h"
++WaylandClient cheader_filename="meta/meta-wayland-client.h"
++WaylandCompositor cheader_filename="meta/meta-wayland-compositor.h"
++Workspace cheader_filename="meta/workspace.h"
++WorkspaceManager cheader_filename="meta/meta-workspace-manager.h"
++Window cheader_filename="meta/window.h"
++Window.focus#signal name="focused"
++Window.suspend_state skip
++Window.main_monitor skip
++WindowActor cheader_filename="meta/meta-window-actor.h"
++WindowClientType cheader_filename="meta/window.h"
++WindowForeachFunc cheader_filename="meta/window.h"
++WindowGroup cheader_filename="meta/meta-window-group.h"
++WindowMenuType cheader_filename="meta/compositor.h"
++WindowType cheader_filename="meta/window.h"
++X11Display cheader_filename="meta/meta-x11-display.h"
++X11Display.add_event_func skip
++X11DisplayEventFunc skip
++X11Display.set_stage_input_region.rects type="X.Xrectangle[]" array_length_idx=1
++
++WaylandSurface.scanout_candidate skip
++WaylandSurface.main_monitor skip
++
++// As per https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/2287
++MonitorManager.monitor_privacy_screen_changed skip
++
++prefs_* parent="Meta.Prefs" name="prefs_(.+)" cheader_filename="meta/prefs.h"
++
++g_utf8_strndup skip
++
++preference_to_string cheader_filename="meta/prefs.h"
++frame_type_to_string cheader_filename="meta/util.h"
++topic_to_string parent="Meta.DebugTopic" name="to_string" cheader_filename="meta/util.h"
++
++CURRENT_TIME cheader_filename="meta/common.h"
++PRIORITY_RESIZE cheader_filename="meta/common.h"
++PRIORITY_BEFORE_REDRAW cheader_filename="meta/common.h"
++PRIORITY_REDRAW cheader_filename="meta/common.h"
++PRIORITY_PREFS_NOTIFY cheader_filename="meta/common.h"
++VIRTUAL_CORE_POINTER_ID cheader_filename="meta/common.h"
++VIRTUAL_CORE_KEYBOARD_ID cheader_filename="meta/common.h"
++
++Display.window_visibility_updated
++	.object name="unplaced" type="GLib.List<unowned Meta.Window>"
++	.p0 name="should_show" type="GLib.List<unowned Meta.Window>"
++	.p1 name="should_hide" type="GLib.List<unowned Meta.Window>"
++
++Compositor.get_window_actors type_arguments="Meta.WindowActor"
++
++add_verbose_topic parent="Meta.Util" cheader_filename="meta/util.h"
++bug parent="Meta.Util" cheader_filename="meta/util.h"
++external_binding_name_for_action parent="Meta.Util" cheader_filename="meta/util.h"
++fatal parent="Meta.Util" cheader_filename="meta/util.h"
++is_verbose parent="Meta.Util" cheader_filename="meta/util.h"
++is_wayland_compositor parent="Meta.Util" cheader_filename="meta/util.h"
++pop_no_msg_prefix parent="Meta.Util" cheader_filename="meta/util.h"
++push_no_msg_prefix parent="Meta.Util" cheader_filename="meta/util.h"
++remove_verbose_topic parent="Meta.Util" cheader_filename="meta/util.h"
++unsigned_long_equal parent="Meta.Util" name="ulong_equal" cheader_filename="meta/util.h"
++unsigned_long_equal.v1 type="ulong?"
++unsigned_long_equal.v2 type="ulong?"
++unsigned_long_hash parent="Meta.Util" name="ulong_hash" cheader_filename="meta/util.h"
++unsigned_long_hash.v type="ulong?"
++create_context parent="Meta.Context" name="new" symbol_type="constructor" cheader_filename="meta/meta-context.h"
++
++Plugin.create_close_dialog unowned=false nullable
++Plugin.create_inhibit_shortcuts_dialog unowned=false
++
++BackgroundActor sealed
++BackgroundContent sealed
++BackgroundImage sealed
++BackgroundImageCache sealed
++Background sealed
++Dnd sealed
++IdleMonitor sealed
++LaunchContext sealed
++RemoteAccessController sealed
++SelectionSourceMemory sealed
++Selection sealed
++ShapedTexture sealed
++SoundPlayer sealed
++Stage sealed
++StartupNotification sealed
++WaylandClient sealed
++WindowGroup sealed
++WorkspaceManager sealed
++X11Display sealed
+diff --git a/vapi/Mtk-17.metadata b/vapi/Mtk-17.metadata
+new file mode 100644
+index 0000000..f804d1b
+--- /dev/null
++++ b/vapi/Mtk-17.metadata
+@@ -0,0 +1,6 @@
++Rectangle struct
++RECTANGLE_MAX_STACK_RECTS parent="Mtk.Rectangle" name="MAX_STACK_RECTS"
++REGION_BUILDER_MAX_LEVELS parent="Mtk.RegionBuilder" name="MAX_LEVELS"
++
++MONITOR_ALL_TRANSFORMS parent="Mtk.MonitorTransform" name="ALL"
++MONITOR_N_TRANSFORMS skip
+diff --git a/vapi/libmutter-17.deps b/vapi/libmutter-17.deps
+new file mode 120000
+index 0000000..7782137
+--- /dev/null
++++ b/vapi/libmutter-17.deps
+@@ -0,0 +1 @@
++libmutter.deps
+\ No newline at end of file
+diff --git a/vapi/libmutter-17.vapi b/vapi/libmutter-17.vapi
+new file mode 120000
+index 0000000..12f9cc5
+--- /dev/null
++++ b/vapi/libmutter-17.vapi
+@@ -0,0 +1 @@
++libmutter.vapi
+\ No newline at end of file
+diff --git a/vapi/libmutter.vapi b/vapi/libmutter.vapi
+index 302b780..1b18951 100644
+--- a/vapi/libmutter.vapi
++++ b/vapi/libmutter.vapi
+@@ -908,7 +908,10 @@ namespace Meta {
+ 		public void activate_with_workspace (uint32 current_time, Meta.Workspace workspace);
+ 		public bool allows_move ();
+ 		public bool allows_resize ();
+-#if HAS_MUTTER46
++#if HAS_MUTTER49
++		// Here instead of an object should be a sprite, but adding it would also drag Clutter.Focus in
++		public bool begin_grab_op (Meta.GrabOp op, GLib.Object? _, uint32 timestamp, Graphene.Point? pos_hint);
++#elif HAS_MUTTER46
+ 		public bool begin_grab_op (Meta.GrabOp op, Clutter.InputDevice? device, Clutter.EventSequence? sequence, uint32 timestamp, Graphene.Point? pos_hint);
+ #else
+ 		public bool begin_grab_op (Meta.GrabOp op, Clutter.InputDevice? device, Clutter.EventSequence? sequence, uint32 timestamp);
+diff --git a/vapi/meson.build b/vapi/meson.build
+index dd3df5a..5c2902f 100644
+--- a/vapi/meson.build
++++ b/vapi/meson.build
+@@ -343,3 +343,74 @@ if mutter48_dep.found()
+ 		output: 'libmutter-16.vapi'
+ 	)
+ endif
++if mutter49_dep.found()
++	mtk_target = custom_target('mutter-mtk-17',
++		command: [
++			vapigen,
++			mutter_typelib_dir / 'Mtk-17.gir',
++			'--library=mutter-mtk-17',
++			'--pkg=gobject-2.0',
++			'--pkg=gio-2.0',
++			'--pkg=cairo',
++			'--pkg=graphene-gobject-1.0',
++			vapigen_args
++		],
++		output: 'mutter-mtk-17.vapi'
++	)
++	cogl_target = custom_target('mutter-cogl-17',
++		command: [
++			vapigen,
++			mutter_typelib_dir / 'Cogl-17.gir',
++			'--library=mutter-cogl-17',
++			'--pkg=mutter-mtk-17',
++			'--pkg=gobject-2.0',
++			'--pkg=gio-2.0',
++			'--pkg=cairo',
++			'--pkg=graphene-gobject-1.0',
++			'--pkg=x11',
++			vapigen_args,
++			files('Cogl-17-custom.vala')
++		],
++		depends: mtk_target,
++		output: 'mutter-cogl-17.vapi'
++	)
++
++	clutter_target = custom_target('mutter-clutter-17',
++		command: [
++			vapigen,
++			mutter_typelib_dir / 'Clutter-17.gir',
++			'--library=mutter-clutter-17',
++			'--pkg=graphene-gobject-1.0',
++			'--pkg=mutter-mtk-17',
++			'--pkg=mutter-cogl-17',
++			'--pkg=atk',
++			'--pkg=gio-2.0',
++			'--pkg=json-glib-1.0',
++			'--pkg=pango',
++			'--pkg=x11',
++			vapigen_args,
++		],
++		depends: [ cogl_target, mtk_target ],
++		output: 'mutter-clutter-17.vapi'
++	)
++
++	libmutter_target = custom_target('libmutter-17',
++		command: [
++			vapigen,
++			mutter_typelib_dir / 'Meta-17.gir',
++			'--library=libmutter-17',
++			'--pkg=graphene-gobject-1.0',
++			'--pkg=mutter-cogl-17',
++			'--pkg=mutter-clutter-17',
++			'--pkg=atk',
++			'--pkg=gio-2.0',
++			'--pkg=json-glib-1.0',
++			'--pkg=pango',
++			'--pkg=x11',
++			'--pkg=xfixes-4.0',
++			vapigen_args
++		],
++		depends: [ cogl_target, clutter_target ],
++		output: 'libmutter-17.vapi'
++	)
++endif
+\ No newline at end of file
+diff --git a/vapi/mutter-clutter-17.deps b/vapi/mutter-clutter-17.deps
+new file mode 100644
+index 0000000..449ef80
+--- /dev/null
++++ b/vapi/mutter-clutter-17.deps
+@@ -0,0 +1,6 @@
++atk
++cairo
++pango
++json-glib-1.0
++mutter-cogl-17
++graphene-gobject-1.0
+diff --git a/vapi/mutter-clutter-17.vapi b/vapi/mutter-clutter-17.vapi
+new file mode 120000
+index 0000000..e1b7159
+--- /dev/null
++++ b/vapi/mutter-clutter-17.vapi
+@@ -0,0 +1 @@
++mutter-clutter.vapi
+\ No newline at end of file
+diff --git a/vapi/mutter-cogl-17.deps b/vapi/mutter-cogl-17.deps
+new file mode 100644
+index 0000000..09e7c16
+--- /dev/null
++++ b/vapi/mutter-cogl-17.deps
+@@ -0,0 +1,5 @@
++pango
++glib-2.0
++gio-2.0
++mutter-mtk-17
++x11
+diff --git a/vapi/mutter-cogl-17.vapi b/vapi/mutter-cogl-17.vapi
+new file mode 120000
+index 0000000..05e3c71
+--- /dev/null
++++ b/vapi/mutter-cogl-17.vapi
+@@ -0,0 +1 @@
++mutter-cogl-16.vapi
+\ No newline at end of file
+diff --git a/vapi/mutter-mtk-17.vapi b/vapi/mutter-mtk-17.vapi
+new file mode 120000
+index 0000000..7aeabe7
+--- /dev/null
++++ b/vapi/mutter-mtk-17.vapi
+@@ -0,0 +1 @@
++mutter-mtk-13.vapi
+\ No newline at end of file
+diff --git a/wingpanel-interface/FocusManager.vala b/wingpanel-interface/FocusManager.vala
+index 92ee10c..68dceed 100644
+--- a/wingpanel-interface/FocusManager.vala
++++ b/wingpanel-interface/FocusManager.vala
+@@ -133,8 +133,14 @@ public class WingpanelInterface.FocusManager : Object {
+                     if (dx * dx + dy * dy < drag_threshold * drag_threshold) {
+                         return Clutter.EVENT_PROPAGATE;
+                     }
+-
+-#if HAS_MUTTER46
++#if HAS_MUTTER49
++                    window.begin_grab_op (
++                        Meta.GrabOp.MOVING,
++                        null,
++                        event.get_time (),
++                        { x, y }
++                    );
++#elif HAS_MUTTER46
+                     window.begin_grab_op (
+                         Meta.GrabOp.MOVING,
+                         event.get_device (),
+diff --git a/wingpanel-interface/meson.build b/wingpanel-interface/meson.build
+index 54eb7f2..642b292 100644
+--- a/wingpanel-interface/meson.build
++++ b/wingpanel-interface/meson.build
+@@ -49,6 +49,17 @@ if mutter48_dep.found()
+ 	vala_flags = ['--define', 'HAS_MUTTER46', '--define', 'HAS_MUTTER47', '--define', 'HAS_MUTTER48']
+ endif
+ 
++mutter49_dep = dependency('libmutter-17', version: ['>= 49', '< 50'], required: false)
++if mutter49_dep.found()
++	libmutter_dep = dependency('libmutter-17', version: '>= 49')
++	mutter_dep = [
++		libmutter_dep,
++		dependency('mutter-mtk-17'), dependency('mutter-cogl-17'),
++		dependency('mutter-clutter-17')
++	]
++	vala_flags = ['--define', 'HAS_MUTTER43', '--define', 'HAS_MUTTER44', '--define', 'HAS_MUTTER45', '--define', 'HAS_MUTTER46', '--define', 'HAS_MUTTER47', '--define', 'HAS_MUTTER48', '--define', 'HAS_MUTTER49']
++endif
++
+ if mutter_dep.length() == 0
+ 	error ('No supported mutter library found!')
+ endif
