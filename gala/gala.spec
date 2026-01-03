@@ -14,6 +14,7 @@ Patch2:         libmutter15.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
+BuildRequires:  git-core
 BuildRequires:  meson >= 0.59
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  vala >= 0.46
@@ -109,7 +110,7 @@ This package contains the development headers
 
 
 %prep
-%autosetup S git -p1
+%autosetup -S git -p1
 
 
 %build

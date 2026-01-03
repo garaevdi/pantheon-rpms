@@ -1,8 +1,8 @@
 diff --git a/lib/CloseButton.vala b/lib/CloseButton.vala
-index 2f9e5d8f..afc7a7b2 100644
+index 206d2174..6782e50a 100644
 --- a/lib/CloseButton.vala
 +++ b/lib/CloseButton.vala
-@@ -11,7 +11,11 @@ public class Gala.CloseButton : Clutter.Actor {
+@@ -12,7 +12,11 @@ public class Gala.CloseButton : Clutter.Actor {
      public float monitor_scale { get; construct set; }
  
      private Icon icon;
@@ -12,8 +12,8 @@ index 2f9e5d8f..afc7a7b2 100644
      private Clutter.ClickAction click_action;
 +#endif
  
-     public CloseButton (float monitor_scale) {
-         Object (monitor_scale: monitor_scale);
+     static construct {
+         close_pixbufs = new Gee.HashMap<int, Gdk.Pixbuf?> ();
 @@ -28,9 +32,17 @@ public class Gala.CloseButton : Clutter.Actor {
          };
          add_child (icon);
@@ -154,10 +154,10 @@ diff --git a/src/Widgets/MultitaskingView/WindowClone.vala b/src/Widgets/Multita
 index e36fb83b..ab41e565 100644
 --- a/src/Widgets/MultitaskingView/WindowClone.vala
 +++ b/src/Widgets/MultitaskingView/WindowClone.vala
-@@ -112,9 +112,14 @@ public class Gala.WindowClone : ActorTarget, RootTarget {
+@@ -106,9 +106,14 @@ public class Gala.WindowClone : ActorTarget, RootTarget {
          window.size_changed.connect (() => request_reposition ());
  
-         if (mode != MULTITASKING_VIEW) {
+         if (overview_mode) {
 +#if HAS_MUTTER49
 +            var click_action = new Clutter.ClickGesture ();
 +            click_action.recognize.connect ((action) => {
