@@ -9,8 +9,8 @@ License:        GPL-3.0-or-later
 URL:            https://github.com/elementary/%{name}
 Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
 
-Patch1:         mutter49.patch
-Patch2:         libmutter15.patch
+Patch1:         mutter49-gala.patch
+Patch2:         libmutter15-gala.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
