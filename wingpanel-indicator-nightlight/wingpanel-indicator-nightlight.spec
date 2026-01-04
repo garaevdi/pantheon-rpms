@@ -1,15 +1,15 @@
 %global __provides_exclude_from ^%{_libdir}/wingpanel/.*\\.so$
 
-%global srcname wingpanel-indicator-nightlight
+%global srcname panel-nightlight
 %global appname io.elementary.wingpanel.nightlight
 
 Name:           wingpanel-indicator-nightlight
 Summary:        Night Light Indicator for wingpanel
-Version:        2.1.2
-Release:        1%{?dist}
+Version:        2.1.3
+Release:        %autorelease
 License:        GPL-2.0-or-later
 
-URL:            https://github.com/elementary/wingpanel-indicator-nightlight
+URL:            https://github.com/elementary/%{srcname}
 Source0:        %{url}/archive/%{version}/%{srcname}-%{version}.tar.gz
 
 BuildRequires:  gettext
@@ -64,6 +64,4 @@ appstream-util validate-relax --nonet \
 
 
 %changelog
-* Tue Nov 14 2023 Fabio Valentini <decathorpe@gmail.com> - 2.1.2-1
-- Initial packaging
-
+%autochangelog
