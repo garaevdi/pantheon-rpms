@@ -1,15 +1,15 @@
 %global __provides_exclude_from ^%{_libdir}/wingpanel/.*\\.so$
 
-%global srcname wingpanel-indicator-power
+%global srcname panel-power
 %global appname io.elementary.wingpanel.power
 
 Name:           wingpanel-indicator-power
 Summary:        Power indicator for wingpanel
-Version:        6.2.1
-Release:        1%{?dist}
+Version:        8.0.2
+Release:        %autorelease
 License:        GPL-2.0-or-later
 
-URL:            https://github.com/elementary/wingpanel-indicator-power
+URL:            https://github.com/elementary/%{srcname}
 Source0:        %{url}/archive/%{version}/%{srcname}-%{version}.tar.gz
 
 BuildRequires:  gettext
@@ -20,7 +20,6 @@ BuildRequires:  vala >= 0.22.0
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(granite) >= 6.0.0
 BuildRequires:  pkgconfig(gtk+-3.0)
-BuildRequires:  pkgconfig(libbamf3)
 BuildRequires:  pkgconfig(libgtop-2.0)
 BuildRequires:  pkgconfig(libnotify)
 BuildRequires:  pkgconfig(libudev)
@@ -48,13 +47,13 @@ A power indicator for wingpanel.
 
 %find_lang power-indicator
 
-# remove the specified stock icon from appdata (invalid in libappstream-glib)
-sed -i '/icon type="stock"/d' %{buildroot}/%{_datadir}/metainfo/%{appname}.appdata.xml
+# remove the specified stock icon from metainfo (invalid in libappstream-glib)
+sed -i '/icon type="stock"/d' %{buildroot}/%{_datadir}/metainfo/%{appname}.metainfo.xml
 
 
 %check
 appstream-util validate-relax --nonet \
-    %{buildroot}/%{_datadir}/metainfo/%{appname}.appdata.xml
+    %{buildroot}/%{_datadir}/metainfo/%{appname}.metainfo.xml
 
 
 %files -f power-indicator.lang
@@ -64,10 +63,8 @@ appstream-util validate-relax --nonet \
 %{_libdir}/wingpanel/libpower.so
 
 %{_datadir}/glib-2.0/schemas/io.elementary.desktop.wingpanel.power.gschema.xml
-%{_datadir}/metainfo/%{appname}.appdata.xml
+%{_datadir}/metainfo/%{appname}.metainfo.xml
 
 
 %changelog
-* Mon May 06 2024 Fabio Valentini <decathorpe@gmail.com> - 6.2.1-1
-- Initial packaging
-
+%autochangelog
