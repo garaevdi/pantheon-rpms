@@ -197,4 +197,5 @@ appstream-util validate-relax --nonet \
 %{_datadir}/vala/vapi/gala.vapi
 
 %changelog
-%autochangelog
+* Sun Jan 04 2025 Denis Garaev <garaevdi@yandex.ru> - 8.4.0-1
+- Initial build for COPR
