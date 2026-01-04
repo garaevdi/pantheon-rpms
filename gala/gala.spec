@@ -3,7 +3,7 @@
 Name:           gala
 Summary:        Gala Window Manager for elementary OS and Pantheon
 Version:        8.4.0
-Release:        %autorelease
+Release:        %autorelease -b2
 License:        GPL-3.0-or-later
 
 URL:            https://github.com/elementary/%{name}
@@ -197,5 +197,8 @@ appstream-util validate-relax --nonet \
 %{_datadir}/vala/vapi/gala.vapi
 
 %changelog
+* Sun Jan 04 2025 Denis Garaev <garaevdi@yandex.ru> - 8.4.0-2
+- Bump release to update copr package
+
 * Sun Jan 04 2025 Denis Garaev <garaevdi@yandex.ru> - 8.4.0-1
 - Initial build for COPR
