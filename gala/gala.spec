@@ -9,7 +9,9 @@ License:        GPL-3.0-or-later
 URL:            https://github.com/elementary/%{name}
 Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
 
+# Based on https://github.com/elementary/gala/pull/2702
 Patch1:         mutter49-gala.patch
+# Based on https://github.com/elementary/gala/pull/2710 and https://github.com/elementary/gala/pull/2708
 Patch2:         libmutter15-gala.patch
 
 BuildRequires:  desktop-file-utils
