@@ -24,11 +24,14 @@ Requires:       gnome-settings-daemon
 Requires:       gnome-session
 Requires:       gnome-desktop3
 Requires:       gala
+Requires:       gala-wayland
 Requires:       elementary-settings-daemon
 Requires:       elementary-dock
 
 Recommends:     gnome-keyring
 Recommends:     orca
+
+Suggests:       gala-x11
 
 %description
 %{summary}
