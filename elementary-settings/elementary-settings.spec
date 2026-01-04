@@ -17,7 +17,13 @@ BuildRequires:  pkgconfig(polkit-gobject-1)
 
 BuildArch:      noarch
 
-Suggests:       elementary-wallpapers
+Recommends:       elementary-icon-theme
+Recommends:       elementary-sound-theme
+Recommends:       elementary-theme
+Recommends:       elementary-wallpapers
+Recommends:       google-roboto-mono-fonts
+Recommends:       rsms-inter-fonts
+Recommends:       open-sans-fonts
 
 %description
 %{summary}
