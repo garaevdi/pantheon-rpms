@@ -19,6 +19,7 @@ BuildRequires:  vala
 BuildRequires:  pkgconfig(gee-0.8)
 BuildRequires:  pkgconfig(granite-7) >= 7.3.0
 BuildRequires:  pkgconfig(gtk4)
+BuildRequires:  pkgconfig(pantheon-wayland-1)
 
 %description
 This GTK+ applet reads window manager and OS keyboard shortcuts from
@@ -43,13 +44,16 @@ the titlebar opens the system keyboard settings.
 
 %find_lang %{appname}
 
+# remove the specified stock icon from metainfo (invalid in libappstream-glib)
+sed -i '/icon type="stock"/d' %{buildroot}/%{_datadir}/metainfo/%{appname}.metainfo.xml
+
 
 %check
 desktop-file-validate \
     %{buildroot}/%{_datadir}/applications/%{appname}.desktop
 
 appstream-util validate-relax --nonet \
-    %{buildroot}/%{_datadir}/metainfo/%{appname}.appdata.xml
+    %{buildroot}/%{_datadir}/metainfo/%{appname}.metainfo.xml
 
 
 %files -f %{appname}.lang
@@ -59,7 +63,7 @@ appstream-util validate-relax --nonet \
 %{_bindir}/%{appname}
 
 %{_datadir}/applications/%{appname}.desktop
-%{_datadir}/metainfo/%{appname}.appdata.xml
+%{_datadir}/metainfo/%{appname}.metainfo.xml
 
 
 %changelog
