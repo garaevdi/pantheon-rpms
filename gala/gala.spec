@@ -110,7 +110,7 @@ This package contains the development headers
 
 
 %prep
-%autosetup -S git -p1
+%autosetup -p1
 
 
 %build
