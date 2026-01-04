@@ -5,8 +5,8 @@
 
 Name:           wingpanel-indicator-network
 Summary:        Network Indicator for wingpanel
-Version:        7.1.0
-Release:        1%{?dist}
+Version:        8.0.1
+Release:        %autorelease
 License:        LGPL-2.1-or-later AND GPL-3.0-or-later AND GPL-2.0-or-later
 
 URL:            https://github.com/elementary/wingpanel-indicator-network
@@ -22,6 +22,7 @@ BuildRequires:  pkgconfig(granite)
 BuildRequires:  pkgconfig(gtk+-3.0)
 BuildRequires:  pkgconfig(libnm) >= 1.24
 BuildRequires:  pkgconfig(libnma)
+BuildRequires:  pkgconfig(polkit-gobject-1)
 BuildRequires:  pkgconfig(wingpanel) >= 3.0.0
 
 Requires:       network-manager-applet%{?_isa}
@@ -61,9 +62,8 @@ appstream-util validate-relax --nonet \
 %{_libdir}/wingpanel/libnetwork.so
 
 %{_datadir}/metainfo/%{appname}.metainfo.xml
+%{_datadir}/polkit-1/actions/%{appname}.policy
 
 
 %changelog
-* Mon May 06 2024 Fabio Valentini <decathorpe@gmail.com> - 7.1.0-1
-- Initial packaging
-
+%autochangelog
