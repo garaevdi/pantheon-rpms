@@ -3,7 +3,7 @@
 Name:           pantheon-session-settings
 Summary:        Desktop files for pantheon session
 Version:        8.1.0
-Release:        %autorelease
+Release:        %autorelease -b2
 License:        GPL-3.0
 
 URL:            https://github.com/elementary/%{srcname}
