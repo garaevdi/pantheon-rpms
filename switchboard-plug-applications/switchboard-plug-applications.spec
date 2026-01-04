@@ -12,7 +12,7 @@ Version:        8.2.0
 Release:        %autorelease
 License:        GPL-3.0-or-later
 
-URL:            http://github.com/elementary/%{srcname}
+URL:            https://github.com/elementary/%{srcname}
 Source0:        %{url}/archive/%{version}/%{srcname}-%{version}.tar.gz
 
 BuildRequires:  gettext
