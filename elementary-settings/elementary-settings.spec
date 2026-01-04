@@ -3,7 +3,7 @@
 Name:           elementary-settings
 Summary:        Default settings for elementary OS
 Version:        8.1.0
-Release:        %autorelease
+Release:        %autorelease -b2
 License:        GPL-3.0-or-later
 
 URL:            https://github.com/elementary/%{srcname}
@@ -62,4 +62,8 @@ Recommends:       open-sans-fonts
 %ghost %{_sysconfdir}/NetworkManager/conf.d/10-globally-managed-devices.conf
 
 %changelog
-%autochangelog
+* Sun Jan 04 2025 Denis Garaev <garaevdi> - 8.1.0-2
+- Add recommended packages
+
+* Sun Jan 04 2025 Denis Garaev <garaevdi> - 8.1.0-1
+- Initial build for COPR
