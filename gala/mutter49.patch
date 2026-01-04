@@ -1,5 +1,5 @@
 diff --git a/lib/CloseButton.vala b/lib/CloseButton.vala
-index 206d2174..6782e50a 100644
+index 206d2174..a6334e74 100644
 --- a/lib/CloseButton.vala
 +++ b/lib/CloseButton.vala
 @@ -12,7 +12,11 @@ public class Gala.CloseButton : Clutter.Actor {
@@ -14,7 +14,7 @@ index 206d2174..6782e50a 100644
  
      static construct {
          close_pixbufs = new Gee.HashMap<int, Gdk.Pixbuf?> ();
-@@ -28,9 +32,17 @@ public class Gala.CloseButton : Clutter.Actor {
+@@ -33,9 +37,17 @@ public class Gala.CloseButton : Clutter.Actor {
          };
          add_child (icon);
  
@@ -151,30 +151,30 @@ index 8065921a..0ffd4cc0 100644
  
      private void setup_barrier () {
 diff --git a/src/Widgets/MultitaskingView/WindowClone.vala b/src/Widgets/MultitaskingView/WindowClone.vala
-index e36fb83b..ab41e565 100644
+index 91e80b3b..a33c9759 100644
 --- a/src/Widgets/MultitaskingView/WindowClone.vala
 +++ b/src/Widgets/MultitaskingView/WindowClone.vala
-@@ -106,9 +106,14 @@ public class Gala.WindowClone : ActorTarget, RootTarget {
+@@ -106,9 +106,15 @@ public class Gala.WindowClone : ActorTarget, RootTarget {
          window.size_changed.connect (() => request_reposition ());
  
          if (overview_mode) {
 +#if HAS_MUTTER49
 +            var click_action = new Clutter.ClickGesture ();
 +            click_action.recognize.connect ((action) => {
++                actor_clicked (((Clutter.PressGesture) action).get_button ());
 +#else
              var click_action = new Clutter.ClickAction ();
              click_action.clicked.connect ((action, actor) => {
--                actor_clicked (action.get_button ());
+                 actor_clicked (action.get_button ());
 +#endif
-+                actor_clicked (((Clutter.PressGesture) action).get_button ());
              });
  
              add_action (click_action);
 diff --git a/src/Widgets/MultitaskingView/WorkspaceClone.vala b/src/Widgets/MultitaskingView/WorkspaceClone.vala
-index 2b13d65f..d57b17d1 100644
+index 873ba0a9..80d7df38 100644
 --- a/src/Widgets/MultitaskingView/WorkspaceClone.vala
 +++ b/src/Widgets/MultitaskingView/WorkspaceClone.vala
-@@ -132,8 +132,13 @@ public class Gala.WorkspaceClone : ActorTarget {
+@@ -139,8 +139,13 @@ public class Gala.WorkspaceClone : ActorTarget {
          unowned var display = workspace.get_display ();
          var monitor_geometry = display.get_monitor_geometry (display.get_primary_monitor ());
  
@@ -189,10 +189,10 @@ index 2b13d65f..d57b17d1 100644
          background.add_action (background_click_action);
  
 diff --git a/src/WindowManager.vala b/src/WindowManager.vala
-index ee6e1959..ae208100 100644
+index 256d5703..c21d5480 100644
 --- a/src/WindowManager.vala
 +++ b/src/WindowManager.vala
-@@ -754,8 +754,10 @@ namespace Gala {
+@@ -752,8 +752,10 @@ namespace Gala {
                      event.get_type () == TOUCHPAD_HOLD || event.get_type () == TOUCH_BEGIN) {
                      window.begin_grab_op (
                          op,
