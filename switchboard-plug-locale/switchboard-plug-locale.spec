@@ -27,6 +27,7 @@ BuildRequires:  pkgconfig(gnome-desktop-4)
 BuildRequires:  pkgconfig(gobject-2.0)
 BuildRequires:  pkgconfig(granite-7)
 BuildRequires:  pkgconfig(gtk4)
+BuildRequires:  pkgconfig(ibus-1.0)
 BuildRequires:  pkgconfig(libadwaita-1)
 BuildRequires:  pkgconfig(switchboard-3)
 
