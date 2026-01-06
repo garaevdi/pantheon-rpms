@@ -3,7 +3,7 @@
 Name:           pantheon-session-settings
 Summary:        Desktop files for pantheon session
 Version:        8.1.0
-Release:        %autorelease -b2
+Release:        %autorelease -b3
 License:        GPL-3.0
 
 URL:            https://github.com/elementary/%{srcname}
@@ -31,8 +31,6 @@ Requires:       elementary-dock
 Recommends:     gnome-keyring
 Recommends:     orca
 
-Suggests:       gala-x11
-
 %description
 %{summary}
 
@@ -42,7 +40,7 @@ Suggests:       gala-x11
 
 
 %build
-%meson -Dfallback-session="gnome"
+%meson -Dfallback-session="gnome" -Dx11=false
 %meson_build
 
 
@@ -55,8 +53,6 @@ Suggests:       gala-x11
 
 %{_datadir}/applications/pantheon-mimeapps.list
 %{_datadir}/wayland-sessions/pantheon-wayland.desktop
-%{_datadir}/xsessions/pantheon.desktop
-%{_datadir}/gnome-session/sessions/pantheon.session
 %{_datadir}/gnome-session/sessions/pantheon-wayland.session
 
 %{_userunitdir}/gnome-session@pantheon.target.d/session.conf
