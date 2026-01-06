@@ -3,7 +3,7 @@
 Name:           gala
 Summary:        Gala Window Manager for elementary OS and Pantheon
 Version:        8.4.0
-Release:        %autorelease -b2
+Release:        %autorelease -b3
 License:        GPL-3.0-or-later
 
 URL:            https://github.com/elementary/%{name}
@@ -128,9 +128,6 @@ This package contains the development headers
 # remove the specified stock icon from appdata (invalid in libappstream-glib)
 sed -i '/icon type="stock"/d' %{buildroot}/%{_datadir}/metainfo/%{name}.metainfo.xml
 
-# drop strange file from /etc/xdg
-rm %{buildroot}/%{_sysconfdir}/xdg/io.elementary.desktop.wm.shell
-
 
 %check
 desktop-file-validate \
@@ -177,6 +174,8 @@ appstream-util validate-relax --nonet \
 %{_datadir}/glib-2.0/schemas/20_elementary.pantheon.wm.gschema.override
 %{_datadir}/metainfo/%{name}.metainfo.xml
 
+%{_sysconfdir}/xdg/io.elementary.desktop.wm.shell
+
 %{_userunitdir}/io.elementary.gala.target
 
 %files x11
@@ -197,8 +196,11 @@ appstream-util validate-relax --nonet \
 %{_datadir}/vala/vapi/gala.vapi
 
 %changelog
-* Sun Jan 04 2025 Denis Garaev <garaevdi@yandex.ru> - 8.4.0-2
+* Tue Jan 06 2026 Denis Garaev <garaevdi@yandex.ru> - 8.4.0-3
+- Include shell autostart file
+
+* Sun Jan 04 2026 Denis Garaev <garaevdi@yandex.ru> - 8.4.0-2
 - Bump release to update copr package
 
-* Sun Jan 04 2025 Denis Garaev <garaevdi@yandex.ru> - 8.4.0-1
+* Sun Jan 04 2026 Denis Garaev <garaevdi@yandex.ru> - 8.4.0-1
 - Initial build for COPR
