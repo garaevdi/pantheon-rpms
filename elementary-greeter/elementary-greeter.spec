@@ -4,14 +4,15 @@
 Name:           elementary-greeter
 Summary:        LightDM Login Screen for the elementary desktop
 Version:        8.1.1
-Release:        %autorelease
+Release:        %autorelease -b3
 License:        GPL-3.0-only AND GPL-3.0-or-later AND GPL-2.0-or-later
 
 URL:            https://github.com/elementary/greeter
 Source0:        %{url}/archive/%{version}/%{srcname}-%{version}.tar.gz
 
-Patch1:          mutter49-greeter.patch
-Patch2:          libmutter15-greeter.patch
+Patch1:         mutter49-greeter.patch
+Patch2:         libmutter15-greeter.patch
+Patch3:         use-wayland-session.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
@@ -125,4 +126,17 @@ appstream-util validate-relax --nonet \
 
 
 %changelog
-%autochangelog
+* Tue Jan 06 2026 Denis Garaev <garaevdi@yandex.ru> - 8.1.1-3
+- Use wayland session to start the greeter (https://github.com/elementary/greeter/pull/752)
+
+* Sat Jan 03 2026 Denis Garaev <garaevdi@yandex.ru> - 8.1.1-2
+- Use mutter 49
+
+* Tue Dec 30 2025 Denis Garaev <garaevdi@yandex.ru> - 8.1.1-1
+- Update to version 8.1.1
+
+* Mon May 06 2024 Fabio Valentini <decathorpe@gmail.com> - 7.0.0-2.20240402.git3ff7809
+- Bump to commit 3ff7809 for compatibility with mutter 46.
+
+* Wed Nov 15 2023 Fabio Valentini <decathorpe@gmail.com> - 7.0.0-1.20231109.git7111c22
+- Initial packaging

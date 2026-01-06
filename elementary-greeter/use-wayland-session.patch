@@ -1,0 +1,18 @@
+From c3c6724c0a340c7c9c698baf17fb475793b92dd5 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Corentin=20No=C3=ABl?= <tintou@noel.tf>
+Date: Tue, 27 Aug 2024 18:33:39 +0200
+Subject: [PATCH] Use a wayland session to start the greeter
+
+---
+ data/io.elementary.greeter.desktop.in | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/data/io.elementary.greeter.desktop.in b/data/io.elementary.greeter.desktop.in
+index 6117e0782..029701ff6 100644
+--- a/data/io.elementary.greeter.desktop.in
++++ b/data/io.elementary.greeter.desktop.in
+@@ -5,3 +5,4 @@ Name=Pantheon Greeter
+ Exec=@PROJECT_NAME@-compositor
+ Type=Application
+ NoDisplay=true
++X-LightDM-Session-Type=wayland
