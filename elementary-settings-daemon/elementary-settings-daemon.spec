@@ -4,13 +4,14 @@
 
 Name:           elementary-settings-daemon
 Version:        8.4.0
-Release:        %autorelease -b2
+Release:        %autorelease -b3
 Summary:        Settings Daemon and Portal for Pantheon
 # GPL-3.0-or-later except settings-portal/* which is LGPL-2.0-or-later
 License:        GPL-3.0-or-later AND LGPL-2.0-or-later
 
 URL:            https://github.com/elementary/settings-daemon
 Source0:        %{url}/archive/%{version}/%{srcname}-%{version}.tar.gz
+Patch0:         add-systemd-unit.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
@@ -70,16 +71,19 @@ appstream-util validate-relax --nonet \
 %systemd_post %{appname}.check-for-firmware-updates.timer
 %systemd_user_post %{appname}.xdg-desktop-portal.service
 %systemd_user_post %{appname}.system-update.timer
+%systemd_user_post %{appname}.service
 
 %preun
 %systemd_preun %{appname}.check-for-firmware-updates.timer
 %systemd_user_preun %{appname}.xdg-desktop-portal.service
 %systemd_user_preun %{appname}.system-update.timer
+%systemd_user_preun %{appname}.service
 
 %postun
 %systemd_postun_with_restart %{appname}.check-for-firmware-updates.timer
 %systemd_user_postun_with_restart %{appname}.xdg-desktop-portal.service
 %systemd_user_postun_with_restart %{appname}.system-update.timer
+%systemd_user_postun_with_restart %{appname}.service
 
 
 %files -f %{appname}.lang
@@ -105,6 +109,7 @@ appstream-util validate-relax --nonet \
 %{_userunitdir}/%{appname}.system-update.service
 %{_userunitdir}/%{appname}.system-update.timer
 %{_userunitdir}/%{appname}.xdg-desktop-portal.service
+%{_userunitdir}/%{appname}.service
 
 
 %changelog
