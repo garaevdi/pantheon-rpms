@@ -3,22 +3,20 @@
 Name:           pantheon-session-settings
 Summary:        Desktop files for pantheon session
 Version:        8.1.0
-Release:        %autorelease -b3
+Release:        %autorelease -b4
 License:        GPL-3.0
 
 URL:            https://github.com/elementary/%{srcname}
 Source0:        %{url}/archive/%{version}/%{srcname}-%{version}.tar.gz
-Patch0:         remove-unnecessary-stuff.patch
+Patch0:         remove-autostarts.patch
 
 BuildArch:      noarch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
-BuildRequires:  gnome-keyring
 BuildRequires:  meson
-BuildRequires:  orca
 BuildRequires:  systemd-rpm-macros
-BuildRequires:  pkgconfig(gnome-settings-daemon)
+BuildRequires:  pkgconfig(systemd)
 
 Requires:       gnome-settings-daemon
 Requires:       gnome-session
@@ -58,7 +56,6 @@ Recommends:     orca
 %{_userunitdir}/gnome-session@pantheon.target.d/session.conf
 %{_userunitdir}/gnome-session@pantheon-wayland.target.d/session.conf
 
-%{_sysconfdir}/xdg/autostart/pantheon-*.desktop
 
 %changelog
 %autochangelog

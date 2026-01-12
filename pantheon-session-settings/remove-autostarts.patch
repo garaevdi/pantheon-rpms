@@ -1,0 +1,242 @@
+diff --git a/meson.build b/meson.build
+index 437a8d0..8ec2770 100644
+--- a/meson.build
++++ b/meson.build
+@@ -6,8 +6,6 @@ i18n = import('i18n')
+ prefix = get_option('prefix')
+ datadir = join_paths(prefix, get_option('datadir'))
+ 
+-gsd_dep = dependency('gnome-settings-daemon', version: '>= 3.36.0')
+-
+ gsd_components = [
+     'org.gnome.SettingsDaemon.A11ySettings',
+     'org.gnome.SettingsDaemon.Color',
+@@ -27,6 +25,17 @@ gsd_components = [
+     'org.gnome.SettingsDaemon.XSettings',
+ ]
+ 
++keyring_components = [
++    'gnome-keyring-daemon',
++    'gcr-ssh-agent'
++]
++
++desktop_components = [
++    'orca',
++    'io.elementary.settings-daemon'
++]
++
++
+ subdir('po')
+ 
+ if get_option('mimeapps-list')
+diff --git a/session/meson.build b/session/meson.build
+index 3e23650..ebfd955 100644
+--- a/session/meson.build
++++ b/session/meson.build
+@@ -1,111 +1,11 @@
+ if get_option('x11')
+-  fallback_session = get_option('fallback-session')
+-
+-  session_configuration = configuration_data()
+-  session_configuration.set('FALLBACK_SESSION', fallback_session)
+-
+-  session_components = [
+-    'gala',
+-    gsd_components
+-  ]
+-
+-  session_configuration.set('SESSION_COMPONENTS', ';'.join(session_components))
+-
+-  pantheon_session = configure_file(
+-    input: 'pantheon.session.in',
+-    output: '@BASENAME@',
+-    configuration: session_configuration,
+-    install_dir: join_paths(datadir, 'gnome-session', 'sessions')
++  install_data(
++    'pantheon.session',
++    install_dir: datadir / 'gnome-session' / 'sessions'
+   )
+ endif
+ 
+-wayland_session_components = [
+-  'gala-wayland',
+-  gsd_components
+-]
+-
+-wayland_session_configuration = configuration_data()
+-wayland_session_configuration.set('SESSION_COMPONENTS', ';'.join(wayland_session_components))
+-
+-configure_file(
+-  input: 'pantheon-wayland.session.in',
+-  output: '@BASENAME@',
+-  configuration: wayland_session_configuration,
++install_data(
++  'pantheon-wayland.session',
+   install_dir: datadir / 'gnome-session' / 'sessions'
+ )
+-
+-autostartdir = join_paths(get_option('sysconfdir'), 'xdg', 'autostart')
+-
+-gsd_dir = gsd_dep.get_pkgconfig_variable('prefix')
+-desktop_file_install = find_program('desktop-file-install')
+-
+-foreach component : gsd_components
+-  original_filename = component + '.desktop'
+-
+-  if get_option('detect-program-prefixes') == true
+-    original_autostart_file = join_paths(gsd_dir, 'etc/xdg/autostart', original_filename)
+-  else
+-    original_autostart_file = join_paths(autostartdir, original_filename)
+-  endif
+-
+-  patched_filename = 'pantheon-' + component + '.desktop'
+-
+-  custom_target('create-gsd-autostart' + patched_filename,
+-    input: original_autostart_file,
+-    output: patched_filename,
+-    command: [
+-      desktop_file_install,
+-      '--set-key=OnlyShowIn',
+-      '--set-value=Pantheon',
+-      '--vendor=pantheon',
+-      '--dir=@OUTDIR@',
+-      '@INPUT@',
+-    ],
+-    install: true,
+-    install_dir: autostartdir,
+-  )
+-endforeach
+-
+-gnome_keyring = find_program('gnome-keyring-daemon')
+-onboard = find_program('onboard')
+-orca = find_program('orca')
+-
+-if get_option('detect-program-prefixes') == true
+-  # TODO: use fs module in meson 0.53.0
+-  gnome_keyring_prefix = gnome_keyring.path().split('/bin')[0]
+-  onboard_prefix = onboard.path().split('/bin')[0]
+-  orca_prefix = orca.path().split('/bin')[0]
+-
+-  autostarts = {
+-    'gnome-keyring-pkcs11': join_paths(gnome_keyring_prefix, 'etc/xdg/autostart', 'gnome-keyring-pkcs11.desktop'),
+-    'gnome-keyring-secrets': join_paths(gnome_keyring_prefix, 'etc/xdg/autostart', 'gnome-keyring-secrets.desktop'),
+-    'gnome-keyring-ssh': join_paths(gnome_keyring_prefix, 'etc/xdg/autostart', 'gnome-keyring-ssh.desktop'),
+-    'onboard-autostart': join_paths(onboard_prefix, 'etc/xdg/autostart', 'onboard-autostart.desktop'),
+-    'orca-autostart': join_paths(orca_prefix, 'etc/xdg/autostart', 'orca-autostart.desktop'),
+-  }
+-else
+-  autostarts = {
+-    'gnome-keyring-pkcs11': join_paths(autostartdir, 'gnome-keyring-pkcs11.desktop'),
+-    'gnome-keyring-secrets': join_paths(autostartdir, 'gnome-keyring-secrets.desktop'),
+-    'gnome-keyring-ssh': join_paths(autostartdir, 'gnome-keyring-ssh.desktop'),
+-    'onboard-autostart': join_paths(autostartdir, 'onboard-autostart.desktop'),
+-    'orca-autostart': join_paths(autostartdir, 'orca-autostart.desktop'),
+-  }
+-endif
+-
+-foreach name, autostart : autostarts
+-  custom_target('create-autostart-' + name,
+-    input: autostart,
+-    output: 'pantheon-' + name + '.desktop',
+-    command: [
+-      desktop_file_install,
+-      '--set-key=OnlyShowIn',
+-      '--set-value=Pantheon',
+-      '--vendor=pantheon',
+-      '--dir=@OUTDIR@',
+-      '@INPUT@',
+-    ],
+-    install: true,
+-    install_dir: autostartdir,
+-  )
+-endforeach
+diff --git a/session/pantheon-wayland.session b/session/pantheon-wayland.session
+new file mode 100644
+index 0000000..7fbfec5
+--- /dev/null
++++ b/session/pantheon-wayland.session
+@@ -0,0 +1,3 @@
++[GNOME Session]
++Name=Pantheon (Wayland)
++DesktopName=Pantheon
+diff --git a/session/pantheon-wayland.session.in b/session/pantheon-wayland.session.in
+deleted file mode 100644
+index bdfa8e5..0000000
+--- a/session/pantheon-wayland.session.in
++++ /dev/null
+@@ -1,5 +0,0 @@
+-[GNOME Session]
+-Name=Pantheon (Wayland)
+-RequiredComponents=@SESSION_COMPONENTS@
+-FallbackSession=pantheon
+-DesktopName=Pantheon
+diff --git a/session/pantheon.session b/session/pantheon.session
+new file mode 100644
+index 0000000..6b2d99c
+--- /dev/null
++++ b/session/pantheon.session
+@@ -0,0 +1,3 @@
++[GNOME Session]
++Name=Pantheon
++DesktopName=Pantheon
+diff --git a/session/pantheon.session.in b/session/pantheon.session.in
+deleted file mode 100644
+index 5cf8c63..0000000
+--- a/session/pantheon.session.in
++++ /dev/null
+@@ -1,5 +0,0 @@
+-[GNOME Session]
+-Name=Pantheon
+-RequiredComponents=@SESSION_COMPONENTS@
+-FallbackSession=@FALLBACK_SESSION@
+-DesktopName=Pantheon
+diff --git a/systemd/meson.build b/systemd/meson.build
+index 53beb67..e824322 100644
+--- a/systemd/meson.build
++++ b/systemd/meson.build
+@@ -4,27 +4,39 @@ if systemd_userunitdir == ''
+     systemd_userunitdir = dep_systemd.get_pkgconfig_variable('systemduserunitdir', define_variable: ['prefix', get_option('prefix')])
+ endif
+ 
+-desktop_plain = 'pantheon'
++desktop_targets = 'target'
++desktop_sockets = 'socktes'
++desktop_services = 'services'
+ 
+ shell_component = {
+-    desktop_plain: 'io.elementary.gala',
++    desktop_targets: 'io.elementary.gala',
+ }
+ 
+ required_components = {
+-    desktop_plain: gsd_components,
++    desktop_targets: gsd_components,
++    desktop_sockets: keyring_components,
++    desktop_services: desktop_components
+ }
+ 
+ gnome_session_wanted_targets = []
+-foreach component: required_components[desktop_plain]
++gnome_session_wanted_sockets = []
++gnome_session_wanted_services = []
++foreach component: required_components[desktop_targets]
+     gnome_session_wanted_targets += 'Wants=@0@.target'.format(component)
+ endforeach
++foreach component: required_components[desktop_sockets]
++    gnome_session_wanted_sockets += 'Wants=@0@.socket'.format(component)
++endforeach
++foreach component: required_components[desktop_services]
++    gnome_session_wanted_services += 'Wants=@0@.service'.format(component)
++endforeach
+ 
+ session_config = configure_file(
+     input: 'gnome.session.conf.in',
+     output: 'session.conf',
+     configuration: {
+-        'requires_component': shell_component[desktop_plain],
+-        'wants_required_components': '\n'.join(gnome_session_wanted_targets),
++        'requires_component': shell_component[desktop_targets],
++        'wants_required_components': '\n'.join(gnome_session_wanted_targets, gnome_session_wanted_sockets, gnome_session_wanted_services),
+     },
+     install_dir: systemd_userunitdir / 'gnome-session@pantheon.target.d',
+ )
