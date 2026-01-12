@@ -4,7 +4,7 @@
 
 Name:           elementary-settings-daemon
 Version:        8.4.0
-Release:        %autorelease
+Release:        %autorelease -b2
 Summary:        Settings Daemon and Portal for Pantheon
 # GPL-3.0-or-later except settings-portal/* which is LGPL-2.0-or-later
 License:        GPL-3.0-or-later AND LGPL-2.0-or-later
@@ -35,6 +35,8 @@ Requires:       accountsservice
 Requires:       dbus-common
 Requires:       xdg-desktop-portal
 
+Recommends:     PackageKit
+
 %description
 %{summary}.
 
@@ -44,7 +46,7 @@ Requires:       xdg-desktop-portal
 
 
 %build
-%meson
+%meson -Dubuntu_drivers=false
 %meson_build
 
 
