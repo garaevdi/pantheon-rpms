@@ -1,22 +1,21 @@
 %global glib_version 2.74.0
 
+%global commit      59c2f983b24f1cc70c2785b2b440481b459d4774
+%global shortcommit %(c=%{commit}; echo ${c:0:7})
+%global gitdate     20260108
+
 Name:           gala
 Summary:        Gala Window Manager for elementary OS and Pantheon
-Version:        8.4.0
-Release:        %autorelease -b3
+Version:        8.4.0^%{gitdate}.git%{shortcommit}
+Release:        %autorelease
 License:        GPL-3.0-or-later
 
 URL:            https://github.com/elementary/%{name}
-Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
-
-# Based on https://github.com/elementary/gala/pull/2702
-Patch1:         mutter49-gala.patch
-# Based on https://github.com/elementary/gala/pull/2710 and https://github.com/elementary/gala/pull/2708
-Patch2:         libmutter15-gala.patch
+Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
 
 BuildRequires:  desktop-file-utils
-BuildRequires:  gettext
-BuildRequires:  git-core
+BuildRequires:  gcc
+BuildRequires:  libappstream-glib
 BuildRequires:  meson >= 0.59
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  vala >= 0.46
@@ -112,7 +111,7 @@ This package contains the development headers
 
 
 %prep
-%autosetup -p1
+%autosetup -n %{name}-%{commit} -p1
 
 
 %build
@@ -196,6 +195,9 @@ appstream-util validate-relax --nonet \
 %{_datadir}/vala/vapi/gala.vapi
 
 %changelog
+* Sat Jan 17 2026 Denis Garaev <garaevdi@yandex.ru> - 8.4.0^20260108.git59c2f98
+- Update to commit 59c2f983b24f1cc70c2785b2b440481b459d4774
+
 * Tue Jan 06 2026 Denis Garaev <garaevdi@yandex.ru> - 8.4.0-3
 - Include shell autostart file
 
