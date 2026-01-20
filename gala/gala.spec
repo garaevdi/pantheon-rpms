@@ -7,12 +7,12 @@
 Name:           gala
 Summary:        Gala Window Manager for elementary OS and Pantheon
 Version:        8.4.0^%{gitdate}.git%{shortcommit}
-Release:        %autorelease -b2
+Release:        %autorelease -b3
 License:        GPL-3.0-or-later
 
 URL:            https://github.com/elementary/%{name}
 Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
-Patch0:         revert-blur.patch
+Patch0:         fix-blur.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gcc

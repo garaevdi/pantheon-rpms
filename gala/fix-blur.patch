@@ -1,0 +1,32 @@
+diff --git a/src/BackgroundBlurEffect.vala b/src/BackgroundBlurEffect.vala
+index ce8c28b1..a781d292 100644
+--- a/src/BackgroundBlurEffect.vala
++++ b/src/BackgroundBlurEffect.vala
+@@ -168,11 +168,7 @@ public class Gala.BackgroundBlurEffect : Clutter.Effect {
+             Mtk.Rectangle stage_view_layout = {};
+ 
+             box_scale_factor = stage_view.get_scale ();
+-#if HAS_MUTTER49
+-            stage_view.get_layout (stage_view_layout);
+-#else
+             stage_view.get_layout (ref stage_view_layout);
+-#endif
+ 
+             origin_x -= stage_view_layout.x;
+             origin_y -= stage_view_layout.y;
+diff --git a/vapi/mutter-clutter.vapi b/vapi/mutter-clutter.vapi
+index c1ddd24b..9897bc55 100644
+--- a/vapi/mutter-clutter.vapi
++++ b/vapi/mutter-clutter.vapi
+@@ -7369,11 +7369,7 @@ namespace Clutter {
+ #endif
+ 		public virtual Clutter.PaintFlag get_default_paint_flags ();
+ 		public unowned Cogl.Framebuffer get_framebuffer ();
+-#if HAS_MUTTER49
+-		public void get_layout (Mtk.Rectangle rect);
+-#else
+ 		public void get_layout (ref Mtk.Rectangle rect);
+-#endif
+ #if HAS_MUTTER47
+ 		public void get_offscreen_transformation_matrix (Graphene.Matrix matrix);
+ #else
