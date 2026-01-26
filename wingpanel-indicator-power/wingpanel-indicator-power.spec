@@ -6,7 +6,7 @@
 Name:           wingpanel-indicator-power
 Summary:        Power indicator for wingpanel
 Version:        8.0.2
-Release:        %autorelease
+Release:        %autorelease -b2
 License:        GPL-2.0-or-later
 
 URL:            https://github.com/elementary/%{srcname}
@@ -28,6 +28,7 @@ BuildRequires:  pkgconfig(wingpanel) >= 3.0.0
 Requires:       wingpanel%{?_isa}
 Supplements:    wingpanel%{?_isa}
 
+Recommends:     power-profiles-daemon
 
 %description
 A power indicator for wingpanel.
