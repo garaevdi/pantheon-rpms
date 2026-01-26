@@ -9,7 +9,7 @@
 Name:           switchboard-plug-power
 Summary:        Switchboard Power plug
 Version:        8.1.0
-Release:        %autorelease
+Release:        %autorelease -b2
 License:        GPL-3.0-or-later
 
 URL:            https://github.com/elementary/%{srcname}
@@ -32,6 +32,8 @@ BuildRequires:  pkgconfig(switchboard-3)
 
 Requires:       switchboard%{?_isa}
 Supplements:    switchboard%{?_isa}
+
+Recommends:     power-profiles-daemon
 
 %description
 This switchboard plug shows power settings.
