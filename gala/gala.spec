@@ -196,14 +196,4 @@ appstream-util validate-relax --nonet \
 %{_datadir}/vala/vapi/gala.vapi
 
 %changelog
-* Sat Jan 17 2026 Denis Garaev <garaevdi@yandex.ru> - 8.4.0^20260108.git59c2f98
-- Update to commit 59c2f983b24f1cc70c2785b2b440481b459d4774
-
-* Tue Jan 06 2026 Denis Garaev <garaevdi@yandex.ru> - 8.4.0-3
-- Include shell autostart file
-
-* Sun Jan 04 2026 Denis Garaev <garaevdi@yandex.ru> - 8.4.0-2
-- Bump release to update copr package
-
-* Sun Jan 04 2026 Denis Garaev <garaevdi@yandex.ru> - 8.4.0-1
-- Initial build for COPR
+%autochangelog
