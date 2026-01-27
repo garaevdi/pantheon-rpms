@@ -5,7 +5,7 @@
 
 Name:           wingpanel-applications-menu
 Summary:        Lightweight and stylish app launcher
-Version:        8.0.2
+Version:        8.0.3
 Release:        %autorelease
 # - GPL-3.0-or-later: applies to most applications-menu sources
 # - GPL-2.0-or-later: applies to all files derived from the synapse launcher
