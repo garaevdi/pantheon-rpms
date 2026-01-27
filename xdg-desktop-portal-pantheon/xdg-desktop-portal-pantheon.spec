@@ -2,7 +2,7 @@
 %global appname io.elementary.portals
 
 Name:           xdg-desktop-portal-pantheon
-Version:        8.0.4
+Version:        8.1.0
 Release:        %autorelease
 Summary:        Portal implementations for Pantheon
 License:        GPL-3.0-or-later
@@ -69,6 +69,7 @@ appstream-util validate-relax --nonet \
 %{_libexecdir}/xdg-desktop-portal-pantheon
 
 %{_datadir}/dbus-1/services/org.freedesktop.impl.portal.desktop.pantheon.service
+%{_datadir}/glib-2.0/schemas/%{name}.gschema.xml
 %{_datadir}/xdg-desktop-portal/portals/pantheon.portal
 
 %{_metainfodir}/%{appname}.metainfo.xml
