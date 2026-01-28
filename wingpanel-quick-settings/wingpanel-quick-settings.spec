@@ -3,7 +3,7 @@
 
 Name:           wingpanel-quick-settings
 Summary:        Access frequently used settings and system actions
-Version:        1.3.0
+Version:        1.4.0
 Release:        %autorelease
 License:        GPL-3.0-or-later AND GPL-2.0-or-later
 
