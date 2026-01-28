@@ -3,15 +3,14 @@
 %global iface   io.elementary.SettingsDaemon.AccountsService
 
 Name:           elementary-settings-daemon
-Version:        8.4.0
-Release:        %autorelease -b4
+Version:        8.5.0
+Release:        %autorelease
 Summary:        Settings Daemon and Portal for Pantheon
 # GPL-3.0-or-later except settings-portal/* which is LGPL-2.0-or-later
 License:        GPL-3.0-or-later AND LGPL-2.0-or-later
 
 URL:            https://github.com/elementary/settings-daemon
 Source0:        %{url}/archive/%{version}/%{srcname}-%{version}.tar.gz
-Patch0:         add-systemd-unit.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
@@ -57,12 +56,6 @@ Recommends:     PackageKit
 
 
 %check
-desktop-file-validate \
-    %{buildroot}/%{_sysconfdir}/xdg/autostart/%{appname}.desktop
-
-desktop-file-validate \
-    %{buildroot}/%{_datadir}/applications/%{appname}.desktop
-
 appstream-util validate-relax --nonet \
     %{buildroot}/%{_datadir}/metainfo/%{appname}.metainfo.xml
 
@@ -90,14 +83,11 @@ appstream-util validate-relax --nonet \
 %license LICENSE
 %doc README.md
 
-%config(noreplace) %{_sysconfdir}/xdg/autostart/%{appname}.desktop
-
 %{_bindir}/%{appname}
 
 %{_libexecdir}/%{appname}.xdg-desktop-portal
 
 %{_datadir}/accountsservice/interfaces/%{iface}.xml
-%{_datadir}/applications/%{appname}.desktop
 %{_datadir}/dbus-1/interfaces/%{iface}.xml
 %{_datadir}/dbus-1/services/org.freedesktop.impl.portal.desktop.elementary.settings-daemon.service
 %{_datadir}/glib-2.0/schemas/%{appname}.gschema.xml
