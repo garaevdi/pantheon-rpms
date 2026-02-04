@@ -1,7 +1,7 @@
 %global appname io.elementary.appcenter
 
 Name:           appcenter
-Version:        8.3.1
+Version:        8.3.2
 Release:        %autorelease
 Summary:        Pay-what-you-can app store
 License:        GPL-3.0
