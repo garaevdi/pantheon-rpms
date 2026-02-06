@@ -5,7 +5,7 @@
 
 Name:           wingpanel-indicator-sound
 Summary:        Sound Indicator for wingpanel
-Version:        8.0.2
+Version:        8.0.3
 Release:        %autorelease
 License:        GPL-3.0-only AND GPL-2.0-or-later AND LGPL-2.1-or-later
 
