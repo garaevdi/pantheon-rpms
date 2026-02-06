@@ -8,7 +8,7 @@
 
 Name:           switchboard-plug-mouse-touchpad
 Summary:        Switchboard Mouse and Touchpad plug
-Version:        8.0.3
+Version:        8.1.0
 Release:        %autorelease
 License:        GPL-3.0-or-later
 
