@@ -2,14 +2,14 @@
 
 Name:           elementary-settings
 Summary:        Default settings for elementary OS
-Version:        8.1.0
-Release:        %autorelease -b2
+Version:        8.1.1
+Release:        %autorelease
 License:        GPL-3.0-or-later
 
 URL:            https://github.com/elementary/%{srcname}
 Source0:        %{url}/archive/%{version}/%{srcname}-%{version}.tar.gz
 
-BuildRequires:  meson
+BuildRequires:  meson >= 1.3.0
 
 BuildRequires:  pkgconfig(accountsservice)
 BuildRequires:  pkgconfig(dbus-1)
@@ -17,13 +17,13 @@ BuildRequires:  pkgconfig(polkit-gobject-1)
 
 BuildArch:      noarch
 
-Recommends:       elementary-icon-theme
-Recommends:       elementary-sound-theme
-Recommends:       elementary-theme
-Recommends:       elementary-wallpapers
-Recommends:       google-roboto-mono-fonts
-Recommends:       rsms-inter-fonts
-Recommends:       open-sans-fonts
+Recommends:     elementary-icon-theme
+Recommends:     elementary-sound-theme
+Recommends:     elementary-theme
+Recommends:     elementary-wallpapers
+Recommends:     google-roboto-mono-fonts
+Recommends:     rsms-inter-fonts
+Recommends:     open-sans-fonts
 
 %description
 %{summary}
@@ -62,8 +62,4 @@ Recommends:       open-sans-fonts
 %ghost %{_sysconfdir}/NetworkManager/conf.d/10-globally-managed-devices.conf
 
 %changelog
-* Sun Jan 04 2025 Denis Garaev <garaevdi> - 8.1.0-2
-- Add recommended packages
-
-* Sun Jan 04 2025 Denis Garaev <garaevdi> - 8.1.0-1
-- Initial build for COPR
+%autochangelog
