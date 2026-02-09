@@ -1,16 +1,19 @@
 %global appname io.elementary.wingpanel
 %global glib_version 2.32.0
 
+%global commit      cd4852e3a28fa5b14dc2ea88810a4754d7e1d226
+%global shortcommit %(c=%{commit}; echo ${c:0:7})
+%global gitdate     20260128
+
 Name:           wingpanel
 Summary:        Stylish top panel
-Version:        8.0.4
-Release:        %autorelease -b2
+Version:        8.0.4^%{gitdate}.git%{shortcommit}
+Release:        %autorelease
 License:        GPL-3.0-or-later AND GPL-2.0-or-later AND LGPL-2.1-or-later
 
 URL:            https://github.com/elementary/%{name}
-Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
-
-Patch:          mutter49-wingpanel.patch
+Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
+Patch:          mutter50-wingpanel.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
@@ -19,7 +22,13 @@ BuildRequires:  libappstream-glib
 BuildRequires:  meson
 BuildRequires:  vala
 
-%if 0%{?fedora} >= 43
+%if 0%{?fedora} >= 44
+BuildRequires:  pkgconfig(libmutter-18)
+BuildRequires:  pkgconfig(mutter-clutter-18)
+BuildRequires:  pkgconfig(mutter-cogl-18)
+BuildRequires:  pkgconfig(mutter-mtk-18)
+%endif
+%if 0%{?fedora} == 43
 BuildRequires:  pkgconfig(libmutter-17)
 BuildRequires:  pkgconfig(mutter-clutter-17)
 BuildRequires:  pkgconfig(mutter-cogl-17)
@@ -64,7 +73,7 @@ Requires:       %{name}%{?_isa} = %{version}-%{release}
 
 
 %prep
-%autosetup -S git -p1
+%autosetup -n %{name}-%{commit} -p1
 
 
 %build
