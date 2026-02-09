@@ -1,8 +1,8 @@
 %global glib_version 2.74.0
 
-%global commit      91a53ec6a68faae73719e55c41abf1689410a5aa
+%global commit      9022687fff4263132c04df6a3e5f416ae694e785
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
-%global gitdate     20260126
+%global gitdate     20260207
 
 Name:           gala
 Summary:        Gala Window Manager for elementary OS and Pantheon
@@ -12,7 +12,7 @@ License:        GPL-3.0-or-later
 
 URL:            https://github.com/elementary/%{name}
 Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
-Patch0:         fix-blur.patch
+Patch0:         mutter50-gala.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gcc
@@ -22,7 +22,13 @@ BuildRequires:  systemd-rpm-macros
 BuildRequires:  vala >= 0.46
 BuildRequires:  wayland-devel
 
-%if 0%{?fedora} >= 43
+%if 0%{?fedora} >= 44
+BuildRequires:  pkgconfig(libmutter-18)
+BuildRequires:  pkgconfig(mutter-clutter-18)
+BuildRequires:  pkgconfig(mutter-cogl-18)
+BuildRequires:  pkgconfig(mutter-mtk-18)
+%endif
+%if 0%{?fedora} == 43
 BuildRequires:  pkgconfig(libmutter-17)
 BuildRequires:  pkgconfig(mutter-clutter-17)
 BuildRequires:  pkgconfig(mutter-cogl-17)
