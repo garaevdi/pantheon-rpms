@@ -1,17 +1,20 @@
 %global srcname greeter
 %global appname io.elementary.greeter
 
+%global commit      d48cbec847aa13243e7336882b5852573faac32d
+%global shortcommit %(c=%{commit}; echo ${c:0:7})
+%global gitdate     20260119
+
 Name:           elementary-greeter
 Summary:        LightDM Login Screen for the elementary desktop
-Version:        8.1.2
+Version:        8.1.2^%{gitdate}.git%{shortcommit}
 Release:        %autorelease
 License:        GPL-3.0-only AND GPL-3.0-or-later AND GPL-2.0-or-later
 
 URL:            https://github.com/elementary/greeter
-Source0:        %{url}/archive/%{version}/%{srcname}-%{version}.tar.gz
-
-Patch2:         libmutter15-greeter.patch
-Patch3:         use-wayland-session.patch
+Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
+Patch0:         mutter50-greeter.patch
+Patch1:         use-wayland-session.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
@@ -20,7 +23,13 @@ BuildRequires:  libappstream-glib
 BuildRequires:  meson >= 0.58.0
 BuildRequires:  vala
 
-%if 0%{?fedora} >= 43
+%if 0%{?fedora} >= 44
+BuildRequires:  pkgconfig(libmutter-18)
+BuildRequires:  pkgconfig(mutter-clutter-18)
+BuildRequires:  pkgconfig(mutter-cogl-18)
+BuildRequires:  pkgconfig(mutter-mtk-18)
+%endif
+%if 0%{?fedora} == 43
 BuildRequires:  pkgconfig(libmutter-17)
 BuildRequires:  pkgconfig(mutter-clutter-17)
 BuildRequires:  pkgconfig(mutter-cogl-17)
@@ -86,7 +95,7 @@ The elementary Greeter is a styled Login Screen for LightDM.
 
 
 %prep
-%autosetup -n %{srcname}-%{version} -S git -p1
+%autosetup -n %{srcname}-%{commit} -p1
 
 
 %build
@@ -125,20 +134,4 @@ appstream-util validate-relax --nonet \
 
 
 %changelog
-* Wed Jan 07 2026 Denis Garaev <garaevdi@yandex.ru> - 8.1.2-1
-- Update to version 8.1.2
-
-* Tue Jan 06 2026 Denis Garaev <garaevdi@yandex.ru> - 8.1.1-3
-- Use wayland session to start the greeter (https://github.com/elementary/greeter/pull/752)
-
-* Sat Jan 03 2026 Denis Garaev <garaevdi@yandex.ru> - 8.1.1-2
-- Use mutter 49
-
-* Tue Dec 30 2025 Denis Garaev <garaevdi@yandex.ru> - 8.1.1-1
-- Update to version 8.1.1
-
-* Mon May 06 2024 Fabio Valentini <decathorpe@gmail.com> - 7.0.0-2.20240402.git3ff7809
-- Bump to commit 3ff7809 for compatibility with mutter 46.
-
-* Wed Nov 15 2023 Fabio Valentini <decathorpe@gmail.com> - 7.0.0-1.20231109.git7111c22
-- Initial packaging
+%{autochangelog}
