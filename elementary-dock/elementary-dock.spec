@@ -5,7 +5,7 @@
 
 Name:           elementary-dock
 Summary:        A quick app launcher and window switcher for Pantheon and elementary OS
-Version:        8.3.1
+Version:        8.3.2
 Release:        %autorelease
 License:        GPL-3.0
 
