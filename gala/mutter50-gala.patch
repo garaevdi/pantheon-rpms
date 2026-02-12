@@ -14,22 +14,6 @@ index 8b04692a..f9144827 100644
                  type != Clutter.EventType.TOUCH_BEGIN &&
                  type != Clutter.EventType.TOUCH_CANCEL &&
                  type != Clutter.EventType.TOUCH_END &&
-diff --git a/lib/Gestures/GestureController.vala b/lib/Gestures/GestureController.vala
-index 1ca3c260..d1396be2 100644
---- a/lib/Gestures/GestureController.vala
-+++ b/lib/Gestures/GestureController.vala
-@@ -119,7 +119,11 @@ public class Gala.GestureController : Object {
-     }
- 
-     public void enable_touchpad (Clutter.Actor actor) {
-+#if HAS_MUTTER50
-+        if (true) {
-+#else
-         if (Meta.Util.is_wayland_compositor ()) {
-+#endif
-             touchpad_backend = new TouchpadBackend (actor, group);
-             touchpad_backend.on_gesture_detected.connect (gesture_detected);
-             touchpad_backend.on_begin.connect (gesture_begin);
 diff --git a/lib/Gestures/ToucheggBackend.vala b/lib/Gestures/ToucheggBackend.vala
 index c280efc0..5a063cd0 100644
 --- a/lib/Gestures/ToucheggBackend.vala
@@ -47,7 +31,7 @@ index c280efc0..5a063cd0 100644
          }
  
 diff --git a/meson.build b/meson.build
-index 3b214885..117461b1 100644
+index 42488d91..009d85df 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -139,6 +139,17 @@ if mutter49_dep.found()
@@ -216,7 +200,7 @@ index 34921eed..58bb07c5 100644
  
          /**
 diff --git a/src/KeyboardManager.vala b/src/KeyboardManager.vala
-index c7341486..51126534 100644
+index c7341486..ab5bc92a 100644
 --- a/src/KeyboardManager.vala
 +++ b/src/KeyboardManager.vala
 @@ -44,10 +44,12 @@ public class Gala.KeyboardManager : Object {
@@ -250,7 +234,7 @@ index c7341486..51126534 100644
  
 +#if HAS_MUTTER50
 +            var description = new Meta.KeymapDescription.from_rules (settings.get_string ("xkb-model"), layout, variant, options, layouts, layouts);
-+            backend.set_keymap_async.begin (description, settings.get_uint("current"), cancellable, (obj, res) => {
++            backend.set_keymap_async.begin (description, settings.get_uint ("current"), cancellable, (obj, res) => {
 +#else
              backend.set_keymap_async.begin (layout, variant, options, settings.get_string ("xkb-model"), cancellable, (obj, res) => {
 +#endif
@@ -386,7 +370,7 @@ index d8bbd548..2e81e7d7 100644
                  Utils.x11_unset_window_pass_through (window, restore_previous_x11_region);
              } else {
 diff --git a/src/Widgets/MultitaskingView/WindowClone.vala b/src/Widgets/MultitaskingView/WindowClone.vala
-index dcbb6e4f..5d1ebadc 100644
+index 951a8720..ff3255af 100644
 --- a/src/Widgets/MultitaskingView/WindowClone.vala
 +++ b/src/Widgets/MultitaskingView/WindowClone.vala
 @@ -464,7 +464,9 @@ public class Gala.WindowClone : ActorTarget, RootTarget {
@@ -395,7 +379,7 @@ index dcbb6e4f..5d1ebadc 100644
  
 -#if HAS_MUTTER48
 +#if HAS_MUTTER50
-+        set_cursor_type (Clutter.CursorType.MOVE);
++        wm.stage.set_cursor_type (Clutter.CursorType.MOVE);
 +#elif HAS_MUTTER48
          wm.get_display ().set_cursor (Meta.Cursor.MOVE);
  #else
@@ -405,7 +389,7 @@ index dcbb6e4f..5d1ebadc 100644
          active_shape.show ();
  
 +#if HAS_MUTTER50
-+        set_cursor_type (Clutter.CursorType.DEFAULT);
++        wm.stage.set_cursor_type (Clutter.CursorType.DEFAULT);
 +#else
          display.set_cursor (Meta.Cursor.DEFAULT);
 +#endif
@@ -417,7 +401,7 @@ index dcbb6e4f..5d1ebadc 100644
          window_title.visible = true;
  
 +#if HAS_MUTTER50
-+        set_cursor_type (Clutter.CursorType.DEFAULT);
++        wm.stage.set_cursor_type (Clutter.CursorType.DEFAULT);
 +#else
          wm.get_display ().set_cursor (Meta.Cursor.DEFAULT);
 +#endif
@@ -425,7 +409,7 @@ index dcbb6e4f..5d1ebadc 100644
          if (duration > 0) {
              ulong handler = 0;
 diff --git a/src/Widgets/PixelPicker.vala b/src/Widgets/PixelPicker.vala
-index a44d7866..48d3c46e 100644
+index a44d7866..52e4c81b 100644
 --- a/src/Widgets/PixelPicker.vala
 +++ b/src/Widgets/PixelPicker.vala
 @@ -54,7 +54,11 @@ public class Gala.PixelPicker : Clutter.Actor {
@@ -433,7 +417,7 @@ index a44d7866..48d3c46e 100644
  
      private void close () {
 +#if HAS_MUTTER50
-+        set_cursor_type (Clutter.CursorType.DEFAULT);
++        wm.stage.set_cursor_type (Clutter.CursorType.DEFAULT);
 +#else
          wm.get_display ().set_cursor (Meta.Cursor.DEFAULT);
 +#endif
@@ -445,7 +429,7 @@ index a44d7866..48d3c46e 100644
  
      public void start_selection () {
 +#if HAS_MUTTER50
-+        set_cursor_type (Clutter.CursorType.DEFAULT);
++        wm.stage.set_cursor_type (Clutter.CursorType.CROSSHAIR);
 +#else
          wm.get_display ().set_cursor (Meta.Cursor.CROSSHAIR);
 +#endif
@@ -453,7 +437,7 @@ index a44d7866..48d3c46e 100644
  
          modal_proxy = wm.push_modal (this, true);
 diff --git a/src/Widgets/SelectionArea.vala b/src/Widgets/SelectionArea.vala
-index 02f4a442..751921c1 100644
+index 02f4a442..87244b36 100644
 --- a/src/Widgets/SelectionArea.vala
 +++ b/src/Widgets/SelectionArea.vala
 @@ -100,7 +100,11 @@ public class Gala.SelectionArea : CanvasActor {
@@ -461,7 +445,7 @@ index 02f4a442..751921c1 100644
  
      public void close () {
 +#if HAS_MUTTER50
-+        set_cursor_type (Clutter.CursorType.DEFAULT);
++        wm.stage.set_cursor_type (Clutter.CursorType.DEFAULT);
 +#else
          wm.get_display ().set_cursor (Meta.Cursor.DEFAULT);
 +#endif
@@ -473,7 +457,7 @@ index 02f4a442..751921c1 100644
  
      public void start_selection () {
 +#if HAS_MUTTER50
-+        set_cursor_type (Clutter.CursorType.CROSSHAIR);
++        wm.stage.set_cursor_type (Clutter.CursorType.CROSSHAIR);
 +#else
          wm.get_display ().set_cursor (Meta.Cursor.CROSSHAIR);
 +#endif
@@ -1541,7 +1525,7 @@ index 00000000..ee388ea5
 +mutter-clutter-17.vapi
 \ No newline at end of file
 diff --git a/vapi/mutter-clutter.vapi b/vapi/mutter-clutter.vapi
-index c1ddd24b..1d2eb78f 100644
+index c1ddd24b..b146e056 100644
 --- a/vapi/mutter-clutter.vapi
 +++ b/vapi/mutter-clutter.vapi
 @@ -5142,10 +5142,18 @@ namespace Clutter {
@@ -1667,17 +1651,7 @@ index c1ddd24b..1d2eb78f 100644
  		public float get_distance (Clutter.Event target);
  		public uint32 get_event_code ();
  		public unowned Clutter.EventSequence get_event_sequence ();
-@@ -6156,9 +6209,7 @@ namespace Clutter {
- 		public Clutter.ScrollFlags get_scroll_flags ();
- #endif
- 		public Clutter.ScrollSource get_scroll_source ();
--#if !HAS_MUTTER46
- 		public unowned Clutter.Actor get_source ();
--#endif
- 		public unowned Clutter.InputDevice get_source_device ();
- 		public Clutter.ModifierType get_state ();
- 		public uint32 get_time ();
-@@ -6251,6 +6302,9 @@ namespace Clutter {
+@@ -6251,6 +6304,9 @@ namespace Clutter {
  	[Compact]
  	public class Frame {
  		public int64 get_count ();
@@ -1687,7 +1661,7 @@ index c1ddd24b..1d2eb78f 100644
  #if HAS_MUTTER46
  		public bool get_frame_deadline (int64 frame_deadline_us);
  #else
-@@ -6286,6 +6340,9 @@ namespace Clutter {
+@@ -6286,6 +6342,9 @@ namespace Clutter {
  		public void schedule_update_now ();
  #if HAS_MUTTER47
  		public void set_deadline_evasion (int64 deadline_evasion_us);
@@ -1697,7 +1671,7 @@ index c1ddd24b..1d2eb78f 100644
  		public void set_mode (Clutter.FrameClockMode mode);
  #endif
  #if HAS_MUTTER49
-@@ -6380,7 +6437,9 @@ namespace Clutter {
+@@ -6380,7 +6439,9 @@ namespace Clutter {
  		public void activate ();
  #endif
  		public void dismiss ();
@@ -1707,7 +1681,7 @@ index c1ddd24b..1d2eb78f 100644
  #if HAS_MUTTER46
  		public bool is_revoked ();
  		[NoAccessorMethod]
-@@ -6439,13 +6498,17 @@ namespace Clutter {
+@@ -6439,13 +6500,17 @@ namespace Clutter {
  		public uint get_bus_type ();
  #endif
  		public Clutter.InputCapabilities get_capabilities ();
@@ -1725,7 +1699,7 @@ index c1ddd24b..1d2eb78f 100644
  		public int get_mode_switch_button_group (uint button);
  		public int get_n_buttons ();
  #if HAS_MUTTER49
-@@ -6472,10 +6535,14 @@ namespace Clutter {
+@@ -6472,10 +6537,14 @@ namespace Clutter {
  		public uint bus_type { get; construct; }
  #endif
  		public Clutter.InputCapabilities capabilities { get; construct; }
@@ -1740,7 +1714,7 @@ index c1ddd24b..1d2eb78f 100644
  		public int n_buttons { get; construct; }
  #if HAS_MUTTER49
  		public int n_dials { get; construct; }
-@@ -6640,6 +6707,10 @@ namespace Clutter {
+@@ -6640,6 +6709,10 @@ namespace Clutter {
  		[CCode (has_construct_function = false)]
  		protected Keymap ();
  		public bool get_caps_lock_state ();
@@ -1751,7 +1725,7 @@ index c1ddd24b..1d2eb78f 100644
  #if HAS_MUTTER46
  		public virtual Clutter.TextDirection get_direction ();
  #else
-@@ -6840,6 +6911,9 @@ namespace Clutter {
+@@ -6840,6 +6913,9 @@ namespace Clutter {
  		public Graphene.Point get_begin_centroid ();
  		public Graphene.Point get_begin_centroid_abs ();
  		public uint get_begin_threshold ();
@@ -1761,7 +1735,7 @@ index c1ddd24b..1d2eb78f 100644
  		public Graphene.Point get_centroid ();
  		public Graphene.Point get_centroid_abs ();
  		public Graphene.Vec2 get_delta ();
-@@ -6847,16 +6921,26 @@ namespace Clutter {
+@@ -6847,16 +6923,26 @@ namespace Clutter {
  		public uint get_max_n_points ();
  		public uint get_min_n_points ();
  		public Clutter.PanAxis get_pan_axis ();
@@ -1788,7 +1762,7 @@ index c1ddd24b..1d2eb78f 100644
  		public signal void pan_update ();
  	}
  #else
-@@ -7102,8 +7186,10 @@ namespace Clutter {
+@@ -7102,8 +7188,10 @@ namespace Clutter {
  #endif
  		public void get_pointer_a11y_settings (Clutter.PointerA11ySettings settings);
  		public bool get_touch_mode ();
@@ -1799,7 +1773,7 @@ index c1ddd24b..1d2eb78f 100644
  #if HAS_MUTTER48
  		[NoWrapper]
  #endif
-@@ -7121,8 +7207,10 @@ namespace Clutter {
+@@ -7121,8 +7209,10 @@ namespace Clutter {
  #endif
  		public void set_pointer_a11y_dwell_click_type (Clutter.PointerA11yDwellClickType click_type);
  		public void set_pointer_a11y_settings (Clutter.PointerA11ySettings settings);
@@ -1810,7 +1784,7 @@ index c1ddd24b..1d2eb78f 100644
  		public void uninhibit_unfocus ();
  		public virtual void warp_pointer (int x, int y);
  #if HAS_MUTTER47
-@@ -7132,7 +7220,11 @@ namespace Clutter {
+@@ -7132,7 +7222,11 @@ namespace Clutter {
  		public bool touch_mode { get; }
  		public signal void device_added (Clutter.InputDevice object);
  		public signal void device_removed (Clutter.InputDevice object);
@@ -1822,7 +1796,7 @@ index c1ddd24b..1d2eb78f 100644
  		public signal void kbd_a11y_flags_changed (uint settings_flags, uint changed_mask);
  		public signal void kbd_a11y_mods_state_changed (uint latched_mask, uint locked_mask);
  		public signal void ptr_a11y_dwell_click_type_changed (Clutter.PointerA11yDwellClickType click_type);
-@@ -7257,8 +7349,17 @@ namespace Clutter {
+@@ -7257,8 +7351,17 @@ namespace Clutter {
  		[CCode (has_construct_function = false)]
  		protected Sprite ();
  		public Graphene.Point get_coords ();
@@ -1840,7 +1814,7 @@ index c1ddd24b..1d2eb78f 100644
  		[NoAccessorMethod]
  		public Clutter.EventSequence sequence { owned get; construct; }
  	}
-@@ -7339,7 +7440,9 @@ namespace Clutter {
+@@ -7339,7 +7442,9 @@ namespace Clutter {
  		public signal void after_update (Clutter.StageView view, Clutter.Frame frame);
  		public virtual signal void before_paint (Clutter.StageView view, Clutter.Frame frame);
  		public signal void before_update (Clutter.StageView view, Clutter.Frame frame);
@@ -1850,7 +1824,7 @@ index c1ddd24b..1d2eb78f 100644
  		public virtual signal void paint_view (Clutter.StageView view, Cairo.Region redraw_clip, Clutter.Frame frame);
  		public signal void prepare_frame (Clutter.StageView view, Clutter.Frame frame);
  #if HAS_MUTTER48
-@@ -7369,11 +7472,7 @@ namespace Clutter {
+@@ -7369,11 +7474,7 @@ namespace Clutter {
  #endif
  		public virtual Clutter.PaintFlag get_default_paint_flags ();
  		public unowned Cogl.Framebuffer get_framebuffer ();
@@ -1862,7 +1836,7 @@ index c1ddd24b..1d2eb78f 100644
  #if HAS_MUTTER47
  		public void get_offscreen_transformation_matrix (Graphene.Matrix matrix);
  #else
-@@ -7999,6 +8098,9 @@ namespace Clutter {
+@@ -7999,6 +8100,9 @@ namespace Clutter {
  		public float min;
  		public float max;
  		public float @ref;
@@ -1872,7 +1846,7 @@ index c1ddd24b..1d2eb78f 100644
  	}
  #endif
  #if !HAS_MUTTER47
-@@ -8377,6 +8479,49 @@ namespace Clutter {
+@@ -8377,6 +8481,49 @@ namespace Clutter {
  		Y_AXIS,
  		BOTH
  	}
@@ -1922,7 +1896,7 @@ index c1ddd24b..1d2eb78f 100644
  #if !HAS_MUTTER48
  #if HAS_MUTTER46
  	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_CONTEXT_FLAG_", type_id = "clutter_context_flags_get_type ()")]
-@@ -8576,6 +8721,7 @@ namespace Clutter {
+@@ -8576,6 +8723,7 @@ namespace Clutter {
  		BEFORE
  	}
  #endif
@@ -1930,7 +1904,7 @@ index c1ddd24b..1d2eb78f 100644
  	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_GRAB_STATE_", type_id = "clutter_grab_state_get_type ()")]
  	[Flags]
  	public enum GrabState {
-@@ -8584,6 +8730,7 @@ namespace Clutter {
+@@ -8584,6 +8732,7 @@ namespace Clutter {
  		KEYBOARD,
  		ALL
  	}
@@ -1938,7 +1912,7 @@ index c1ddd24b..1d2eb78f 100644
  	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_GRID_POSITION_", type_id = "clutter_grid_position_get_type ()")]
  	public enum GridPosition {
  		LEFT,
-@@ -8702,12 +8849,14 @@ namespace Clutter {
+@@ -8702,12 +8851,14 @@ namespace Clutter {
  		PAD_DEVICE,
  		N_DEVICE_TYPES
  	}
@@ -1953,7 +1927,7 @@ index c1ddd24b..1d2eb78f 100644
  	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_INPUT_PANEL_STATE_", type_id = "clutter_input_panel_state_get_type ()")]
  	public enum InputPanelState {
  		OFF,
-@@ -8952,6 +9101,14 @@ namespace Clutter {
+@@ -8952,6 +9103,14 @@ namespace Clutter {
  		BOTTOM,
  		LEFT
  	}
@@ -1968,7 +1942,7 @@ index c1ddd24b..1d2eb78f 100644
  #if !HAS_MUTTER46
  	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_COLOR_", type_id = "clutter_static_color_get_type ()")]
  	public enum StaticColor {
-@@ -9007,6 +9164,7 @@ namespace Clutter {
+@@ -9007,6 +9166,7 @@ namespace Clutter {
  		START,
  		END
  	}
@@ -1976,7 +1950,7 @@ index c1ddd24b..1d2eb78f 100644
  	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_SWIPE_DIRECTION_", type_id = "clutter_swipe_direction_get_type ()")]
  	[Flags]
  	public enum SwipeDirection {
-@@ -9015,6 +9173,7 @@ namespace Clutter {
+@@ -9015,6 +9175,7 @@ namespace Clutter {
  		LEFT,
  		RIGHT
  	}
@@ -1984,7 +1958,7 @@ index c1ddd24b..1d2eb78f 100644
  	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_TEXT_DIRECTION_", type_id = "clutter_text_direction_get_type ()")]
  	public enum TextDirection {
  		DEFAULT,
-@@ -9036,11 +9195,17 @@ namespace Clutter {
+@@ -9036,11 +9197,17 @@ namespace Clutter {
  #if HAS_MUTTER47
  	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_TRANSFER_FUNCTION_", type_id = "clutter_transfer_function_get_type ()")]
  	public enum TransferFunction {
@@ -2002,7 +1976,7 @@ index c1ddd24b..1d2eb78f 100644
  		LINEAR
  #else
  		LINEAR;
-@@ -9116,6 +9281,14 @@ namespace Clutter {
+@@ -9116,6 +9283,14 @@ namespace Clutter {
  #endif
  	[CCode (cheader_filename = "clutter/clutter.h", cname = "CLUTTER_PRIORITY_REDRAW")]
  	public const int PRIORITY_REDRAW;
@@ -2017,7 +1991,7 @@ index c1ddd24b..1d2eb78f 100644
  #if !HAS_MUTTER46
  	[CCode (cheader_filename = "clutter/clutter.h")]
  	public static void cairo_clear (Cairo.Context cr);
-@@ -9125,12 +9298,27 @@ namespace Clutter {
+@@ -9125,12 +9300,27 @@ namespace Clutter {
  #if HAS_MUTTER48
  	[CCode (cheader_filename = "clutter/clutter.h")]
  	public static void add_debug_flags (Clutter.DebugFlag debug_flags, Clutter.DrawDebugFlag draw_flags, Clutter.PickDebugFlag pick_flags);
@@ -2045,7 +2019,7 @@ index c1ddd24b..1d2eb78f 100644
  #endif
  	[CCode (cheader_filename = "clutter/clutter.h")]
  	public static bool events_pending ();
-@@ -9162,6 +9350,11 @@ namespace Clutter {
+@@ -9162,6 +9352,11 @@ namespace Clutter {
  	public static void keyval_convert_case (uint symbol, out uint lower, out uint upper);
  	[CCode (cheader_filename = "clutter/clutter.h")]
  	public static unowned string? keyval_name (uint keyval);
@@ -2058,7 +2032,7 @@ index c1ddd24b..1d2eb78f 100644
  	[CCode (cheader_filename = "clutter/clutter.h")]
  	public static void remove_debug_flags (Clutter.DebugFlag debug_flags, Clutter.DrawDebugFlag draw_flags, Clutter.PickDebugFlag pick_flags);
 diff --git a/vapi/mutter-cogl-14.vapi b/vapi/mutter-cogl-14.vapi
-index fb26e857..5d491c03 100644
+index fb26e857..a4a8d6ed 100644
 --- a/vapi/mutter-cogl-14.vapi
 +++ b/vapi/mutter-cogl-14.vapi
 @@ -122,16 +122,24 @@ namespace Cogl {
@@ -2329,15 +2303,6 @@ index fb26e857..5d491c03 100644
  #endif
  	[CCode (cheader_filename = "cogl/cogl.h", has_type_id = false)]
  	public struct VertexP2 {
-@@ -965,7 +1085,7 @@ namespace Cogl {
- 		public float s;
- 		public float t;
- 	}
--#if !HAS_MUTTER47
-+#if !HAS_MUTTER47 || HAS_MUTTER50
- 	[CCode (cheader_filename = "cogl/cogl.h", has_type_id = false)]
- 	public struct VertexP3T2C4 {
- 		public float x;
 @@ -1084,6 +1204,21 @@ namespace Cogl {
  		SINGLE_PLANE,
  		NOT_EXTERNAL_ONLY

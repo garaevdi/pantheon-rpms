@@ -1,17 +1,13 @@
 %global glib_version 2.74.0
 
-%global commit      9022687fff4263132c04df6a3e5f416ae694e785
-%global shortcommit %(c=%{commit}; echo ${c:0:7})
-%global gitdate     20260207
-
 Name:           gala
 Summary:        Gala Window Manager for elementary OS and Pantheon
-Version:        8.4.0^%{gitdate}.git%{shortcommit}
+Version:        8.4.1
 Release:        %autorelease
 License:        GPL-3.0-or-later
 
 URL:            https://github.com/elementary/%{name}
-Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
+Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
 Patch0:         mutter50-gala.patch
 
 BuildRequires:  desktop-file-utils
@@ -118,7 +114,7 @@ This package contains the development headers
 
 
 %prep
-%autosetup -n %{name}-%{commit} -p1
+%autosetup -p1
 
 
 %build
