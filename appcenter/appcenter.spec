@@ -2,7 +2,7 @@
 
 Name:           appcenter
 Version:        8.3.2
-Release:        %autorelease
+Release:        %autorelease -b2
 Summary:        Pay-what-you-can app store
 License:        GPL-3.0
 
@@ -41,7 +41,7 @@ BuildRequires:  pkgconfig(polkit-gobject-1)
 
 
 %build
-%meson
+%meson -Dcurated=false -Dpayments=false -Dhide_upstream_distro_apps=false
 %meson_build
 
 
