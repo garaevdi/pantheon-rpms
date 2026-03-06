@@ -1,6 +1,6 @@
-%global commit      549fb55a9dec1ed7c6ea58579db21059dcd142c8
+%global commit      33d52d0ba247e265fa2efa4b6b2efbcd5251c66b
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
-%global gitdate     20251118
+%global gitdate     20260209
 
 Name:           expandtheon
 Summary:        Bringing 3rd-party icon support to Pantheon DE
