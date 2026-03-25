@@ -1,14 +1,19 @@
 %global glib_version 2.74.0
 
+%global commit      cc8f51523412fa48e687fe0a1db5c7b34f12c714
+%global shortcommit %(c=%{commit}; echo ${c:0:7})
+%global gitdate     20260324
+
 Name:           gala
 Summary:        Gala Window Manager for elementary OS and Pantheon
-Version:        8.4.1
+Version:        8.4.1^%{gitdate}.git%{shortcommit}
 Release:        %autorelease
 License:        GPL-3.0-or-later
 
 URL:            https://github.com/elementary/%{name}
-Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
-Patch0:         mutter50-gala.patch
+Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
+Patch0:         maximize-gesture.patch
+Patch1:         dont-try-to-reconnect-to-touchegg.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gcc
@@ -114,7 +119,7 @@ This package contains the development headers
 
 
 %prep
-%autosetup -p1
+%autosetup -n %{name}-%{commit} -p1
 
 
 %build
