@@ -1,9 +1,9 @@
 %global srcname greeter
 %global appname io.elementary.greeter
 
-%global commit      d48cbec847aa13243e7336882b5852573faac32d
+%global commit      abf8a675e9da66aa6d90afcdc12684a16685eec4
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
-%global gitdate     20260119
+%global gitdate     20260322
 
 Name:           elementary-greeter
 Summary:        LightDM Login Screen for the elementary desktop

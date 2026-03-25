@@ -1,155 +1,41 @@
-diff --git a/compositor/BackgroundBlurEffect.vala b/compositor/BackgroundBlurEffect.vala
-index 7cda051e..ede2fe9c 100644
---- a/compositor/BackgroundBlurEffect.vala
-+++ b/compositor/BackgroundBlurEffect.vala
-@@ -39,11 +39,7 @@ public class GreeterCompositor.BackgroundBlurEffect : Clutter.Effect {
-     }
- 
-     construct {
--#if HAS_MUTTER47
--        unowned var ctx = actor.context.get_backend ().get_cogl_context ();
--#else
-         unowned var ctx = Clutter.get_default_backend ().get_cogl_context ();
--#endif
- 
-         actor_pipeline = new Cogl.Pipeline (ctx);
-         actor_pipeline.set_layer_null_texture (0);
-diff --git a/compositor/KeyboardManager.vala b/compositor/KeyboardManager.vala
-index cd51e126..60132451 100644
---- a/compositor/KeyboardManager.vala
-+++ b/compositor/KeyboardManager.vala
-@@ -48,10 +48,12 @@ public class GreeterCompositor.KeyboardManager : Object {
- 
-     [CCode (instance_pos = -1)]
-     public static bool handle_modifiers_accelerator_activated (Meta.Display display, bool backward) {
-+#if !HAS_MUTTER50
- #if HAS_MUTTER46
-         display.get_compositor ().backend.ungrab_keyboard (display.get_current_time ());
- #else
-         display.ungrab_keyboard (display.get_current_time ());
-+#endif
- #endif
- 
-         var sources = settings.get_value ("sources");
-@@ -79,7 +81,11 @@ public class GreeterCompositor.KeyboardManager : Object {
-     private void set_keyboard_layout (GLib.Settings settings, string key) {
-         unowned var backend = display.get_context ().get_backend ();
- 
-+#if HAS_MUTTER50
-+        if (key == "sources" || key == "xkb-options" || key == "current") {
-+#else
-         if (key == "sources" || key == "xkb-options") {
-+#endif
-             string[] layouts = {}, variants = {};
- 
-             var sources = settings.get_value ("sources");
-@@ -111,7 +117,12 @@ public class GreeterCompositor.KeyboardManager : Object {
-                 cancellable = new GLib.Cancellable ();
-             }
- 
-+#if HAS_MUTTER50
-+            var description = new Meta.KeymapDescription.from_rules (settings.get_string ("xkb-model"), layout, variant, options, layouts, layouts);
-+            backend.set_keymap_async.begin (description, settings.get_uint("current"), cancellable, (obj, res) => {
-+#else
-             backend.set_keymap_async.begin (layout, variant, options, settings.get_string ("xkb-model"), cancellable, (obj, res) => {
-+#endif
-                 try {
-                     ((Meta.Backend) obj).set_keymap_async.end (res);
-                 } catch (Error e) {
-@@ -128,6 +139,7 @@ public class GreeterCompositor.KeyboardManager : Object {
- #else
-             backend.set_keymap (layout, variant, options);
- #endif
-+#if !HAS_MUTTER50
-         } else if (key == "current") {
- #if HAS_MUTTER49
-             if (cancellable != null) {
-@@ -148,6 +160,7 @@ public class GreeterCompositor.KeyboardManager : Object {
-             });
- #else
-             backend.lock_layout_group (settings.get_uint ("current"));
-+#endif
- #endif
-         }
-     }
-diff --git a/compositor/ShellClients/ManagedClient.vala b/compositor/ShellClients/ManagedClient.vala
-index a423c9ff..00317f7a 100644
---- a/compositor/ShellClients/ManagedClient.vala
-+++ b/compositor/ShellClients/ManagedClient.vala
-@@ -25,7 +25,11 @@ public class GreeterCompositor.ManagedClient : Object {
-     }
- 
-     construct {
-+#if HAS_MUTTER50
-+        if (true) {
-+#else
-         if (Meta.Util.is_wayland_compositor ()) {
-+#endif
-             start_wayland.begin ();
- 
-             display.window_created.connect ((window) => {
-diff --git a/compositor/ShellClients/ShellClientsManager.vala b/compositor/ShellClients/ShellClientsManager.vala
-index fe8ce2c3..71e4200a 100644
---- a/compositor/ShellClients/ShellClientsManager.vala
-+++ b/compositor/ShellClients/ShellClientsManager.vala
-@@ -39,12 +39,14 @@ public class GreeterCompositor.ShellClientsManager : Object {
- 
-         start_clients.begin ();
- 
-+#if !HAS_MUTTER50
-         if (!Meta.Util.is_wayland_compositor ()) {
-             wm.get_display ().window_created.connect ((window) => {
-                 window.notify["mutter-hints"].connect ((obj, pspec) => parse_mutter_hints ((Meta.Window) obj));
-                 parse_mutter_hints (window);
-             });
-         }
-+#endif
-     }
- 
-     private async void start_clients () {
-@@ -54,8 +56,12 @@ public class GreeterCompositor.ShellClientsManager : Object {
-     public void make_dock (Meta.Window window) {
- #if HAS_MUTTER49
-         window.set_type (Meta.WindowType.DOCK);
-+#else
-+#if HAS_MUTTER50
-+        if (true) {
- #else
-         if (Meta.Util.is_wayland_compositor ()) {
-+#endif
-             make_dock_wayland (window);
-         } else {
-             make_dock_x11 (window);
-@@ -217,6 +223,7 @@ public class GreeterCompositor.ShellClientsManager : Object {
-         return positioned;
-     }
- 
-+#if !HAS_MUTTER50
-     //X11 only
-     private void parse_mutter_hints (Meta.Window window) requires (!Meta.Util.is_wayland_compositor ()) {
-         if (window.mutter_hints == null) {
-@@ -311,4 +318,5 @@ public class GreeterCompositor.ShellClientsManager : Object {
-     requires (window in panel_windows) {
-         debug ("restore-previous-region is unsupported in greeter-compositor");
-     }
-+#endif
- }
-diff --git a/compositor/WindowManager.vala b/compositor/WindowManager.vala
-index 791805a5..c763f696 100644
---- a/compositor/WindowManager.vala
-+++ b/compositor/WindowManager.vala
-@@ -241,7 +241,11 @@ namespace GreeterCompositor {
-         }
- 
-         private async void start_command (string[] command) {
-+#if HAS_MUTTER50
-+            if (true) {
-+#else
-             if (Meta.Util.is_wayland_compositor ()) {
-+#endif
-                 yield start_wayland (command);
-             } else {
-                 yield start_x (command);
+From b82522f6f6610dd64c48833987febf72e865dc54 Mon Sep 17 00:00:00 2001
+From: Denis Garaev <garaevdi@yandex.ru>
+Date: Tue, 10 Feb 2026 00:21:11 +0300
+Subject: [PATCH 1/5] Update vapi for Mutter 50
+
+---
+ compositor/meson.build      |  11 ++
+ vapi/Clutter-18.metadata    | 146 +++++++++++++++++++++++
+ vapi/Cogl-18-custom.vala    |  66 +++++++++++
+ vapi/Cogl-18.metadata       |  40 +++++++
+ vapi/Meta-18.metadata       | 184 +++++++++++++++++++++++++++++
+ vapi/Mtk-18.metadata        |   6 +
+ vapi/libmutter-18.deps      |   1 +
+ vapi/libmutter-18.vapi      |   1 +
+ vapi/libmutter.vapi         | 158 ++++++++++++++++++++++++-
+ vapi/meson.build            |  71 +++++++++++
+ vapi/mutter-clutter-18.deps |   6 +
+ vapi/mutter-clutter-18.vapi |   1 +
+ vapi/mutter-clutter.vapi    | 188 +++++++++++++++++++++++++++++
+ vapi/mutter-cogl-14.vapi    | 230 +++++++++++++++++++++++++++++++++++-
+ vapi/mutter-cogl-18.deps    |   5 +
+ vapi/mutter-cogl-18.vapi    |   1 +
+ vapi/mutter-mtk-13.vapi     |  20 ++++
+ vapi/mutter-mtk-18.vapi     |   1 +
+ 18 files changed, 1131 insertions(+), 5 deletions(-)
+ create mode 100644 vapi/Clutter-18.metadata
+ create mode 100644 vapi/Cogl-18-custom.vala
+ create mode 100644 vapi/Cogl-18.metadata
+ create mode 100644 vapi/Meta-18.metadata
+ create mode 100644 vapi/Mtk-18.metadata
+ create mode 120000 vapi/libmutter-18.deps
+ create mode 120000 vapi/libmutter-18.vapi
+ create mode 100644 vapi/mutter-clutter-18.deps
+ create mode 120000 vapi/mutter-clutter-18.vapi
+ create mode 100644 vapi/mutter-cogl-18.deps
+ create mode 120000 vapi/mutter-cogl-18.vapi
+ create mode 120000 vapi/mutter-mtk-18.vapi
+
 diff --git a/compositor/meson.build b/compositor/meson.build
 index 1cfe5539..e8453310 100644
 --- a/compositor/meson.build
@@ -661,7 +547,7 @@ index 00000000..ff0e578a
 +libmutter-17.vapi
 \ No newline at end of file
 diff --git a/vapi/libmutter.vapi b/vapi/libmutter.vapi
-index e21902e7..908bc11e 100644
+index e21902e7..2669f1fd 100644
 --- a/vapi/libmutter.vapi
 +++ b/vapi/libmutter.vapi
 @@ -105,8 +105,10 @@ namespace Meta {
@@ -760,7 +646,17 @@ index e21902e7..908bc11e 100644
  #if HAS_MUTTER46
  		public void set_input_focus (Meta.Window window, uint32 timestamp);
  #else
-@@ -535,15 +561,23 @@ namespace Meta {
+@@ -527,7 +553,9 @@ namespace Meta {
+ 		public signal void accelerator_deactivated (uint object, Clutter.InputDevice p0, uint p1);
+ #endif
+ 		public signal void closing ();
++#if !HAS_MUTTER50
+ 		public signal void cursor_updated ();
++#endif
+ 		[CCode (cname = "focus-window")]
+ 		public signal void do_focus_window (Meta.Window object, int64 p0);
+ 		public signal void gl_video_memory_purged ();
+@@ -535,15 +563,23 @@ namespace Meta {
  		public signal void grab_op_end (Meta.Window object, Meta.GrabOp p0);
  		public signal void in_fullscreen_changed ();
  		public signal bool init_xserver (GLib.Task object);
@@ -784,7 +680,7 @@ index e21902e7..908bc11e 100644
  		public signal void showing_desktop_changed ();
  		public signal void window_created (Meta.Window object);
  		public signal void window_demands_attention (Meta.Window object);
-@@ -595,11 +629,16 @@ namespace Meta {
+@@ -595,11 +631,16 @@ namespace Meta {
  		[CCode (has_construct_function = false)]
  		protected IdleMonitor ();
  		public uint add_idle_watch (uint64 interval_msec, owned Meta.IdleMonitorWatchFunc? callback);
@@ -801,7 +697,7 @@ index e21902e7..908bc11e 100644
  	}
  	[CCode (cheader_filename = "meta/keybindings.h", copy_function = "g_boxed_copy", free_function = "g_boxed_free", type_id = "meta_key_binding_get_type ()")]
  	[Compact]
-@@ -612,6 +651,18 @@ namespace Meta {
+@@ -612,6 +653,18 @@ namespace Meta {
  		[CCode (cheader_filename = "meta/keybindings.h", cname = "meta_keybindings_set_custom_handler")]
  		public static bool set_custom_handler (string name, owned Meta.KeyHandlerFunc? handler);
  	}
@@ -820,7 +716,7 @@ index e21902e7..908bc11e 100644
  	[CCode (cheader_filename = "meta/types.h", type_id = "meta_laters_get_type ()")]
  	public class Laters : GLib.Object {
  		[CCode (has_construct_function = false)]
-@@ -661,6 +712,9 @@ namespace Meta {
+@@ -661,6 +714,9 @@ namespace Meta {
  		[CCode (has_construct_function = false)]
  		protected MonitorManager ();
  		public bool can_switch_config ();
@@ -830,7 +726,7 @@ index e21902e7..908bc11e 100644
  		public int get_display_configuration_timeout ();
  		public bool get_is_builtin_display_on ();
  #if HAS_MUTTER49
-@@ -673,8 +727,12 @@ namespace Meta {
+@@ -673,8 +729,12 @@ namespace Meta {
  		public bool get_panel_orientation_managed ();
  		public Meta.MonitorSwitchConfigType get_switch_config ();
  		public void switch_config (Meta.MonitorSwitchConfigType config_type);
@@ -843,7 +739,7 @@ index e21902e7..908bc11e 100644
  #if !HAS_MUTTER48
  		[NoAccessorMethod]
  		public string experimental_hdr { owned get; set; }
-@@ -785,6 +843,7 @@ namespace Meta {
+@@ -785,6 +845,7 @@ namespace Meta {
  		[NoWrapper]
  		public virtual void unminimize (Meta.WindowActor actor);
  		public void unminimize_completed (Meta.WindowActor actor);
@@ -851,7 +747,7 @@ index e21902e7..908bc11e 100644
  #if !HAS_MUTTER46
  		[NoWrapper]
  		public virtual bool xevent_filter ([CCode (type = "XEvent*")] ref X.Event event);
-@@ -795,6 +854,7 @@ namespace Meta {
+@@ -795,6 +856,7 @@ namespace Meta {
  #elif HAS_MUTTER48
  		[NoWrapper]
  		public virtual bool xevent_filter (X.Event event);
@@ -859,7 +755,7 @@ index e21902e7..908bc11e 100644
  #endif
  	}
  	[CCode (cheader_filename = "meta/meta-remote-access-controller.h", type_id = "meta_remote_access_controller_get_type ()")]
-@@ -1001,6 +1061,9 @@ namespace Meta {
+@@ -1001,6 +1063,9 @@ namespace Meta {
  		protected Window ();
  		public void activate (uint32 current_time);
  		public void activate_with_workspace (uint32 current_time, Meta.Workspace workspace);
@@ -869,7 +765,7 @@ index e21902e7..908bc11e 100644
  		public bool allows_move ();
  		public bool allows_resize ();
  #if HAS_MUTTER49
-@@ -1101,6 +1164,9 @@ namespace Meta {
+@@ -1101,6 +1166,9 @@ namespace Meta {
  		public bool has_pointer ();
  #if HAS_MUTTER49
  		public void hide_from_window_list ();
@@ -879,7 +775,7 @@ index e21902e7..908bc11e 100644
  #endif
  		public bool is_above ();
  		public bool is_always_on_all_workspaces ();
-@@ -1111,6 +1177,9 @@ namespace Meta {
+@@ -1111,6 +1179,9 @@ namespace Meta {
  #endif
  		public bool is_fullscreen ();
  		public bool is_hidden ();
@@ -889,7 +785,7 @@ index e21902e7..908bc11e 100644
  #if HAS_MUTTER49
  		public bool is_maximized ();
  #endif
-@@ -1144,6 +1213,9 @@ namespace Meta {
+@@ -1144,6 +1215,9 @@ namespace Meta {
  		public void raise_and_make_recent_on_workspace (Meta.Workspace workspace);
  #else
  		public void raise_and_make_recent ();
@@ -899,7 +795,7 @@ index e21902e7..908bc11e 100644
  #endif
  		public void set_compositor_private (GLib.Object priv);
  		public void set_demands_attention ();
-@@ -1165,6 +1237,9 @@ namespace Meta {
+@@ -1165,6 +1239,9 @@ namespace Meta {
  		public Mtk.Rectangle stage_to_protocol_rect (Mtk.Rectangle stage_rect);
  #endif
  		public void stick ();
@@ -909,7 +805,20 @@ index e21902e7..908bc11e 100644
  #if !HAS_MUTTER48
  		public bool titlebar_is_onscreen ();
  #endif
-@@ -1383,7 +1458,11 @@ namespace Meta {
+@@ -1183,6 +1260,12 @@ namespace Meta {
+ 		[CCode (cheader_filename = "meta/meta-x11-group.h")]
+ #endif
+ 		public unowned Meta.Group? x11_get_group ();
++#endif
++#if HAS_MUTTER50
++		[NoAccessorMethod]
++		public string a11y_dbus_name { owned get; }
++		[NoAccessorMethod]
++		public string a11y_object_path { owned get; }
+ #endif
+ 		[NoAccessorMethod]
+ 		public bool above { get; }
+@@ -1383,7 +1466,11 @@ namespace Meta {
  		public signal void workspaces_reordered ();
  	}
  	[CCode (cheader_filename = "meta/meta-x11-display.h", type_id = "meta_x11_display_get_type ()")]
@@ -921,7 +830,7 @@ index e21902e7..908bc11e 100644
  		[CCode (has_construct_function = false)]
  		protected X11Display ();
  #if !HAS_MUTTER47
-@@ -1404,10 +1483,12 @@ namespace Meta {
+@@ -1404,10 +1491,12 @@ namespace Meta {
  #endif
  		public void redirect_windows (Meta.Display display);
  		public void remove_event_func (uint id);
@@ -934,7 +843,7 @@ index e21902e7..908bc11e 100644
  #endif
  	}
  	[CCode (cheader_filename = "meta/meta-close-dialog.h", type_cname = "MetaCloseDialogInterface", type_id = "meta_close_dialog_get_type ()")]
-@@ -1421,6 +1502,12 @@ namespace Meta {
+@@ -1421,6 +1510,12 @@ namespace Meta {
  		[HasEmitter]
  		public signal void response (Meta.CloseDialogResponse response);
  	}
@@ -947,7 +856,7 @@ index e21902e7..908bc11e 100644
  	[CCode (cheader_filename = "meta/meta-inhibit-shortcuts-dialog.h", type_cname = "MetaInhibitShortcutsDialogInterface", type_id = "meta_inhibit_shortcuts_dialog_get_type ()")]
  	public interface InhibitShortcutsDialog : GLib.Object {
  		public abstract void hide ();
-@@ -1447,6 +1534,14 @@ namespace Meta {
+@@ -1447,6 +1542,14 @@ namespace Meta {
  		public Meta.Side side_type;
  		public Meta.EdgeType edge_type;
  	}
@@ -962,7 +871,7 @@ index e21902e7..908bc11e 100644
  	[CCode (cheader_filename = "meta/main.h", has_type_id = false)]
  	public struct FrameBorder {
  		public int16 left;
-@@ -1527,6 +1622,7 @@ namespace Meta {
+@@ -1527,6 +1630,7 @@ namespace Meta {
  		MINIMIZE,
  		NONE
  	}
@@ -970,7 +879,7 @@ index e21902e7..908bc11e 100644
  	[CCode (cheader_filename = "meta/meta-enums.h", cprefix = "META_COMPOSITOR_TYPE_", type_id = "meta_compositor_type_get_type ()")]
  	public enum CompositorType {
  		WAYLAND,
-@@ -1598,6 +1694,7 @@ namespace Meta {
+@@ -1598,6 +1702,7 @@ namespace Meta {
  		LAST
  #endif
  	}
@@ -978,7 +887,7 @@ index e21902e7..908bc11e 100644
  	[CCode (cheader_filename = "meta/util.h", cprefix = "META_DEBUG_PAINT_", type_id = "meta_debug_paint_flag_get_type ()")]
  	[Flags]
  	public enum DebugPaintFlag {
-@@ -1698,6 +1795,15 @@ namespace Meta {
+@@ -1698,6 +1803,15 @@ namespace Meta {
  		SUCCESS,
  		ERROR
  	}
@@ -994,7 +903,7 @@ index e21902e7..908bc11e 100644
  	[CCode (cheader_filename = "meta/common.h", cprefix = "META_FRAME_TYPE_", type_id = "meta_frame_type_get_type ()")]
  	public enum FrameType {
  		NORMAL,
-@@ -1708,7 +1814,9 @@ namespace Meta {
+@@ -1708,7 +1822,9 @@ namespace Meta {
  		BORDER,
  		ATTACHED,
  		LAST;
@@ -1004,7 +913,7 @@ index e21902e7..908bc11e 100644
  		public unowned string to_string ();
  	}
  	[CCode (cheader_filename = "meta/common.h", cprefix = "META_GRAB_OP_", type_id = "meta_grab_op_get_type ()")]
-@@ -1749,9 +1857,20 @@ namespace Meta {
+@@ -1749,9 +1865,20 @@ namespace Meta {
  		SOUTH,
  		SOUTH_EAST,
  		STATIC;
@@ -1025,7 +934,7 @@ index e21902e7..908bc11e 100644
  	[CCode (cheader_filename = "meta/meta-inhibit-shortcuts-dialog.h", cprefix = "META_INHIBIT_SHORTCUTS_DIALOG_RESPONSE_", type_id = "meta_inhibit_shortcuts_dialog_response_get_type ()")]
  	public enum InhibitShortcutsDialogResponse {
  		ALLOW,
-@@ -2066,7 +2185,9 @@ namespace Meta {
+@@ -2066,7 +2193,9 @@ namespace Meta {
  		DRAG_THRESHOLD,
  		LOCATE_POINTER,
  		CHECK_ALIVE_TIMEOUT;
@@ -1035,7 +944,7 @@ index e21902e7..908bc11e 100644
  		public unowned string to_string ();
  	}
  	[CCode (cheader_filename = "meta/meta-selection-source.h", cprefix = "META_", type_id = "meta_selection_type_get_type ()")]
-@@ -2216,22 +2337,47 @@ namespace Meta {
+@@ -2216,22 +2345,47 @@ namespace Meta {
  #if !HAS_MUTTER48
  	[CCode (cheader_filename = "meta/main.h")]
  	public static void get_clutter_debug_flags (out Clutter.DebugFlag debug_flags, out Clutter.DrawDebugFlag draw_flags, out Clutter.PickDebugFlag pick_flags);
@@ -1643,7 +1552,7 @@ index 97dfb632..87fd485e 100644
  	[CCode (cheader_filename = "clutter/clutter.h")]
  	public static void remove_debug_flags (Clutter.DebugFlag debug_flags, Clutter.DrawDebugFlag draw_flags, Clutter.PickDebugFlag pick_flags);
 diff --git a/vapi/mutter-cogl-14.vapi b/vapi/mutter-cogl-14.vapi
-index fb26e857..5d491c03 100644
+index fb26e857..fd78df6b 100644
 --- a/vapi/mutter-cogl-14.vapi
 +++ b/vapi/mutter-cogl-14.vapi
 @@ -122,16 +122,24 @@ namespace Cogl {
@@ -1746,7 +1655,18 @@ index fb26e857..5d491c03 100644
  		[CCode (has_construct_function = false)]
  		public Indices (Cogl.Context context, Cogl.IndicesType type, void* indices_data, int n_indices);
  #if !HAS_MUTTER48
-@@ -443,6 +481,13 @@ namespace Cogl {
+@@ -400,6 +438,10 @@ namespace Cogl {
+ 	public sealed class Offscreen : Cogl.Framebuffer {
+ 		[CCode (has_construct_function = false)]
+ 		protected Offscreen ();
++#if HAS_MUTTER50
++		[CCode (has_construct_function = false)]
++		public Offscreen.from_formats (Cogl.Context context, Cogl.PixelFormat formats, size_t n_formats, int width, int height) throws GLib.Error;
++#endif
+ 		public unowned Cogl.Texture get_texture ();
+ 		[CCode (has_construct_function = false)]
+ 		public Offscreen.with_texture (Cogl.Texture texture);
+@@ -443,6 +485,13 @@ namespace Cogl {
  		public virtual void swap_region ([CCode (array_length_cname = "n_rectangles", array_length_pos = 1.5)] int[] rectangles, Cogl.FrameInfo info);
  #endif
  	}
@@ -1760,7 +1680,7 @@ index fb26e857..5d491c03 100644
  #if !HAS_MUTTER47
  	[CCode (cheader_filename = "cogl/cogl.h", copy_function = "g_boxed_copy", free_function = "g_boxed_free", type_id = "cogl_onscreen_dirty_closure_get_type ()")]
  	[Compact]
-@@ -525,9 +570,15 @@ namespace Cogl {
+@@ -525,9 +574,15 @@ namespace Cogl {
  #endif
  		public void set_uniform_1f (int uniform_location, float value);
  		public void set_uniform_1i (int uniform_location, int value);
@@ -1776,7 +1696,7 @@ index fb26e857..5d491c03 100644
  		public void set_user_program (Cogl.Program program);
  	}
  	[CCode (cheader_filename = "cogl/cogl.h", type_id = "cogl_pixel_buffer_get_type ()")]
-@@ -624,9 +675,11 @@ namespace Cogl {
+@@ -624,9 +679,11 @@ namespace Cogl {
  		public bool check_onscreen_template (Cogl.OnscreenTemplate onscreen_template) throws GLib.Error;
  #endif
  		public bool connect () throws GLib.Error;
@@ -1788,7 +1708,7 @@ index fb26e857..5d491c03 100644
  #if !HAS_MUTTER47
  		public void foreach_output (Cogl.OutputCallback callback);
  #endif
-@@ -639,10 +692,16 @@ namespace Cogl {
+@@ -639,10 +696,16 @@ namespace Cogl {
  #if HAS_MUTTER47
  		public void* get_proc_address (string name);
  #endif
@@ -1806,7 +1726,7 @@ index fb26e857..5d491c03 100644
  		public bool is_dma_buf_supported ();
  #if HAS_MUTTER48
  		public bool is_implicit_drm_modifier (uint64 modifier);
-@@ -656,6 +715,9 @@ namespace Cogl {
+@@ -656,9 +719,16 @@ namespace Cogl {
  #if !HAS_MUTTER47
  		public void set_winsys_id (Cogl.WinsysID winsys_id);
  #endif
@@ -1815,8 +1735,15 @@ index fb26e857..5d491c03 100644
 +#endif
  #if HAS_MUTTER49
  		public void set_driver (Cogl.DriverId driver);
++#if HAS_MUTTER50
++		public void set_winsys_data (void* winsys, GLib.DestroyNotify destroy);
++#else
  		public void set_winsys (void* winsys);
-@@ -669,7 +731,11 @@ namespace Cogl {
++#endif
+ #endif
+ 	}
+ 	[CCode (cheader_filename = "cogl/cogl.h", type_id = "cogl_scanout_get_type ()")]
+@@ -669,7 +739,11 @@ namespace Cogl {
  #else
  		public Scanout (Cogl.ScanoutBuffer scanout_buffer);
  #endif
@@ -1828,7 +1755,7 @@ index fb26e857..5d491c03 100644
  		public unowned Cogl.ScanoutBuffer get_buffer ();
  		public void get_dst_rect (Mtk.Rectangle dst_rect);
  		public void get_src_rect (Graphene.Rect rect);
-@@ -786,6 +852,9 @@ namespace Cogl {
+@@ -786,6 +860,9 @@ namespace Cogl {
  		public Texture2D.from_bitmap (Cogl.Bitmap bitmap);
  		[CCode (has_construct_function = false, type = "CoglTexture*")]
  		public Texture2D.from_data (Cogl.Context ctx, int width, int height, Cogl.PixelFormat format, int rowstride, [CCode (array_length = false)] uint8[] data) throws GLib.Error;
@@ -1838,7 +1765,7 @@ index fb26e857..5d491c03 100644
  		[CCode (has_construct_function = false, type = "CoglTexture*")]
  		public Texture2D.with_format (Cogl.Context ctx, int width, int height, Cogl.PixelFormat format);
  		[CCode (has_construct_function = false, type = "CoglTexture*")]
-@@ -804,10 +873,47 @@ namespace Cogl {
+@@ -804,10 +881,47 @@ namespace Cogl {
  		[CCode (has_construct_function = false, type = "CoglTexture*")]
  		public Texture2DSliced.with_size (Cogl.Context ctx, int width, int height, int max_waste);
  	}
@@ -1886,7 +1813,7 @@ index fb26e857..5d491c03 100644
  	[CCode (cheader_filename = "cogl/cogl.h", type_cname = "CoglScanoutBufferInterface", type_id = "cogl_scanout_buffer_get_type ()")]
  	public interface ScanoutBuffer : GLib.Object {
  		public abstract int get_height ();
-@@ -877,6 +983,12 @@ namespace Cogl {
+@@ -877,6 +991,12 @@ namespace Cogl {
  		public void set_test_function (Cogl.DepthTestFunction function);
  		public void set_write_enabled (bool enable);
  	}
@@ -1899,7 +1826,7 @@ index fb26e857..5d491c03 100644
  #if !HAS_MUTTER47
  	[CCode (cheader_filename = "cogl/cogl.h", has_type_id = false)]
  	public struct OnscreenDirtyInfo {
-@@ -904,6 +1016,14 @@ namespace Cogl {
+@@ -904,6 +1024,14 @@ namespace Cogl {
  		public float ty;
  		public Cogl.Color color;
  	}
@@ -1914,7 +1841,7 @@ index fb26e857..5d491c03 100644
  #endif
  	[CCode (cheader_filename = "cogl/cogl.h", has_type_id = false)]
  	public struct VertexP2 {
-@@ -965,7 +1085,7 @@ namespace Cogl {
+@@ -965,7 +1093,7 @@ namespace Cogl {
  		public float s;
  		public float t;
  	}
@@ -1923,7 +1850,7 @@ index fb26e857..5d491c03 100644
  	[CCode (cheader_filename = "cogl/cogl.h", has_type_id = false)]
  	public struct VertexP3T2C4 {
  		public float x;
-@@ -1084,6 +1204,21 @@ namespace Cogl {
+@@ -1084,6 +1212,21 @@ namespace Cogl {
  		SINGLE_PLANE,
  		NOT_EXTERNAL_ONLY
  	}
@@ -1945,7 +1872,7 @@ index fb26e857..5d491c03 100644
  #endif
  	[CCode (cheader_filename = "cogl/cogl.h", cprefix = "COGL_EGL_IMAGE_FLAG_", has_type_id = false)]
  	[Flags]
-@@ -1109,19 +1244,60 @@ namespace Cogl {
+@@ -1109,19 +1252,60 @@ namespace Cogl {
  		OGL_FEATURE_ID_TEXTURE_HALF_FLOAT,
  		[CCode (cname = "COGL_FEATURE_ID_TEXTURE_NORM16")]
  		OGL_FEATURE_ID_TEXTURE_NORM16,
@@ -2007,7 +1934,7 @@ index fb26e857..5d491c03 100644
  #if HAS_MUTTER48
  	[CCode (cheader_filename = "cogl/cogl.h", cprefix = "COGL_FILTER_", type_id = "cogl_filter_return_get_type ()")]
  #else
-@@ -1131,6 +1307,7 @@ namespace Cogl {
+@@ -1131,6 +1315,7 @@ namespace Cogl {
  		CONTINUE,
  		REMOVE
  	}
@@ -2015,7 +1942,7 @@ index fb26e857..5d491c03 100644
  	[CCode (cheader_filename = "cogl/cogl.h", cprefix = "COGL_FRAME_EVENT_", has_type_id = false)]
  	public enum FrameEvent {
  		SYNC,
-@@ -1241,6 +1418,9 @@ namespace Cogl {
+@@ -1241,6 +1426,9 @@ namespace Cogl {
  		RGBA_FP_32323232_PRE,
  		R_16,
  		RG_1616,
@@ -2025,7 +1952,7 @@ index fb26e857..5d491c03 100644
  		RGBA_16161616,
  		RGBA_16161616_PRE,
  		DEPTH_16,
-@@ -1350,23 +1530,37 @@ namespace Cogl {
+@@ -1350,23 +1538,37 @@ namespace Cogl {
  		CLOCKWISE,
  		COUNTER_CLOCKWISE
  	}
@@ -2063,7 +1990,7 @@ index fb26e857..5d491c03 100644
  	[CCode (cheader_filename = "cogl/cogl.h", cprefix = "COGL_WINSYS_ID_", has_type_id = false)]
  	public enum WinsysID {
  		ANY,
-@@ -1375,6 +1569,7 @@ namespace Cogl {
+@@ -1375,6 +1577,7 @@ namespace Cogl {
  		EGL_XLIB,
  		CUSTOM
  	}
@@ -2071,7 +1998,7 @@ index fb26e857..5d491c03 100644
  #if !HAS_MUTTER47
  	[CCode (cheader_filename = "cogl/cogl.h", cprefix = "COGL_BITMAP_ERROR_", has_type_id = false)]
  	public errordomain BitmapError {
-@@ -1467,12 +1662,23 @@ namespace Cogl {
+@@ -1467,12 +1670,23 @@ namespace Cogl {
  #if HAS_MUTTER48
  	[CCode (cheader_filename = "cogl/cogl.h", instance_pos = 3.9)]
  	public delegate void TextureForeachCallback (Cogl.Texture sub_texture, float sub_texture_coords, float meta_coords);
@@ -2095,7 +2022,7 @@ index fb26e857..5d491c03 100644
  #endif
  	[CCode (cheader_filename = "cogl/cogl.h")]
  	[Version (replacement = "Color.init_from_hsl")]
-@@ -1500,8 +1706,10 @@ namespace Cogl {
+@@ -1500,8 +1714,10 @@ namespace Cogl {
  #else
  	public static void graphene_matrix_project_point (Graphene.Matrix matrix, ref float x, ref float y, ref float z, ref float w);
  #endif
@@ -2106,7 +2033,7 @@ index fb26e857..5d491c03 100644
  	[CCode (cheader_filename = "cogl/cogl.h")]
  	public static void graphene_matrix_transform_points (Graphene.Matrix matrix, int n_components, size_t stride_in, void* points_in, size_t stride_out, void* points_out, int n_points);
  	[CCode (cheader_filename = "cogl/cogl.h")]
-@@ -1518,6 +1726,14 @@ namespace Cogl {
+@@ -1518,6 +1734,14 @@ namespace Cogl {
  	public static void poll_renderer_dispatch (Cogl.Renderer renderer, Cogl.PollFD poll_fds, int n_poll_fds);
  	[CCode (cheader_filename = "cogl/cogl.h")]
  	public static int poll_renderer_get_info (Cogl.Renderer renderer, Cogl.PollFD poll_fds, int n_poll_fds, int64 timeout);
@@ -2194,3 +2121,210 @@ index 00000000..efd075ab
 @@ -0,0 +1 @@
 +mutter-mtk-17.vapi
 \ No newline at end of file
+
+From cc299cafac328fa419374c960246e346bf8ad543 Mon Sep 17 00:00:00 2001
+From: Denis Garaev <garaevdi@yandex.ru>
+Date: Tue, 10 Feb 2026 00:21:56 +0300
+Subject: [PATCH 2/5] Add compatable check for wayland
+
+---
+ vapi/Meta-18-custom.vala | 5 +++++
+ vapi/libmutter.vapi      | 8 ++++++--
+ vapi/meson.build         | 3 ++-
+ 3 files changed, 13 insertions(+), 3 deletions(-)
+ create mode 100644 vapi/Meta-18-custom.vala
+
+diff --git a/vapi/Meta-18-custom.vala b/vapi/Meta-18-custom.vala
+new file mode 100644
+index 00000000..6c2ad893
+--- /dev/null
++++ b/vapi/Meta-18-custom.vala
+@@ -0,0 +1,5 @@
++namespace Meta.Util {
++    public static inline bool is_wayland_compositor () {
++        return true;
++    }
++}
+diff --git a/vapi/libmutter.vapi b/vapi/libmutter.vapi
+index 2669f1fd..ade24867 100644
+--- a/vapi/libmutter.vapi
++++ b/vapi/libmutter.vapi
+@@ -105,7 +105,12 @@ namespace Meta {
+ #endif
+ 		[CCode (cheader_filename = "meta/util.h", cname = "meta_is_verbose")]
+ 		public static bool is_verbose ();
+-#if !HAS_MUTTER50
++#if HAS_MUTTER50
++		[CCode (cheader_filename = "meta/main.h")]
++		public static bool is_wayland_compositor () {
++			return true;
++		}
++#else
+ 		[CCode (cheader_filename = "meta/util.h", cname = "meta_is_wayland_compositor")]
+ 		public static bool is_wayland_compositor ();
+ #endif
+@@ -2388,4 +2393,3 @@ namespace Meta {
+ 	public static void restart (string? message, Meta.Context context);
+ #endif
+ }
+-
+diff --git a/vapi/meson.build b/vapi/meson.build
+index 5f81ac84..9d11aef0 100644
+--- a/vapi/meson.build
++++ b/vapi/meson.build
+@@ -479,7 +479,8 @@ if mutter50_dep.found()
+ 			'--pkg=pango',
+ 			'--pkg=x11',
+ 			'--pkg=xfixes-4.0',
+-			vapigen_args
++			vapigen_args,
++			files('Meta-18-custom.vala')
+ 		],
+ 		depends: [ cogl_target, clutter_target ],
+ 		output: 'libmutter-18.vapi'
+
+From bc4225bc7e0b21f82f8a87be7c766114a9fbd921 Mon Sep 17 00:00:00 2001
+From: Denis Garaev <garaevdi@yandex.ru>
+Date: Tue, 10 Feb 2026 00:22:16 +0300
+Subject: [PATCH 3/5] KeyboardManager: update for mutter50
+
+---
+ compositor/KeyboardManager.vala | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/compositor/KeyboardManager.vala b/compositor/KeyboardManager.vala
+index cd51e126..c2eb254e 100644
+--- a/compositor/KeyboardManager.vala
++++ b/compositor/KeyboardManager.vala
+@@ -48,10 +48,12 @@ public class GreeterCompositor.KeyboardManager : Object {
+ 
+     [CCode (instance_pos = -1)]
+     public static bool handle_modifiers_accelerator_activated (Meta.Display display, bool backward) {
++#if !HAS_MUTTER50
+ #if HAS_MUTTER46
+         display.get_compositor ().backend.ungrab_keyboard (display.get_current_time ());
+ #else
+         display.ungrab_keyboard (display.get_current_time ());
++#endif
+ #endif
+ 
+         var sources = settings.get_value ("sources");
+@@ -79,7 +81,11 @@ public class GreeterCompositor.KeyboardManager : Object {
+     private void set_keyboard_layout (GLib.Settings settings, string key) {
+         unowned var backend = display.get_context ().get_backend ();
+ 
++#if HAS_MUTTER50
++        if (key == "sources" || key == "xkb-options" || key == "current") {
++#else
+         if (key == "sources" || key == "xkb-options") {
++#endif
+             string[] layouts = {}, variants = {};
+ 
+             var sources = settings.get_value ("sources");
+@@ -111,7 +117,12 @@ public class GreeterCompositor.KeyboardManager : Object {
+                 cancellable = new GLib.Cancellable ();
+             }
+ 
++#if HAS_MUTTER50
++            var description = new Meta.KeymapDescription.from_rules (settings.get_string ("xkb-model"), layout, variant, options, layouts, layouts);
++            backend.set_keymap_async.begin (description, settings.get_uint ("current"), cancellable, (obj, res) => {
++#else
+             backend.set_keymap_async.begin (layout, variant, options, settings.get_string ("xkb-model"), cancellable, (obj, res) => {
++#endif
+                 try {
+                     ((Meta.Backend) obj).set_keymap_async.end (res);
+                 } catch (Error e) {
+@@ -128,6 +139,7 @@ public class GreeterCompositor.KeyboardManager : Object {
+ #else
+             backend.set_keymap (layout, variant, options);
+ #endif
++#if !HAS_MUTTER50
+         } else if (key == "current") {
+ #if HAS_MUTTER49
+             if (cancellable != null) {
+@@ -148,6 +160,7 @@ public class GreeterCompositor.KeyboardManager : Object {
+             });
+ #else
+             backend.lock_layout_group (settings.get_uint ("current"));
++#endif
+ #endif
+         }
+     }
+
+From 4f5e6d9a03d2b575b35d487f4d88c62617369377 Mon Sep 17 00:00:00 2001
+From: Denis Garaev <garaevdi@yandex.ru>
+Date: Tue, 10 Feb 2026 00:23:54 +0300
+Subject: [PATCH 4/5] BackgroundBlurEffect: keep getting Cogl.Context from
+ default Clutter.Backend on libmutter15+
+
+See https://github.com/elementary/gala/pull/2710
+---
+ compositor/BackgroundBlurEffect.vala | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/compositor/BackgroundBlurEffect.vala b/compositor/BackgroundBlurEffect.vala
+index 7cda051e..ede2fe9c 100644
+--- a/compositor/BackgroundBlurEffect.vala
++++ b/compositor/BackgroundBlurEffect.vala
+@@ -39,11 +39,7 @@ public class GreeterCompositor.BackgroundBlurEffect : Clutter.Effect {
+     }
+ 
+     construct {
+-#if HAS_MUTTER47
+-        unowned var ctx = actor.context.get_backend ().get_cogl_context ();
+-#else
+         unowned var ctx = Clutter.get_default_backend ().get_cogl_context ();
+-#endif
+ 
+         actor_pipeline = new Cogl.Pipeline (ctx);
+         actor_pipeline.set_layer_null_texture (0);
+
+From 3aa1f72391458d153c507e115fc698fc15e7370a Mon Sep 17 00:00:00 2001
+From: Denis Garaev <garaevdi@yandex.ru>
+Date: Wed, 11 Mar 2026 01:32:22 +0300
+Subject: [PATCH 5/5] CI: update dev-target to libmutter-18-dev
+
+Also fix formatting a bit
+---
+ .github/workflows/main.yml | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/.github/workflows/main.yml b/.github/workflows/main.yml
+index 9f7a86f2..0ed1e19a 100644
+--- a/.github/workflows/main.yml
++++ b/.github/workflows/main.yml
+@@ -22,7 +22,8 @@ jobs:
+           - version: unstable
+             mutter_pkg: libmutter-14-dev
+           - version: development-target
+-            mutter_pkg: libmutter-14-dev
++            mutter_pkg: libmutter-18-dev
++            lightdm_vala: lightdm-vala
+     container:
+       image: ghcr.io/elementary/docker:${{ matrix.version }}
+ 
+@@ -31,7 +32,7 @@ jobs:
+     - name: Install Dependencies
+       run: |
+         apt update
+-        apt install -y desktop-file-utils libgdk-pixbuf2.0-dev libgnome-desktop-3-dev libgranite-dev libgtk-3-dev libhandy-1-dev liblightdm-gobject-1-dev ${{ matrix.mutter_pkg }} libx11-dev meson valac
++        apt install -y desktop-file-utils libgdk-pixbuf-2.0-dev libgnome-desktop-3-dev libgranite-dev libgtk-3-dev libhandy-1-dev libjson-glib-dev liblightdm-gobject-1-dev ${{ matrix.mutter_pkg }} libsoup-3.0-dev libx11-dev ${{ matrix.lightdm_vala }} meson valac
+     - name: Build
+       env:
+         DESTDIR: out
+@@ -75,8 +76,8 @@ jobs:
+           DESTDIR: out
+         run: |
+           meson build
+-          ninja -C build install  
+-     
++          ninja -C build install
++
+   lint:
+     runs-on: ubuntu-latest
+ 
+@@ -89,4 +90,3 @@ jobs:
+       run: |
+         io.elementary.vala-lint -d compositor
+         io.elementary.vala-lint -d src
+-
