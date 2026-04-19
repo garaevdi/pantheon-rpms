@@ -3,7 +3,7 @@
 
 Name:           elementary-terminal
 Summary:        The terminal of the 21st century
-Version:        7.2.0
+Version:        8.0.0
 Release:        %autorelease
 License:        LGPL-3.0
 
@@ -15,17 +15,16 @@ BuildRequires:  gettext
 BuildRequires:  libappstream-glib
 BuildRequires:  meson
 BuildRequires:  vala >= 0.40.0
-BuildRequires:  xorg-x11-server-Xvfb
 
 BuildRequires:  pkgconfig(gee-0.8)
 BuildRequires:  pkgconfig(glib-2.0) >= 2.40
 BuildRequires:  pkgconfig(gobject-2.0) >= 2.40
 BuildRequires:  pkgconfig(gio-2.0) >= 2.40
-BuildRequires:  pkgconfig(granite) >= 6.1.0
-BuildRequires:  pkgconfig(gtk+-3.0) >= 3.24
-BuildRequires:  pkgconfig(libhandy-1) >= 0.83.0
-BuildRequires:  pkgconfig(libpcre2-8)
-BuildRequires:  pkgconfig(vte-2.91) >= 0.59
+BuildRequires:  pkgconfig(granite-7) >= 7.7.0
+BuildRequires:  pkgconfig(gtk4) >= 4.1
+BuildRequires:  pkgconfig(libadwaita-1) >= 1.5
+BuildRequires:  pkgconfig(libpcre2-8) >= 10.4
+BuildRequires:  pkgconfig(vte-2.91-gtk4) >= 0.76
 
 Requires:       hicolor-icon-theme
 
