@@ -1,9 +1,9 @@
 %global srcname greeter
 %global appname io.elementary.greeter
 
-%global commit      abf8a675e9da66aa6d90afcdc12684a16685eec4
+%global commit      2fe3ef3f997ece5bc253c01b7824a8dae7bfee81
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
-%global gitdate     20260322
+%global gitdate     20260411
 
 Name:           elementary-greeter
 Summary:        LightDM Login Screen for the elementary desktop
@@ -13,8 +13,7 @@ License:        GPL-3.0-only AND GPL-3.0-or-later AND GPL-2.0-or-later
 
 URL:            https://github.com/elementary/greeter
 Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
-Patch0:         mutter50-greeter.patch
-Patch1:         use-wayland-session.patch
+Patch0:         use-wayland-session.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
@@ -76,9 +75,9 @@ Requires:       wingpanel%{?_isa}
 Requires:       numlockx
 
 # requirements for default artwork
-Requires:       elementary-icon-theme
-Requires:       elementary-theme-gtk3
-Requires:       elementary-wallpapers
+Suggests:       elementary-icon-theme
+Suggests:       elementary-theme-gtk3
+Suggests:       elementary-wallpapers
 
 # requirements for accountsservice extension
 Requires:       pantheon-session-settings
