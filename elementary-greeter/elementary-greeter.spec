@@ -1,9 +1,9 @@
 %global srcname greeter
 %global appname io.elementary.greeter
 
-%global commit      2fe3ef3f997ece5bc253c01b7824a8dae7bfee81
+%global commit      28f36f775a4f4dda8b553e7bd212b5a2579b1f41
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
-%global gitdate     20260411
+%global gitdate     20260424
 
 Name:           elementary-greeter
 Summary:        LightDM Login Screen for the elementary desktop
@@ -13,7 +13,6 @@ License:        GPL-3.0-only AND GPL-3.0-or-later AND GPL-2.0-or-later
 
 URL:            https://github.com/elementary/greeter
 Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
-Patch0:         use-wayland-session.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
