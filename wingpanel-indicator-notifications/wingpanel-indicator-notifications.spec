@@ -1,12 +1,12 @@
 %global __provides_exclude_from ^%{_libdir}/wingpanel/.*\\.so$
 
-%global srcname wingpanel-indicator-notifications
+%global srcname panel-notifications
 %global appname io.elementary.wingpanel.notifications
 
 Name:           wingpanel-indicator-notifications
 Summary:        Notifications Indicator for wingpanel
-Version:        7.1.0
-Release:        1%{?dist}
+Version:        7.1.1
+Release:        %autorelease
 License:        LGPL-2.1-or-later AND GPL-3.0-or-later AND GPL-2.0-or-later
 
 URL:            https://github.com/elementary/wingpanel-indicator-notifications
