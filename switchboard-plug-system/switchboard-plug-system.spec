@@ -8,7 +8,7 @@
 
 Name:           switchboard-plug-system
 Summary:        Switchboard System Information plug
-Version:        8.2.2
+Version:        8.2.3
 Release:        %autorelease
 License:        GPL-3.0-or-later
 
