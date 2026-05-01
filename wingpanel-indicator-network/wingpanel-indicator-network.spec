@@ -1,6 +1,6 @@
 %global __provides_exclude_from ^%{_libdir}/wingpanel/.*\\.so$
 
-%global srcname wingpanel-indicator-network
+%global srcname panel-network
 %global appname io.elementary.wingpanel.network
 
 Name:           wingpanel-indicator-network
