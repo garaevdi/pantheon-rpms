@@ -1,14 +1,14 @@
-# Pantheon packages for Fedora 38+ (work-in-progress)
+# Pantheon packages for Fedora
 
-This repository contains WIP packages of Pantheon for Fedora 38, 39, and Rawhide,
-based on my original packaging for Fedora < 37.
+This repository contains packages of Pantheon for Fedora, based on Fabio's
+original packaging efforts. Due to some ubuntuisms in upstream I try to apply
+some additional patches.
 
-The goal is to add the packages back to Fedora once enough components have
-been revived to provide a working desktop environment again.
+You can find them in a [COPR] repo. Also you might be interested in an atomic
+fedora image with Pantheon [Prosto].
 
-Until then, builds of these packages are provided in a [COPR].
+For local mock builds, a mock configurations for rawhide and current stable
+fedora branch are provided.
 
-For local mock builds, a mock configuration for rawhide / x86_64 is provided.
-
-[COPR]: https://copr.fedorainfracloud.org/coprs/decathorpe/pantheon-staging/
-
+[COPR]: https://copr.fedorainfracloud.org/coprs/garaevdi/pantheon-rpm/
+[Prosto]: https://github.com/garaevdi/prosto
