@@ -2,13 +2,13 @@
 
 Name:           gala
 Summary:        Gala Window Manager for elementary OS and Pantheon
-Version:        8.4.2
+Version:        8.5.0
 Release:        %autorelease
 License:        GPL-3.0-or-later
 
 URL:            https://github.com/elementary/%{name}
 Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
-Patch0:         maximize-gesture.patch
+Patch0:         greeter-support.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gcc
