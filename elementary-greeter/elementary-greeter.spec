@@ -13,6 +13,7 @@ License:        GPL-3.0-only AND GPL-3.0-or-later AND GPL-2.0-or-later
 
 URL:            https://github.com/elementary/greeter
 Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
+Patch0:         gala-greeter-compositor.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext

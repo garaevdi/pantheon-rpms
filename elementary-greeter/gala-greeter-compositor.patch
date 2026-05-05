@@ -1,0 +1,22 @@
+From c58e557476dfd6334f7ba7aecf19265722cb6205 Mon Sep 17 00:00:00 2001
+From: Leonhard <leo.kargl@proton.me>
+Date: Sun, 26 Apr 2026 01:18:38 +0200
+Subject: [PATCH] Use gala instead of the greeter compositor
+
+---
+ data/io.elementary.greeter.desktop.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/data/io.elementary.greeter.desktop.in b/data/io.elementary.greeter.desktop.in
+index 4809815c..9eb39e91 100644
+--- a/data/io.elementary.greeter.desktop.in
++++ b/data/io.elementary.greeter.desktop.in
+@@ -2,7 +2,7 @@
+ Name=Pantheon Greeter
+ Comment=Pantheon Greeter
+ Icon=io.elementary.greeter.settings
+-Exec=@PROJECT_NAME@-compositor
++Exec=env GALA_SESSION_TYPE=greeter gala --wayland
+ Type=Application
+ X-LightDM-Session-Type=wayland
+ NoDisplay=true
