@@ -8,7 +8,7 @@
 
 Name:           switchboard-plug-sound
 Summary:        Switchboard Sound Plug
-Version:        8.0.2
+Version:        8.0.3
 Release:        %autorelease
 License:        LGPL-2.0-or-later
 
@@ -70,9 +70,11 @@ appstream-util validate-relax --nonet \
 
 
 %changelog
+* Tue May 05 2026 Denis Garaev <garaevdi@yandex.ru> - 8.0.3-1
+- Update to version 8.0.3
+
 * Wed Jan 07 2026 Denis Garaev <garaevdi@yandex.ru> - 8.0.2-1
 - Update to version 8.0.2
 
 * Thu Nov 16 2023 Fabio Valentini <decathorpe@gmail.com> - 2.3.3-1
 - Initial packaging
-
