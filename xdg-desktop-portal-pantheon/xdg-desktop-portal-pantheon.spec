@@ -2,7 +2,7 @@
 %global appname io.elementary.portals
 
 Name:           xdg-desktop-portal-pantheon
-Version:        8.1.0
+Version:        8.2.0
 Release:        %autorelease
 Summary:        Portal implementations for Pantheon
 License:        GPL-3.0-or-later
@@ -17,6 +17,7 @@ BuildRequires:  meson
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  vala
 
+BuildRequires:  pkgconfig(accountsservice)
 BuildRequires:  pkgconfig(gio-2.0)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(gobject-2.0)
@@ -24,6 +25,7 @@ BuildRequires:  pkgconfig(granite-7)
 BuildRequires:  pkgconfig(gtk4)
 BuildRequires:  pkgconfig(gtk4-x11)
 BuildRequires:  pkgconfig(gtk4-wayland)
+BuildRequires:  pkgconfig(libadwaita-1)
 BuildRequires:  pkgconfig(pantheon-wayland-1)
 BuildRequires:  pkgconfig(systemd)
 BuildRequires:  pkgconfig(x11)
