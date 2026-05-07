@@ -1,13 +1,17 @@
 %global glib_version 2.74.0
 
+%global commit      110c5f480f5b0efda3bb889c0c2e1e193af068e8
+%global shortcommit %(c=%{commit}; echo ${c:0:7})
+%global gitdate     20260507
+
 Name:           gala
 Summary:        Gala Window Manager for elementary OS and Pantheon
-Version:        8.5.0
+Version:        8.5.0^%{gitdate}.git%{shortcommit}
 Release:        %autorelease
 License:        GPL-3.0-or-later
 
 URL:            https://github.com/elementary/%{name}
-Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
+Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
 Patch0:         greeter-support.patch
 
 BuildRequires:  desktop-file-utils
@@ -114,7 +118,7 @@ This package contains the development headers
 
 
 %prep
-%autosetup -p1
+%autosetup -n %{name}-%{commit} -p1
 
 
 %build
