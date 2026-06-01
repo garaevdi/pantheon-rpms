@@ -3,12 +3,13 @@
 
 Name:           xdg-desktop-portal-pantheon
 Version:        8.2.0
-Release:        %autorelease
+Release:        %autorelease -b2
 Summary:        Portal implementations for Pantheon
 License:        GPL-3.0-or-later
 
 URL:            https://github.com/elementary/%{srcname}
 Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
+Patch0:         gtk420.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
