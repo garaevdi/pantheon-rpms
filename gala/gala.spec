@@ -1,12 +1,12 @@
 %global glib_version 2.74.0
 
-%global commit      110c5f480f5b0efda3bb889c0c2e1e193af068e8
+%global commit      4d1b6a7bdfd1ec5dfd2cb776f86f069988f703d9
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
-%global gitdate     20260507
+%global gitdate     20260522
 
 Name:           gala
 Summary:        Gala Window Manager for elementary OS and Pantheon
-Version:        8.5.0^%{gitdate}.git%{shortcommit}
+Version:        8.5.1^%{gitdate}.git%{shortcommit}
 Release:        %autorelease
 License:        GPL-3.0-or-later
 
@@ -61,6 +61,7 @@ BuildRequires:  pkgconfig(granite)
 BuildRequires:  pkgconfig(granite-7)
 BuildRequires:  pkgconfig(gtk+-3.0)
 BuildRequires:  pkgconfig(gtk4)
+BuildRequires:  pkgconfig(ibus-1.0)
 BuildRequires:  pkgconfig(libhandy-1)
 BuildRequires:  pkgconfig(libsystemd)
 BuildRequires:  pkgconfig(sqlite3)
