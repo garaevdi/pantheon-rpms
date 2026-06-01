@@ -8,7 +8,7 @@
 Name:           elementary-greeter
 Summary:        LightDM Login Screen for the elementary desktop
 Version:        8.1.2^%{gitdate}.git%{shortcommit}
-Release:        %autorelease -b2
+Release:        %autorelease -b3
 License:        GPL-3.0-only AND GPL-3.0-or-later AND GPL-2.0-or-later
 
 URL:            https://github.com/elementary/greeter
