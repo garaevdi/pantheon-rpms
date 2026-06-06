@@ -1,0 +1,12 @@
+diff --git a/src/ScreenCast/Portal.vala b/src/ScreenCast/Portal.vala
+index 38f7870..b309032 100644
+--- a/src/ScreenCast/Portal.vala
++++ b/src/ScreenCast/Portal.vala
+@@ -23,6 +23,7 @@ public enum ScreenCast.CursorMode {
+ public class ScreenCast.Portal : Object {
+     public SourceType available_source_types { get; default = MONITOR | WINDOW | VIRTUAL; }
+     public CursorMode available_cursor_modes { get; default = HIDDEN | EMBEDDED | METADATA; }
++    [DBus (name = "version")]
+     public uint version { get; default = 3; }
+ 
+     private DBusConnection connection;

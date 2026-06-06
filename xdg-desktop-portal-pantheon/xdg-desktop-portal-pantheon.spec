@@ -1,15 +1,19 @@
 %global srcname portals
 %global appname io.elementary.portals
 
+%global commit      c5f6fa1179bfa51429ddf4b2d268c7f2295dfff8
+%global shortcommit %(c=%{commit}; echo ${c:0:7})
+%global gitdate     20260604
+
 Name:           xdg-desktop-portal-pantheon
-Version:        8.2.0
-Release:        %autorelease -b2
+Version:        8.2.0^%{gitdate}.git%{shortcommit}
+Release:        %autorelease
 Summary:        Portal implementations for Pantheon
 License:        GPL-3.0-or-later
 
 URL:            https://github.com/elementary/%{srcname}
-Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
-Patch0:         gtk420.patch
+Source:         %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
+Patch0:         xdp-spec.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
@@ -38,7 +42,7 @@ Requires:       xdg-desktop-portal
 
 
 %prep
-%autosetup -n %{srcname}-%{version} -p1
+%autosetup -n %{srcname}-%{commit} -p1
 
 
 %build
