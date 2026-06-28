@@ -1,14 +1,5 @@
-From d984d91d98df7da1ef729df219a1b1dd87762320 Mon Sep 17 00:00:00 2001
-From: Leonhard <leo.kargl@proton.me>
-Date: Sat, 27 Jun 2026 14:10:32 +0200
-Subject: [PATCH] HideTracker: Guard against accessing invalid pointer
-
----
- src/ShellClients/HideTracker.vala | 14 +++++++++++++-
- 1 file changed, 13 insertions(+), 1 deletion(-)
-
 diff --git a/src/ShellClients/HideTracker.vala b/src/ShellClients/HideTracker.vala
-index a5c305918..ec9d2bbb6 100644
+index a5c30591..7a8344c9 100644
 --- a/src/ShellClients/HideTracker.vala
 +++ b/src/ShellClients/HideTracker.vala
 @@ -14,7 +14,7 @@ public class Gala.HideTracker : Object {
@@ -53,3 +44,25 @@ index a5c305918..ec9d2bbb6 100644
              if (!panel.window.is_ancestor_of_transient (new_window_actor.meta_window)) {
                  return;
              }
+@@ -87,6 +99,10 @@ public class Gala.HideTracker : Object {
+     }
+ 
+     private void check_trigger_conditions () {
++        if (panel == null) {
++            return;
++        }
++
+         if (hovered || has_transients || panel.window.has_focus ()) {
+             trigger_show ();
+         } else {
+@@ -178,6 +194,10 @@ public class Gala.HideTracker : Object {
+             return;
+         }
+ 
++        if (panel == null) {
++            return;
++        }
++
+         if (!display.get_monitor_in_fullscreen (panel.window.get_monitor ()) ||
+             behavior_settings.get_boolean ("enable-hotcorners-in-fullscreen")
+         ) {
