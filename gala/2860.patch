@@ -1,0 +1,55 @@
+From d984d91d98df7da1ef729df219a1b1dd87762320 Mon Sep 17 00:00:00 2001
+From: Leonhard <leo.kargl@proton.me>
+Date: Sat, 27 Jun 2026 14:10:32 +0200
+Subject: [PATCH] HideTracker: Guard against accessing invalid pointer
+
+---
+ src/ShellClients/HideTracker.vala | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/src/ShellClients/HideTracker.vala b/src/ShellClients/HideTracker.vala
+index a5c305918..ec9d2bbb6 100644
+--- a/src/ShellClients/HideTracker.vala
++++ b/src/ShellClients/HideTracker.vala
+@@ -14,7 +14,7 @@ public class Gala.HideTracker : Object {
+     public signal void show ();
+ 
+     public Meta.Display display { get; construct; }
+-    public unowned PanelWindow panel { get; construct; }
++    public unowned PanelWindow? panel { get; construct; }
+ 
+     private static GLib.Settings behavior_settings;
+ 
+@@ -37,6 +37,10 @@ public class Gala.HideTracker : Object {
+ 
+     construct {
+         panel.window.unmanaging.connect_after (() => {
++            /* The window was unmanaged so the panel will be freed because we only hold a weak reference,
++               therefore set it to null to avoid a dangling pointer */
++            panel = null;
++
+             // The timeouts hold refs on us so we stay connected to signal handlers that might
+             // access the panel which was already freed. To prevent that make sure we reset
+             // the timeouts so that we get freed immediately
+@@ -49,6 +53,10 @@ public class Gala.HideTracker : Object {
+         unowned var cursor_tracker = display.get_cursor_tracker ();
+ #endif
+         cursor_tracker.position_invalidated.connect (() => {
++            if (panel == null) {
++                return;
++            }
++
+             var has_pointer = panel.window.has_pointer ();
+ 
+             if (hovered != has_pointer) {
+@@ -72,6 +80,10 @@ public class Gala.HideTracker : Object {
+ 
+     private void on_window_created (Meta.Window new_window) {
+         InternalUtils.wait_for_window_actor (new_window, (new_window_actor) => {
++            if (panel == null) {
++                return;
++            }
++
+             if (!panel.window.is_ancestor_of_transient (new_window_actor.meta_window)) {
+                 return;
+             }
