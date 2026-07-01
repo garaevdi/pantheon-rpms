@@ -7,7 +7,7 @@
 Name:           gala
 Summary:        Gala Window Manager for elementary OS and Pantheon
 Version:        8.5.1^%{gitdate}.git%{shortcommit}
-Release:        %autorelease -b4
+Release:        %autorelease -b5
 License:        GPL-3.0-or-later
 
 URL:            https://github.com/elementary/%{name}
