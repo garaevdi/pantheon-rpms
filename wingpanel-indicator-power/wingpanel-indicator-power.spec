@@ -6,11 +6,13 @@
 Name:           wingpanel-indicator-power
 Summary:        Power indicator for wingpanel
 Version:        8.0.2
-Release:        %autorelease -b2
+Release:        %autorelease -b3
 License:        GPL-2.0-or-later
 
 URL:            https://github.com/elementary/%{srcname}
 Source0:        %{url}/archive/%{version}/%{srcname}-%{version}.tar.gz
+
+Patch0:         panel-power-gala-backlight-interface.patch
 
 BuildRequires:  gettext
 BuildRequires:  libappstream-glib
