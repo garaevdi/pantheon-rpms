@@ -9,11 +9,13 @@
 Name:           switchboard-plug-power
 Summary:        Switchboard Power plug
 Version:        8.1.0
-Release:        %autorelease -b2
+Release:        %autorelease -b3
 License:        GPL-3.0-or-later
 
 URL:            https://github.com/elementary/%{srcname}
 Source0:        %{url}/archive/%{version}/%{srcname}-%{version}.tar.gz
+
+Patch0:         settings-power-gala-brightness-interface.patch
 
 BuildRequires:  gettext
 BuildRequires:  libappstream-glib

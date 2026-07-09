@@ -1,0 +1,46 @@
+diff --git a/src/Interfaces.vala b/src/Interfaces.vala
+index 9d8bdb0f..38db9516 100644
+--- a/src/Interfaces.vala
++++ b/src/Interfaces.vala
+@@ -39,8 +39,8 @@ namespace Power {
+         public signal void changed ();
+     }
+ 
+-    [DBus (name = "org.gnome.SettingsDaemon.Power.Screen")]
+-    interface PowerSettings : GLib.Object {
++    [DBus (name = "io.elementary.gala.BrightnessManager")]
++    interface BrightnessManager : GLib.Object {
+         public abstract int brightness {get; set; }
+     }
+ 
+diff --git a/src/MainView.vala b/src/MainView.vala
+index f1899271..cd5fb0e7 100644
+--- a/src/MainView.vala
++++ b/src/MainView.vala
+@@ -27,12 +27,12 @@ public class Power.MainView : Switchboard.SettingsPage {
+     private double total_y_delta= 0;
+     private const double BRIGHTNESS_STEP = 4.0;
+ 
+-    private const string SETTINGS_DAEMON_NAME = "org.gnome.SettingsDaemon.Power";
+-    private const string SETTINGS_DAEMON_PATH = "/org/gnome/SettingsDaemon/Power";
++    private const string GALA_NAME = "io.elementary.gala";
++    private const string GALA_PATH = "/io/elementary/gala/BrightnessManager";
+ 
+     private Gtk.DropDown powerbutton_dropdown;
+     private Gtk.Scale scale;
+-    private PowerSettings screen;
++    private BrightnessManager screen;
+ 
+     private enum PowerActionType {
+         BLANK,
+@@ -64,8 +64,8 @@ public class Power.MainView : Switchboard.SettingsPage {
+         var power_manager = PowerManager.get_default ();
+ 
+         try {
+-            screen = Bus.get_proxy_sync (BusType.SESSION, SETTINGS_DAEMON_NAME,
+-                SETTINGS_DAEMON_PATH, DBusProxyFlags.GET_INVALIDATED_PROPERTIES);
++            screen = Bus.get_proxy_sync (BusType.SESSION, GALA_NAME,
++                GALA_PATH, DBusProxyFlags.GET_INVALIDATED_PROPERTIES);
+         } catch (IOError e) {
+             warning ("Failed to get settings daemon for brightness setting");
+         }
