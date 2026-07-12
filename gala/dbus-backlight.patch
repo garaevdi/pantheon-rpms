@@ -149,7 +149,7 @@ index aa42ee15e..ed50498be 100644
      'Widgets/WindowSwitcher/WindowSwitcherIcon.vala',
  )
  
-+if mutter50_dep.found()
++if mutter50_dep.found() or mutter51_dep.found()
 +    gala_bin_sources+=files('BrightnessManager.vala')
 +endif
 +
