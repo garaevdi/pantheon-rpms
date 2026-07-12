@@ -9,7 +9,7 @@
 Name:           switchboard-plug-system
 Summary:        Switchboard System Information plug
 Version:        8.2.3
-Release:        %autorelease
+Release:        %autorelease -b2
 License:        GPL-3.0-or-later
 
 URL:            https://github.com/elementary/%{srcname}
@@ -28,6 +28,7 @@ BuildRequires:  pkgconfig(gobject-2.0)
 BuildRequires:  pkgconfig(granite-7)
 BuildRequires:  pkgconfig(gtk4)
 BuildRequires:  pkgconfig(gudev-1.0)
+BuildRequires:  pkgconfig(json-glib-1.0)
 BuildRequires:  pkgconfig(libadwaita-1)
 BuildRequires:  pkgconfig(libgtop-2.0)
 BuildRequires:  pkgconfig(libsoup-3.0)
