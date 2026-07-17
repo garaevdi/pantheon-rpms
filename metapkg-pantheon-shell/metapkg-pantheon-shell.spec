@@ -1,0 +1,32 @@
+Name:           metapkg-pantheon-shell
+Summary:        Pantheon desktop metapackage
+Version:        1.0
+Release:        %autorelease
+License:        NO-LICENSE
+
+BuildArch:      noarch
+
+Requires:       elementary-dock
+Requires:       elementary-greeter
+Requires:       elementary-settings-daemon
+Requires:       elementary-wallpapers
+Requires:       gala
+Requires:       gala-wayland
+Requires:       pantheon-agent-polkit
+Requires:       wingpanel
+Requires:       xdg-desktop-portal-pantheon
+
+Suggests:       elementary-screenshot
+Suggests:       elementary-sound-theme
+
+%description
+%{summary}
+
+%posttrans
+systemctl set-default graphical.target
+systemctl enable lightdm.service
+
+%files
+
+%changelog
+%autochangelog
