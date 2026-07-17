@@ -1,6 +1,6 @@
 Name:           metapkg-pantheon-shell
 Summary:        Pantheon desktop metapackage
-Version:        1.0
+Version:        1.1
 Release:        %autorelease
 License:        NO-LICENSE
 
@@ -8,6 +8,7 @@ BuildArch:      noarch
 
 Requires:       elementary-dock
 Requires:       elementary-greeter
+Requires:       elementary-settings
 Requires:       elementary-settings-daemon
 Requires:       elementary-wallpapers
 Requires:       gala
