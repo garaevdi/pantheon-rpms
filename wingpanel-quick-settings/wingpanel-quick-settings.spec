@@ -29,6 +29,8 @@ BuildRequires:  pkgconfig(libportal)
 Requires:       wingpanel%{?_isa}
 Supplements:    wingpanel%{?_isa}
 
+Obsoletes:      wingpanel-indicator-a11y
+
 %description
 %{summary}
 
