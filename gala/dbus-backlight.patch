@@ -1,15 +1,125 @@
-From 0689518c541e72526a8384637dcb1c7733aa336f Mon Sep 17 00:00:00 2001
-From: Denis Garaev <garaevdi@yandex.ru>
-Date: Sat, 25 Apr 2026 21:36:46 +0300
-Subject: [PATCH 1/2] Vapi: small fixup
-
----
- vapi/Meta-18.metadata | 3 +++
- vapi/libmutter.vapi   | 6 +++---
- 2 files changed, 6 insertions(+), 3 deletions(-)
-
+diff --git a/data/gala.gschema.xml b/data/gala.gschema.xml
+index ea079697..a726ae8b 100644
+--- a/data/gala.gschema.xml
++++ b/data/gala.gschema.xml
+@@ -204,6 +204,16 @@
+       <summary>The shortcut to enable picture-in-picture window</summary>
+       <description>The shortcut to show the selection area to choose a window.</description>
+     </key>
++    <key type="as" name="brightness-brighter">
++      <default><![CDATA[['XF86MonBrightnessUp']]]></default>
++      <summary>Monitor brightness up</summary>
++      <description>Increase monitor brightness on supported panels</description>
++    </key>
++    <key type="as" name="brightness-dimmer">
++      <default><![CDATA[['XF86MonBrightnessDown']]]></default>
++      <summary>Monitor brightness down</summary>
++      <description>Decrease monitor brightness on supported panels</description>
++    </key>
+   </schema>
+ 
+   <schema path="/io/elementary/desktop/wm/animations/" id="io.elementary.desktop.wm.animations">
+diff --git a/src/BrightnessManager.vala b/src/BrightnessManager.vala
+new file mode 100644
+index 00000000..ee1761cd
+--- /dev/null
++++ b/src/BrightnessManager.vala
+@@ -0,0 +1,68 @@
++/*
++ * Copyright 2026 elementary, Inc. (https://elementary.io)
++ * SPDX-License-Identifier: GPL-3.0-or-later
++ *
++ * Authored by: Denis Garaev <garaevdi@outlook.com>
++ */
++
++#if HAS_MUTTER50
++[DBus (name = "io.elementary.gala.BrightnessManager")]
++public class Gala.BrightnessManager : GLib.Object {
++    public int brightness {
++        get {
++            if (backlight == null) {
++                return -1;
++            }
++            int min, max;
++            int value;
++            backlight.get_brightness_info (out min, out max);
++            value = backlight.get_brightness ();
++            return ((value - min) * 100) / (max - min);
++        }
++        set {
++            if (brightness == value || backlight == null) {
++                return;
++            }
++            int min, max;
++            backlight.get_brightness_info (out min, out max);
++            backlight.set_brightness ((int) (value * (max - min) / 100) + min);
++        }
++    }
++
++    [DBus (visible = false)]
++    public unowned Meta.Display display { private get; construct; }
++    private unowned Meta.MonitorManager monitor_manager;
++    private unowned Meta.Backlight? backlight;
++
++    public BrightnessManager (Meta.Display display) {
++        Object (
++            display: display
++        );
++    }
++
++    construct {
++        monitor_manager = display.get_context ().get_backend ().get_monitor_manager ();
++        monitor_manager.monitors_changed.connect (update_available_backlights);
++
++        var keybinding_settings = new GLib.Settings ("io.elementary.desktop.wm.keybindings");
++        display.add_keybinding ("brightness-brighter", keybinding_settings, Meta.KeyBindingFlags.NONE, () => {
++            brightness += 5;
++        });
++        display.add_keybinding ("brightness-dimmer", keybinding_settings, Meta.KeyBindingFlags.NONE, () => {
++            brightness -= 5;
++        });
++
++        update_available_backlights ();
++    }
++
++    private void update_available_backlights () {
++        backlight = null;
++        unowned var monitors = monitor_manager.get_monitors ();
++        foreach (unowned var monitor in monitors) {
++            if (monitor.is_primary () && monitor.is_active ()) {
++                backlight = monitor.get_backlight ();
++            }
++        }
++    }
++}
++#endif
+diff --git a/src/DBus.vala b/src/DBus.vala
+index d02a7595..3bd4c926 100644
+--- a/src/DBus.vala
++++ b/src/DBus.vala
+@@ -19,6 +19,9 @@ public class Gala.DBus {
+             (connection, name) => {
+                 try {
+                     connection.register_object ("/io/elementary/gala", WindowDragProvider.get_instance ());
++#if HAS_MUTTER50
++                    connection.register_object ("/io/elementary/gala/BrightnessManager", new BrightnessManager (wm.get_display ()));
++#endif
+                 } catch (Error e) {
+                     warning (e.message);
+                 }
+diff --git a/src/meson.build b/src/meson.build
+index 1395c66a..78f3b17f 100644
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -1,5 +1,6 @@
+ gala_bin_sources = files(
+     'BlurManager.vala',
++    'BrightnessManager.vala',
+     'DBus.vala',
+     'DBusAccelerator.vala',
+     'DaemonManager.vala',
 diff --git a/vapi/Meta-18.metadata b/vapi/Meta-18.metadata
-index 05cf306ee..d85250716 100644
+index 05cf306e..d8525071 100644
 --- a/vapi/Meta-18.metadata
 +++ b/vapi/Meta-18.metadata
 @@ -12,6 +12,7 @@ BackgroundContent cheader_filename="meta/meta-background-content.h"
@@ -37,7 +147,7 @@ index 05cf306ee..d85250716 100644
  MonitorSwitchConfigType cheader_filename="meta/meta-monitor-manager.h"
  MotionDirection cheader_filename="meta/common.h"
 diff --git a/vapi/libmutter.vapi b/vapi/libmutter.vapi
-index c474aadf4..c8c56e704 100644
+index c474aadf..c8c56e70 100644
 --- a/vapi/libmutter.vapi
 +++ b/vapi/libmutter.vapi
 @@ -294,7 +294,7 @@ namespace Meta {
@@ -66,93 +176,3 @@ index c474aadf4..c8c56e704 100644
  	public class Monitor : GLib.Object {
  		[CCode (has_construct_function = false)]
  		protected Monitor ();
-
-From 1053aae9dc0a7ca2c57da212f9df41129f907926 Mon Sep 17 00:00:00 2001
-From: Denis Garaev <garaevdi@yandex.ru>
-Date: Sat, 25 Apr 2026 21:37:05 +0300
-Subject: [PATCH 2/2] BrightnessManager: add basic dbus interface
-
----
- src/BrightnessManager.vala | 42 ++++++++++++++++++++++++++++++++++++++
- src/DBus.vala              |  3 +++
- src/meson.build            |  4 ++++
- 3 files changed, 49 insertions(+)
- create mode 100644 src/BrightnessManager.vala
-
-diff --git a/src/BrightnessManager.vala b/src/BrightnessManager.vala
-new file mode 100644
-index 000000000..41a5aa5ec
---- /dev/null
-+++ b/src/BrightnessManager.vala
-@@ -0,0 +1,42 @@
-+[DBus (name = "io.elementary.gala.BrightnessManager")]
-+public class Gala.BrightnessManager : GLib.Object {
-+    public int brightness {
-+        get {
-+            if (backlight == null) {
-+                return -1;
-+            }
-+            int min, max;
-+            int value;
-+            backlight.get_brightness_info (out min, out max);
-+            value = backlight.get_brightness ();
-+            return ((value - min) * 100) / (max - min);
-+        }
-+        set {
-+            if (brightness == value || backlight == null) {
-+                return;
-+            }
-+            int min, max;
-+            backlight.get_brightness_info (out min, out max);
-+            backlight.set_brightness ((int) (value * (max - min) / 100) + min);
-+        }
-+    }
-+
-+    private unowned Meta.MonitorManager monitor_manager;
-+    private unowned Meta.Backlight? backlight;
-+
-+    public BrightnessManager (WindowManagerGala wm) {
-+        monitor_manager = wm.get_display ().get_context ().get_backend ().get_monitor_manager ();
-+        monitor_manager.monitors_changed.connect (update_available_backlights);
-+        update_available_backlights ();
-+    }
-+
-+    private void update_available_backlights () {
-+        backlight = null;
-+        unowned var monitors = monitor_manager.get_monitors ();
-+        foreach (unowned var monitor in monitors) {
-+            if (monitor.is_primary () && monitor.is_active ()) {
-+                backlight = monitor.get_backlight ();
-+            }
-+        }
-+    }
-+}
-diff --git a/src/DBus.vala b/src/DBus.vala
-index d02a7595c..a7142a97a 100644
---- a/src/DBus.vala
-+++ b/src/DBus.vala
-@@ -19,6 +19,9 @@ public class Gala.DBus {
-             (connection, name) => {
-                 try {
-                     connection.register_object ("/io/elementary/gala", WindowDragProvider.get_instance ());
-+#if HAS_MUTTER50
-+                    connection.register_object ("/io/elementary/gala/BrightnessManager", new BrightnessManager (wm));
-+#endif
-                 } catch (Error e) {
-                     warning (e.message);
-                 }
-diff --git a/src/meson.build b/src/meson.build
-index aa42ee15e..ed50498be 100644
---- a/src/meson.build
-+++ b/src/meson.build
-@@ -72,6 +72,10 @@ gala_bin_sources = files(
-     'Widgets/WindowSwitcher/WindowSwitcherIcon.vala',
- )
- 
-+if mutter50_dep.found() or mutter51_dep.found()
-+    gala_bin_sources+=files('BrightnessManager.vala')
-+endif
-+
- gala_bin = executable(
-     'gala',
-     gala_bin_sources,
