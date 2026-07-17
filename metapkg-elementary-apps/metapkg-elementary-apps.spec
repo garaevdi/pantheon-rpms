@@ -1,6 +1,6 @@
 Name:           metapkg-elementary-apps
 Summary:        elementary apps metapackage
-Version:        1.1
+Version:        1.2
 Release:        %autorelease
 License:        NO-LICENSE
 
@@ -10,6 +10,7 @@ Requires:       elementary-bluetooth-daemon
 Requires:       switchboard
 
 Recommends:       appcenter
+Recommends:       elementary-calendar
 Recommends:       elementary-capnet-assis
 Recommends:       elementary-code
 Recommends:       elementary-files
