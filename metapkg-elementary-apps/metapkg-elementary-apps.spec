@@ -1,6 +1,6 @@
 Name:           metapkg-elementary-apps
 Summary:        elementary apps metapackage
-Version:        1.0
+Version:        1.1
 Release:        %autorelease
 License:        NO-LICENSE
 
@@ -9,18 +9,18 @@ BuildArch:      noarch
 Requires:       elementary-bluetooth-daemon
 Requires:       switchboard
 
-Suggests:       appcenter
-Suggests:       elementary-capnet-assis
-Suggests:       elementary-code
-Suggests:       elementary-files
-Suggests:       elementary-mail
-Suggests:       elementary-monitor
-Suggests:       elementary-onboarding
-Suggests:       elementary-photos
-Suggests:       elementary-shortcut-overlay
-Suggests:       elementary-sideload
-Suggests:       elementary-tasks
-Suggests:       elementary-terminal
+Recommends:       appcenter
+Recommends:       elementary-capnet-assis
+Recommends:       elementary-code
+Recommends:       elementary-files
+Recommends:       elementary-mail
+Recommends:       elementary-monitor
+Recommends:       elementary-onboarding
+Recommends:       elementary-photos
+Recommends:       elementary-shortcut-overlay
+Recommends:       elementary-sideload
+Recommends:       elementary-tasks
+Recommends:       elementary-terminal
 
 
 %description
