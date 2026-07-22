@@ -1,6 +1,6 @@
 Name:           metapkg-pantheon-shell
 Summary:        Pantheon desktop metapackage
-Version:        1.1
+Version:        1.2
 Release:        %autorelease
 License:        NO-LICENSE
 
@@ -22,10 +22,6 @@ Suggests:       elementary-sound-theme
 
 %description
 %{summary}
-
-%posttrans
-systemctl set-default graphical.target
-systemctl enable lightdm.service
 
 %files
 
