@@ -1,19 +1,20 @@
 %global srcname greeter
 %global appname io.elementary.greeter
 
-%global commit      28f36f775a4f4dda8b553e7bd212b5a2579b1f41
+%global commit      dc16de4d5bf61e8a7ebf7adef1a60d73796bd5db
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
-%global gitdate     20260424
+%global gitdate     20260701
 
 Name:           elementary-greeter
 Summary:        LightDM Login Screen for the elementary desktop
 Version:        8.1.2^%{gitdate}.git%{shortcommit}
-Release:        %autorelease -b3
+Release:        %autorelease
 License:        GPL-3.0-only AND GPL-3.0-or-later AND GPL-2.0-or-later
 
 URL:            https://github.com/elementary/greeter
 Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
-Patch0:         gala-greeter-compositor.patch
+Patch0:         0001-Use-gala-as-a-compositor.patch
+Patch1:         0002-Remove-greeter-compositor.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
@@ -22,41 +23,13 @@ BuildRequires:  libappstream-glib
 BuildRequires:  meson >= 0.58.0
 BuildRequires:  vala
 
-%if 0%{?fedora} >= 44
-BuildRequires:  pkgconfig(libmutter-18)
-BuildRequires:  pkgconfig(mutter-clutter-18)
-BuildRequires:  pkgconfig(mutter-cogl-18)
-BuildRequires:  pkgconfig(mutter-mtk-18)
-%endif
-%if 0%{?fedora} == 43
-BuildRequires:  pkgconfig(libmutter-17)
-BuildRequires:  pkgconfig(mutter-clutter-17)
-BuildRequires:  pkgconfig(mutter-cogl-17)
-BuildRequires:  pkgconfig(mutter-mtk-17)
-%endif
-%if 0%{?fedora} == 42
-BuildRequires:  pkgconfig(libmutter-16)
-BuildRequires:  pkgconfig(mutter-clutter-16)
-BuildRequires:  pkgconfig(mutter-cogl-16)
-BuildRequires:  pkgconfig(mutter-mtk-16)
-%endif
-%if 0%{?fedora} == 41
-BuildRequires:  pkgconfig(libmutter-15)
-BuildRequires:  pkgconfig(mutter-clutter-15)
-BuildRequires:  pkgconfig(mutter-cogl-15)
-BuildRequires:  pkgconfig(mutter-cogl-pango-15)
-BuildRequires:  pkgconfig(mutter-mtk-15)
-%endif
-
 BuildRequires:  pkgconfig(accountsservice)
-BuildRequires:  pkgconfig(clutter-gtk-1.0)
 BuildRequires:  pkgconfig(gdk-pixbuf-2.0)
 BuildRequires:  pkgconfig(gdk-wayland-3.0)
 BuildRequires:  pkgconfig(gdk-x11-3.0)
 BuildRequires:  pkgconfig(gee-0.8)
 BuildRequires:  pkgconfig(gio-2.0)
 BuildRequires:  pkgconfig(gio-unix-2.0)
-BuildRequires:  pkgconfig(gl)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(gmodule-2.0)
 BuildRequires:  pkgconfig(gnome-desktop-3.0)
@@ -64,15 +37,10 @@ BuildRequires:  pkgconfig(granite) >= 5.0
 BuildRequires:  pkgconfig(gtk+-3.0)
 BuildRequires:  pkgconfig(libhandy-1)
 BuildRequires:  pkgconfig(liblightdm-gobject-1)
-BuildRequires:  pkgconfig(wayland-client)
-BuildRequires:  pkgconfig(wayland-scanner)
-BuildRequires:  pkgconfig(x11)
 
 Requires:       lightdm%{?_isa}
 Requires:       wingpanel%{?_isa}
-
-# runtime requirement for numlock capture
-Requires:       numlockx
+Requires:       gala
 
 # requirements for default artwork
 Suggests:       elementary-icon-theme
@@ -119,7 +87,6 @@ appstream-util validate-relax --nonet \
 
 %config(noreplace) %{_sysconfdir}/lightdm/%{appname}.conf
 
-%{_bindir}/%{appname}-compositor
 %{_bindir}/%{appname}-session-manager
 %{_sbindir}/%{appname}
 
