@@ -7,7 +7,7 @@
 Name:           elementary-icon-theme
 Summary:        Named, vector icons for elementary OS
 Version:        8.2.0^%{gitdate}.git%{shortcommit}
-Release:        %autorelease -b2
+Release:        %autorelease
 License:        GPL-3.0-only
 
 URL:            https://github.com/elementary/%{srcname}
@@ -37,7 +37,7 @@ Requires:       hicolor-icon-theme
 
 
 %build
-%meson -Dvolume_icons=false -Dscale_factors=1
+%meson -Dvolume_icons=false
 %meson_build
 
 
