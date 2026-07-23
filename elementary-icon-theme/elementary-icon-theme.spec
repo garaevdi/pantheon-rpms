@@ -7,7 +7,7 @@
 Name:           elementary-icon-theme
 Summary:        Named, vector icons for elementary OS
 Version:        8.2.0^%{gitdate}.git%{shortcommit}
-Release:        %autorelease
+Release:        %autorelease -b3
 License:        GPL-3.0-only
 
 URL:            https://github.com/elementary/%{srcname}
