@@ -8,12 +8,13 @@
 Name:           wingpanel
 Summary:        Stylish top panel
 Version:        8.0.4^%{gitdate}.git%{shortcommit}
-Release:        %autorelease
+Release:        %autorelease -b2
 License:        GPL-3.0-or-later AND GPL-2.0-or-later AND LGPL-2.1-or-later
 
 URL:            https://github.com/elementary/%{name}
 Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
-Patch:          mutter50-wingpanel.patch
+Patch0:          0001-mutter50-wingpanel.patch
+Patch1:          0002-mutter51-wingpanel.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
@@ -22,7 +23,13 @@ BuildRequires:  libappstream-glib
 BuildRequires:  meson
 BuildRequires:  vala
 
-%if 0%{?fedora} >= 44
+%if 0%{?fedora} >= 45
+BuildRequires:  pkgconfig(libmutter-51)
+BuildRequires:  pkgconfig(mutter-clutter-51)
+BuildRequires:  pkgconfig(mutter-cogl-51)
+BuildRequires:  pkgconfig(mutter-mtk-51)
+%endif
+%if 0%{?fedora} == 44
 BuildRequires:  pkgconfig(libmutter-18)
 BuildRequires:  pkgconfig(mutter-clutter-18)
 BuildRequires:  pkgconfig(mutter-cogl-18)

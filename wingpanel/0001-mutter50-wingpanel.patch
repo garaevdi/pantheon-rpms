@@ -1,6 +1,48 @@
+From 8bc5eeb8f97c436494f744211046992d83a5e0b4 Mon Sep 17 00:00:00 2001
+From: Denis Garaev <64484944+garaevdi@users.noreply.github.com>
+Date: Tue, 31 Mar 2026 17:29:36 +0000
+Subject: [PATCH] Update vapi for Mutter50 (#679)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-authored-by: Danielle Foré <danielle@elementary.io>
+---
+ vapi/Clutter-18.metadata        | 145 ++++++++++++++++++++
+ vapi/Cogl-18-custom.vala        |  66 ++++++++++
+ vapi/Cogl-18.metadata           |  40 ++++++
+ vapi/Meta-18.metadata           | 176 +++++++++++++++++++++++++
+ vapi/Mtk-18.metadata            |   6 +
+ vapi/libmutter-18.deps          |   1 +
+ vapi/libmutter-18.vapi          |   1 +
+ vapi/libmutter.vapi             | 164 ++++++++++++++++++++++-
+ vapi/meson.build                |  69 ++++++++++
+ vapi/mutter-clutter-18.deps     |   6 +
+ vapi/mutter-clutter-18.vapi     |   1 +
+ vapi/mutter-clutter.vapi        | 188 +++++++++++++++++++++++++-
+ vapi/mutter-cogl-14.vapi        | 227 +++++++++++++++++++++++++++++++-
+ vapi/mutter-cogl-18.deps        |   5 +
+ vapi/mutter-cogl-18.vapi        |   1 +
+ vapi/mutter-mtk-13.vapi         |  11 ++
+ vapi/mutter-mtk-18.vapi         |   1 +
+ wingpanel-interface/meson.build |  11 ++
+ 18 files changed, 1107 insertions(+), 12 deletions(-)
+ create mode 100644 vapi/Clutter-18.metadata
+ create mode 100644 vapi/Cogl-18-custom.vala
+ create mode 100644 vapi/Cogl-18.metadata
+ create mode 100644 vapi/Meta-18.metadata
+ create mode 100644 vapi/Mtk-18.metadata
+ create mode 120000 vapi/libmutter-18.deps
+ create mode 120000 vapi/libmutter-18.vapi
+ create mode 100644 vapi/mutter-clutter-18.deps
+ create mode 120000 vapi/mutter-clutter-18.vapi
+ create mode 100644 vapi/mutter-cogl-18.deps
+ create mode 120000 vapi/mutter-cogl-18.vapi
+ create mode 120000 vapi/mutter-mtk-18.vapi
+
 diff --git a/vapi/Clutter-18.metadata b/vapi/Clutter-18.metadata
 new file mode 100644
-index 0000000..f7f4205
+index 00000000..f7f42051
 --- /dev/null
 +++ b/vapi/Clutter-18.metadata
 @@ -0,0 +1,145 @@
@@ -151,7 +193,7 @@ index 0000000..f7f4205
 +EVENT_PROPAGATE skip=false type="bool"
 diff --git a/vapi/Cogl-18-custom.vala b/vapi/Cogl-18-custom.vala
 new file mode 100644
-index 0000000..90d46b3
+index 00000000..90d46b33
 --- /dev/null
 +++ b/vapi/Cogl-18-custom.vala
 @@ -0,0 +1,66 @@
@@ -223,7 +265,7 @@ index 0000000..90d46b3
 +}
 diff --git a/vapi/Cogl-18.metadata b/vapi/Cogl-18.metadata
 new file mode 100644
-index 0000000..f66d6f4
+index 00000000..f66d6f40
 --- /dev/null
 +++ b/vapi/Cogl-18.metadata
 @@ -0,0 +1,40 @@
@@ -269,7 +311,7 @@ index 0000000..f66d6f4
 +PIXEL_FORMAT_MAX_PLANES parent = "Cogl.PixelFormat" name="MAX_PLANES"
 diff --git a/vapi/Meta-18.metadata b/vapi/Meta-18.metadata
 new file mode 100644
-index 0000000..04355e7
+index 00000000..04355e74
 --- /dev/null
 +++ b/vapi/Meta-18.metadata
 @@ -0,0 +1,176 @@
@@ -451,7 +493,7 @@ index 0000000..04355e7
 +X11Display sealed
 diff --git a/vapi/Mtk-18.metadata b/vapi/Mtk-18.metadata
 new file mode 100644
-index 0000000..f804d1b
+index 00000000..f804d1bc
 --- /dev/null
 +++ b/vapi/Mtk-18.metadata
 @@ -0,0 +1,6 @@
@@ -463,7 +505,7 @@ index 0000000..f804d1b
 +MONITOR_N_TRANSFORMS skip
 diff --git a/vapi/libmutter-18.deps b/vapi/libmutter-18.deps
 new file mode 120000
-index 0000000..18c721d
+index 00000000..18c721de
 --- /dev/null
 +++ b/vapi/libmutter-18.deps
 @@ -0,0 +1 @@
@@ -471,14 +513,14 @@ index 0000000..18c721d
 \ No newline at end of file
 diff --git a/vapi/libmutter-18.vapi b/vapi/libmutter-18.vapi
 new file mode 120000
-index 0000000..ff0e578
+index 00000000..ff0e578a
 --- /dev/null
 +++ b/vapi/libmutter-18.vapi
 @@ -0,0 +1 @@
 +libmutter-17.vapi
 \ No newline at end of file
 diff --git a/vapi/libmutter.vapi b/vapi/libmutter.vapi
-index d825594..4a16a61 100644
+index d825594e..922c6959 100644
 --- a/vapi/libmutter.vapi
 +++ b/vapi/libmutter.vapi
 @@ -105,8 +105,10 @@ namespace Meta {
@@ -585,7 +627,17 @@ index d825594..4a16a61 100644
  #if HAS_MUTTER46
  		public void set_input_focus (Meta.Window window, uint32 timestamp);
  #else
-@@ -533,15 +561,23 @@ namespace Meta {
+@@ -525,7 +553,9 @@ namespace Meta {
+ 		public signal void accelerator_deactivated (uint object, Clutter.InputDevice p0, uint p1);
+ #endif
+ 		public signal void closing ();
++#if !HAS_MUTTER50
+ 		public signal void cursor_updated ();
++#endif
+ 		[CCode (cname = "focus-window")]
+ 		public signal void do_focus_window (Meta.Window object, int64 p0);
+ 		public signal void gl_video_memory_purged ();
+@@ -533,15 +563,23 @@ namespace Meta {
  		public signal void grab_op_end (Meta.Window object, Meta.GrabOp p0);
  		public signal void in_fullscreen_changed ();
  		public signal bool init_xserver (GLib.Task object);
@@ -609,7 +661,7 @@ index d825594..4a16a61 100644
  		public signal void showing_desktop_changed ();
  		public signal void window_created (Meta.Window object);
  		public signal void window_demands_attention (Meta.Window object);
-@@ -593,6 +629,9 @@ namespace Meta {
+@@ -593,6 +631,9 @@ namespace Meta {
  		[CCode (has_construct_function = false)]
  		protected IdleMonitor ();
  		public uint add_idle_watch (uint64 interval_msec, owned Meta.IdleMonitorWatchFunc? callback);
@@ -619,7 +671,7 @@ index d825594..4a16a61 100644
  		public uint add_user_active_watch (owned Meta.IdleMonitorWatchFunc? callback);
  		public int64 get_idletime ();
  		public void remove_watch (uint id);
-@@ -612,6 +651,18 @@ namespace Meta {
+@@ -612,6 +653,18 @@ namespace Meta {
  		[CCode (cheader_filename = "meta/keybindings.h", cname = "meta_keybindings_set_custom_handler")]
  		public static bool set_custom_handler (string name, owned Meta.KeyHandlerFunc? handler);
  	}
@@ -638,7 +690,7 @@ index d825594..4a16a61 100644
  	[CCode (cheader_filename = "meta/types.h", type_id = "meta_laters_get_type ()")]
  	public class Laters : GLib.Object {
  		[CCode (has_construct_function = false)]
-@@ -661,6 +712,9 @@ namespace Meta {
+@@ -661,6 +714,9 @@ namespace Meta {
  		[CCode (has_construct_function = false)]
  		protected MonitorManager ();
  		public bool can_switch_config ();
@@ -648,7 +700,7 @@ index d825594..4a16a61 100644
  		public int get_display_configuration_timeout ();
  		public bool get_is_builtin_display_on ();
  #if HAS_MUTTER49
-@@ -673,8 +727,12 @@ namespace Meta {
+@@ -673,8 +729,12 @@ namespace Meta {
  		public bool get_panel_orientation_managed ();
  		public Meta.MonitorSwitchConfigType get_switch_config ();
  		public void switch_config (Meta.MonitorSwitchConfigType config_type);
@@ -661,7 +713,7 @@ index d825594..4a16a61 100644
  #if !HAS_MUTTER48
  		[NoAccessorMethod]
  		public string experimental_hdr { owned get; set; }
-@@ -785,16 +843,18 @@ namespace Meta {
+@@ -785,16 +845,18 @@ namespace Meta {
  		[NoWrapper]
  		public virtual void unminimize (Meta.WindowActor actor);
  		public void unminimize_completed (Meta.WindowActor actor);
@@ -681,7 +733,7 @@ index d825594..4a16a61 100644
  #endif
  	}
  	[CCode (cheader_filename = "meta/meta-remote-access-controller.h", type_id = "meta_remote_access_controller_get_type ()")]
-@@ -1001,6 +1061,9 @@ namespace Meta {
+@@ -1001,6 +1063,9 @@ namespace Meta {
  		protected Window ();
  		public void activate (uint32 current_time);
  		public void activate_with_workspace (uint32 current_time, Meta.Workspace workspace);
@@ -691,7 +743,7 @@ index d825594..4a16a61 100644
  		public bool allows_move ();
  		public bool allows_resize ();
  #if HAS_MUTTER49
-@@ -1101,6 +1164,9 @@ namespace Meta {
+@@ -1101,6 +1166,9 @@ namespace Meta {
  		public bool has_pointer ();
  #if HAS_MUTTER49
  		public void hide_from_window_list ();
@@ -701,7 +753,7 @@ index d825594..4a16a61 100644
  #endif
  		public bool is_above ();
  		public bool is_always_on_all_workspaces ();
-@@ -1111,6 +1177,9 @@ namespace Meta {
+@@ -1111,6 +1179,9 @@ namespace Meta {
  #endif
  		public bool is_fullscreen ();
  		public bool is_hidden ();
@@ -711,7 +763,7 @@ index d825594..4a16a61 100644
  #if HAS_MUTTER49
  		public bool is_maximized ();
  #endif
-@@ -1144,6 +1213,9 @@ namespace Meta {
+@@ -1144,6 +1215,9 @@ namespace Meta {
  		public void raise_and_make_recent_on_workspace (Meta.Workspace workspace);
  #else
  		public void raise_and_make_recent ();
@@ -721,7 +773,7 @@ index d825594..4a16a61 100644
  #endif
  		public void set_compositor_private (GLib.Object priv);
  		public void set_demands_attention ();
-@@ -1165,6 +1237,9 @@ namespace Meta {
+@@ -1165,6 +1239,9 @@ namespace Meta {
  		public Mtk.Rectangle stage_to_protocol_rect (Mtk.Rectangle stage_rect);
  #endif
  		public void stick ();
@@ -731,7 +783,20 @@ index d825594..4a16a61 100644
  #if !HAS_MUTTER48
  		public bool titlebar_is_onscreen ();
  #endif
-@@ -1383,7 +1458,11 @@ namespace Meta {
+@@ -1183,6 +1260,12 @@ namespace Meta {
+ 		[CCode (cheader_filename = "meta/meta-x11-group.h")]
+ #endif
+ 		public unowned Meta.Group? x11_get_group ();
++#endif
++#if HAS_MUTTER50
++		[NoAccessorMethod]
++		public string a11y_dbus_name { owned get; }
++		[NoAccessorMethod]
++		public string a11y_object_path { owned get; }
+ #endif
+ 		[NoAccessorMethod]
+ 		public bool above { get; }
+@@ -1383,7 +1466,11 @@ namespace Meta {
  		public signal void workspaces_reordered ();
  	}
  	[CCode (cheader_filename = "meta/meta-x11-display.h", type_id = "meta_x11_display_get_type ()")]
@@ -743,7 +808,7 @@ index d825594..4a16a61 100644
  		[CCode (has_construct_function = false)]
  		protected X11Display ();
  #if !HAS_MUTTER47
-@@ -1404,10 +1483,12 @@ namespace Meta {
+@@ -1404,10 +1491,12 @@ namespace Meta {
  #endif
  		public void redirect_windows (Meta.Display display);
  		public void remove_event_func (uint id);
@@ -756,7 +821,7 @@ index d825594..4a16a61 100644
  #endif
  	}
  	[CCode (cheader_filename = "meta/meta-close-dialog.h", type_cname = "MetaCloseDialogInterface", type_id = "meta_close_dialog_get_type ()")]
-@@ -1421,6 +1502,12 @@ namespace Meta {
+@@ -1421,6 +1510,12 @@ namespace Meta {
  		[HasEmitter]
  		public signal void response (Meta.CloseDialogResponse response);
  	}
@@ -769,7 +834,7 @@ index d825594..4a16a61 100644
  	[CCode (cheader_filename = "meta/meta-inhibit-shortcuts-dialog.h", type_cname = "MetaInhibitShortcutsDialogInterface", type_id = "meta_inhibit_shortcuts_dialog_get_type ()")]
  	public interface InhibitShortcutsDialog : GLib.Object {
  		public abstract void hide ();
-@@ -1447,6 +1534,14 @@ namespace Meta {
+@@ -1447,6 +1542,14 @@ namespace Meta {
  		public Meta.Side side_type;
  		public Meta.EdgeType edge_type;
  	}
@@ -784,7 +849,7 @@ index d825594..4a16a61 100644
  	[CCode (cheader_filename = "meta/main.h", has_type_id = false)]
  	public struct FrameBorder {
  		public int16 left;
-@@ -1486,7 +1581,7 @@ namespace Meta {
+@@ -1486,7 +1589,7 @@ namespace Meta {
  		public Mtk.Rectangle rect;
  		public Meta.Side side;
  	}
@@ -793,7 +858,7 @@ index d825594..4a16a61 100644
  	[CCode (cheader_filename = "meta/main.h")]
  	public struct XEvent {
  	}
-@@ -1536,6 +1631,7 @@ namespace Meta {
+@@ -1536,6 +1639,7 @@ namespace Meta {
  		MINIMIZE,
  		NONE
  	}
@@ -801,7 +866,7 @@ index d825594..4a16a61 100644
  	[CCode (cheader_filename = "meta/meta-enums.h", cprefix = "META_COMPOSITOR_TYPE_", type_id = "meta_compositor_type_get_type ()")]
  	public enum CompositorType {
  		WAYLAND,
-@@ -1607,6 +1703,7 @@ namespace Meta {
+@@ -1607,6 +1711,7 @@ namespace Meta {
  		LAST
  #endif
  	}
@@ -809,7 +874,7 @@ index d825594..4a16a61 100644
  	[CCode (cheader_filename = "meta/util.h", cprefix = "META_DEBUG_PAINT_", type_id = "meta_debug_paint_flag_get_type ()")]
  	[Flags]
  	public enum DebugPaintFlag {
-@@ -1707,6 +1804,15 @@ namespace Meta {
+@@ -1707,6 +1812,15 @@ namespace Meta {
  		SUCCESS,
  		ERROR
  	}
@@ -825,7 +890,7 @@ index d825594..4a16a61 100644
  	[CCode (cheader_filename = "meta/common.h", cprefix = "META_FRAME_TYPE_", type_id = "meta_frame_type_get_type ()")]
  	public enum FrameType {
  		NORMAL,
-@@ -1717,7 +1823,9 @@ namespace Meta {
+@@ -1717,7 +1831,9 @@ namespace Meta {
  		BORDER,
  		ATTACHED,
  		LAST;
@@ -835,7 +900,7 @@ index d825594..4a16a61 100644
  		public unowned string to_string ();
  	}
  	[CCode (cheader_filename = "meta/common.h", cprefix = "META_GRAB_OP_", type_id = "meta_grab_op_get_type ()")]
-@@ -1758,9 +1866,20 @@ namespace Meta {
+@@ -1758,9 +1874,20 @@ namespace Meta {
  		SOUTH,
  		SOUTH_EAST,
  		STATIC;
@@ -856,7 +921,7 @@ index d825594..4a16a61 100644
  	[CCode (cheader_filename = "meta/meta-inhibit-shortcuts-dialog.h", cprefix = "META_INHIBIT_SHORTCUTS_DIALOG_RESPONSE_", type_id = "meta_inhibit_shortcuts_dialog_response_get_type ()")]
  	public enum InhibitShortcutsDialogResponse {
  		ALLOW,
-@@ -2028,7 +2147,7 @@ namespace Meta {
+@@ -2028,7 +2155,7 @@ namespace Meta {
  	public enum PadFeatureType {
  		RING,
  #if HAS_MUTTER49
@@ -865,7 +930,7 @@ index d825594..4a16a61 100644
  #endif
  		STRIP
  	}
-@@ -2073,7 +2192,9 @@ namespace Meta {
+@@ -2073,7 +2200,9 @@ namespace Meta {
  		DRAG_THRESHOLD,
  		LOCATE_POINTER,
  		CHECK_ALIVE_TIMEOUT;
@@ -875,7 +940,7 @@ index d825594..4a16a61 100644
  		public unowned string to_string ();
  	}
  	[CCode (cheader_filename = "meta/meta-selection-source.h", cprefix = "META_", type_id = "meta_selection_type_get_type ()")]
-@@ -2223,21 +2344,46 @@ namespace Meta {
+@@ -2223,21 +2352,46 @@ namespace Meta {
  #if !HAS_MUTTER48
  	[CCode (cheader_filename = "meta/main.h")]
  	public static void get_clutter_debug_flags (out Clutter.DebugFlag debug_flags, out Clutter.DrawDebugFlag draw_flags, out Clutter.PickDebugFlag pick_flags);
@@ -923,7 +988,7 @@ index d825594..4a16a61 100644
 +#endif
  }
 diff --git a/vapi/meson.build b/vapi/meson.build
-index 408feae..464346f 100644
+index 408feaec..464346fa 100644
 --- a/vapi/meson.build
 +++ b/vapi/meson.build
 @@ -414,3 +414,72 @@ if mutter49_dep.found()
@@ -1001,7 +1066,7 @@ index 408feae..464346f 100644
 +endif
 diff --git a/vapi/mutter-clutter-18.deps b/vapi/mutter-clutter-18.deps
 new file mode 100644
-index 0000000..b305687
+index 00000000..b3056877
 --- /dev/null
 +++ b/vapi/mutter-clutter-18.deps
 @@ -0,0 +1,6 @@
@@ -1013,14 +1078,14 @@ index 0000000..b305687
 +graphene-gobject-1.0
 diff --git a/vapi/mutter-clutter-18.vapi b/vapi/mutter-clutter-18.vapi
 new file mode 120000
-index 0000000..ee388ea
+index 00000000..ee388ea5
 --- /dev/null
 +++ b/vapi/mutter-clutter-18.vapi
 @@ -0,0 +1 @@
 +mutter-clutter-17.vapi
 \ No newline at end of file
 diff --git a/vapi/mutter-clutter.vapi b/vapi/mutter-clutter.vapi
-index 780e379..ae1a0b0 100644
+index 780e379f..ae1a0b08 100644
 --- a/vapi/mutter-clutter.vapi
 +++ b/vapi/mutter-clutter.vapi
 @@ -5235,6 +5235,9 @@ namespace Clutter {
@@ -1492,7 +1557,7 @@ index 780e379..ae1a0b0 100644
  	[CCode (cheader_filename = "clutter/clutter.h")]
  	public static void remove_debug_flags (Clutter.DebugFlag debug_flags, Clutter.DrawDebugFlag draw_flags, Clutter.PickDebugFlag pick_flags);
 diff --git a/vapi/mutter-cogl-14.vapi b/vapi/mutter-cogl-14.vapi
-index 55a4088..9298d66 100644
+index 55a4088c..c234e7b6 100644
 --- a/vapi/mutter-cogl-14.vapi
 +++ b/vapi/mutter-cogl-14.vapi
 @@ -122,16 +122,24 @@ namespace Cogl {
@@ -1583,7 +1648,18 @@ index 55a4088..9298d66 100644
  #endif
  		public bool is_hw_clock ();
  		public bool is_vsync ();
-@@ -447,6 +481,13 @@ namespace Cogl {
+@@ -404,6 +438,10 @@ namespace Cogl {
+ 	public sealed class Offscreen : Cogl.Framebuffer {
+ 		[CCode (has_construct_function = false)]
+ 		protected Offscreen ();
++#if HAS_MUTTER50
++		[CCode (has_construct_function = false)]
++		public Offscreen.from_formats (Cogl.Context context, Cogl.PixelFormat formats, size_t n_formats, int width, int height) throws GLib.Error;
++#endif
+ 		public unowned Cogl.Texture get_texture ();
+ 		[CCode (has_construct_function = false)]
+ 		public Offscreen.with_texture (Cogl.Texture texture);
+@@ -447,6 +485,13 @@ namespace Cogl {
  		public virtual void swap_region ([CCode (array_length_cname = "n_rectangles", array_length_pos = 1.5)] int[] rectangles, Cogl.FrameInfo info);
  #endif
  	}
@@ -1597,7 +1673,7 @@ index 55a4088..9298d66 100644
  #if !HAS_MUTTER47
  	[CCode (cheader_filename = "cogl/cogl.h", copy_function = "g_boxed_copy", free_function = "g_boxed_free", type_id = "cogl_onscreen_dirty_closure_get_type ()")]
  	[Compact]
-@@ -529,9 +570,15 @@ namespace Cogl {
+@@ -529,9 +574,15 @@ namespace Cogl {
  #endif
  		public void set_uniform_1f (int uniform_location, float value);
  		public void set_uniform_1i (int uniform_location, int value);
@@ -1614,7 +1690,7 @@ index 55a4088..9298d66 100644
  		public void set_user_program (Cogl.Program program);
  	}
  	[CCode (cheader_filename = "cogl/cogl.h", type_id = "cogl_pixel_buffer_get_type ()")]
-@@ -640,10 +687,16 @@ namespace Cogl {
+@@ -640,10 +691,16 @@ namespace Cogl {
  #if HAS_MUTTER47
  		public void* get_proc_address (string name);
  #endif
@@ -1633,7 +1709,7 @@ index 55a4088..9298d66 100644
  		public bool is_dma_buf_supported ();
  #if HAS_MUTTER48
  		public bool is_implicit_drm_modifier (uint64 modifier);
-@@ -657,6 +710,9 @@ public void* get_winsys ();
+@@ -657,9 +714,16 @@ public void* get_winsys ();
  #if !HAS_MUTTER47
  		public void set_winsys_id (Cogl.WinsysID winsys_id);
  #endif
@@ -1642,8 +1718,15 @@ index 55a4088..9298d66 100644
 +#endif
  #if HAS_MUTTER49
  		public void set_driver (Cogl.DriverId driver);
++#if HAS_MUTTER50
++		public void set_winsys_data (void* winsys, GLib.DestroyNotify destroy);
++#else
  		public void set_winsys (void* winsys);
-@@ -670,7 +726,11 @@ public void* get_winsys ();
++#endif
+ #endif
+ 	}
+ 	[CCode (cheader_filename = "cogl/cogl.h", type_id = "cogl_scanout_get_type ()")]
+@@ -670,7 +734,11 @@ public void* get_winsys ();
  #else
  		public Scanout (Cogl.ScanoutBuffer scanout_buffer);
  #endif
@@ -1655,7 +1738,7 @@ index 55a4088..9298d66 100644
  		public unowned Cogl.ScanoutBuffer get_buffer ();
  		public void get_dst_rect (Mtk.Rectangle dst_rect);
  		public void get_src_rect (Graphene.Rect rect);
-@@ -760,7 +820,7 @@ public void* get_winsys ();
+@@ -760,7 +828,7 @@ public void* get_winsys ();
  		public uint get_width ();
  		public bool is_get_data_supported ();
  		public bool is_sliced ();
@@ -1664,7 +1747,7 @@ index 55a4088..9298d66 100644
  		public void set_auto_mipmap (bool value);
  #endif
  		public void set_components (Cogl.TextureComponents components);
-@@ -808,10 +868,47 @@ public void* get_winsys ();
+@@ -808,10 +876,47 @@ public void* get_winsys ();
  		[CCode (has_construct_function = false, type = "CoglTexture*")]
  		public Texture2DSliced.with_size (Cogl.Context ctx, int width, int height, int max_waste);
  	}
@@ -1712,7 +1795,7 @@ index 55a4088..9298d66 100644
  	[CCode (cheader_filename = "cogl/cogl.h", type_cname = "CoglScanoutBufferInterface", type_id = "cogl_scanout_buffer_get_type ()")]
  	public interface ScanoutBuffer : GLib.Object {
  		public abstract int get_height ();
-@@ -881,6 +978,12 @@ public void* get_winsys ();
+@@ -881,6 +986,12 @@ public void* get_winsys ();
  		public void set_test_function (Cogl.DepthTestFunction function);
  		public void set_write_enabled (bool enable);
  	}
@@ -1725,7 +1808,7 @@ index 55a4088..9298d66 100644
  #if !HAS_MUTTER47
  	[CCode (cheader_filename = "cogl/cogl.h", has_type_id = false)]
  	public struct OnscreenDirtyInfo {
-@@ -908,6 +1011,14 @@ public void* get_winsys ();
+@@ -908,6 +1019,14 @@ public void* get_winsys ();
  		public float ty;
  		public Cogl.Color color;
  	}
@@ -1740,7 +1823,7 @@ index 55a4088..9298d66 100644
  #endif
  	[CCode (cheader_filename = "cogl/cogl.h", has_type_id = false)]
  	public struct VertexP2 {
-@@ -969,7 +1080,7 @@ public void* get_winsys ();
+@@ -969,7 +1088,7 @@ public void* get_winsys ();
  		public float s;
  		public float t;
  	}
@@ -1749,7 +1832,7 @@ index 55a4088..9298d66 100644
  	[CCode (cheader_filename = "cogl/cogl.h", has_type_id = false)]
  	public struct VertexP3T2C4 {
  		public float x;
-@@ -1088,6 +1199,21 @@ public void* get_winsys ();
+@@ -1088,6 +1207,21 @@ public void* get_winsys ();
  		SINGLE_PLANE,
  		NOT_EXTERNAL_ONLY
  	}
@@ -1771,7 +1854,7 @@ index 55a4088..9298d66 100644
  #endif
  	[CCode (cheader_filename = "cogl/cogl.h", cprefix = "COGL_EGL_IMAGE_FLAG_", has_type_id = false)]
  	[Flags]
-@@ -1113,19 +1239,60 @@ public void* get_winsys ();
+@@ -1113,19 +1247,60 @@ public void* get_winsys ();
  		OGL_FEATURE_ID_TEXTURE_HALF_FLOAT,
  		[CCode (cname = "COGL_FEATURE_ID_TEXTURE_NORM16")]
  		OGL_FEATURE_ID_TEXTURE_NORM16,
@@ -1833,7 +1916,7 @@ index 55a4088..9298d66 100644
  #if HAS_MUTTER48
  	[CCode (cheader_filename = "cogl/cogl.h", cprefix = "COGL_FILTER_", type_id = "cogl_filter_return_get_type ()")]
  #else
-@@ -1135,6 +1302,7 @@ public void* get_winsys ();
+@@ -1135,6 +1310,7 @@ public void* get_winsys ();
  		CONTINUE,
  		REMOVE
  	}
@@ -1841,7 +1924,7 @@ index 55a4088..9298d66 100644
  	[CCode (cheader_filename = "cogl/cogl.h", cprefix = "COGL_FRAME_EVENT_", has_type_id = false)]
  	public enum FrameEvent {
  		SYNC,
-@@ -1245,6 +1413,9 @@ public void* get_winsys ();
+@@ -1245,6 +1421,9 @@ public void* get_winsys ();
  		RGBA_FP_32323232_PRE,
  		R_16,
  		RG_1616,
@@ -1851,7 +1934,7 @@ index 55a4088..9298d66 100644
  		RGBA_16161616,
  		RGBA_16161616_PRE,
  		DEPTH_16,
-@@ -1354,23 +1525,37 @@ public void* get_winsys ();
+@@ -1354,23 +1533,37 @@ public void* get_winsys ();
  		CLOCKWISE,
  		COUNTER_CLOCKWISE
  	}
@@ -1889,7 +1972,7 @@ index 55a4088..9298d66 100644
  	[CCode (cheader_filename = "cogl/cogl.h", cprefix = "COGL_WINSYS_ID_", has_type_id = false)]
  	public enum WinsysID {
  		ANY,
-@@ -1379,6 +1564,7 @@ public void* get_winsys ();
+@@ -1379,6 +1572,7 @@ public void* get_winsys ();
  		EGL_XLIB,
  		CUSTOM
  	}
@@ -1897,7 +1980,7 @@ index 55a4088..9298d66 100644
  #if !HAS_MUTTER47
  	[CCode (cheader_filename = "cogl/cogl.h", cprefix = "COGL_BITMAP_ERROR_", has_type_id = false)]
  	public errordomain BitmapError {
-@@ -1471,12 +1657,23 @@ public void* get_winsys ();
+@@ -1471,12 +1665,23 @@ public void* get_winsys ();
  #if HAS_MUTTER48
  	[CCode (cheader_filename = "cogl/cogl.h", instance_pos = 3.9)]
  	public delegate void TextureForeachCallback (Cogl.Texture sub_texture, float sub_texture_coords, float meta_coords);
@@ -1921,7 +2004,7 @@ index 55a4088..9298d66 100644
  #endif
  	[CCode (cheader_filename = "cogl/cogl.h")]
  	[Version (replacement = "Color.init_from_hsl")]
-@@ -1504,8 +1701,10 @@ public void* get_winsys ();
+@@ -1504,8 +1709,10 @@ public void* get_winsys ();
  #else
  	public static void graphene_matrix_project_point (Graphene.Matrix matrix, ref float x, ref float y, ref float z, ref float w);
  #endif
@@ -1932,7 +2015,7 @@ index 55a4088..9298d66 100644
  	[CCode (cheader_filename = "cogl/cogl.h")]
  	public static void graphene_matrix_transform_points (Graphene.Matrix matrix, int n_components, size_t stride_in, void* points_in, size_t stride_out, void* points_out, int n_points);
  	[CCode (cheader_filename = "cogl/cogl.h")]
-@@ -1522,6 +1721,14 @@ public void* get_winsys ();
+@@ -1522,6 +1729,14 @@ public void* get_winsys ();
  	public static void poll_renderer_dispatch (Cogl.Renderer renderer, Cogl.PollFD poll_fds, int n_poll_fds);
  	[CCode (cheader_filename = "cogl/cogl.h")]
  	public static int poll_renderer_get_info (Cogl.Renderer renderer, Cogl.PollFD poll_fds, int n_poll_fds, int64 timeout);
@@ -1949,7 +2032,7 @@ index 55a4088..9298d66 100644
  	public static void set_tracing_disabled_on_thread (void* data);
 diff --git a/vapi/mutter-cogl-18.deps b/vapi/mutter-cogl-18.deps
 new file mode 100644
-index 0000000..8f69f28
+index 00000000..8f69f28a
 --- /dev/null
 +++ b/vapi/mutter-cogl-18.deps
 @@ -0,0 +1,5 @@
@@ -1960,14 +2043,14 @@ index 0000000..8f69f28
 +x11
 diff --git a/vapi/mutter-cogl-18.vapi b/vapi/mutter-cogl-18.vapi
 new file mode 120000
-index 0000000..dca44a1
+index 00000000..dca44a1c
 --- /dev/null
 +++ b/vapi/mutter-cogl-18.vapi
 @@ -0,0 +1 @@
 +mutter-cogl-17.vapi
 \ No newline at end of file
 diff --git a/vapi/mutter-mtk-13.vapi b/vapi/mutter-mtk-13.vapi
-index c588368..1f1981a 100644
+index c588368b..1f1981ac 100644
 --- a/vapi/mutter-mtk-13.vapi
 +++ b/vapi/mutter-mtk-13.vapi
 @@ -27,6 +27,9 @@ namespace Mtk {
@@ -1998,14 +2081,14 @@ index c588368..1f1981a 100644
  	[Version (replacement = "Rectangle.from_graphene_rect")]
 diff --git a/vapi/mutter-mtk-18.vapi b/vapi/mutter-mtk-18.vapi
 new file mode 120000
-index 0000000..efd075a
+index 00000000..efd075ab
 --- /dev/null
 +++ b/vapi/mutter-mtk-18.vapi
 @@ -0,0 +1 @@
 +mutter-mtk-17.vapi
 \ No newline at end of file
 diff --git a/wingpanel-interface/meson.build b/wingpanel-interface/meson.build
-index 24a49c4..fcda54d 100644
+index 24a49c48..fcda54d6 100644
 --- a/wingpanel-interface/meson.build
 +++ b/wingpanel-interface/meson.build
 @@ -60,6 +60,17 @@ if mutter49_dep.found()
