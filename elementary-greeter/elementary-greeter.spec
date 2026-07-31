@@ -1,9 +1,9 @@
 %global srcname greeter
 %global appname io.elementary.greeter
 
-%global commit      dc16de4d5bf61e8a7ebf7adef1a60d73796bd5db
+%global commit      2b47a17ccbb0f6820999ce6139201b28bb11b3bf
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
-%global gitdate     20260701
+%global gitdate     20260727
 
 Name:           elementary-greeter
 Summary:        LightDM Login Screen for the elementary desktop
@@ -13,8 +13,7 @@ License:        GPL-3.0-only AND GPL-3.0-or-later AND GPL-2.0-or-later
 
 URL:            https://github.com/elementary/greeter
 Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
-Patch0:         0001-Use-gala-as-a-compositor.patch
-Patch1:         0002-Remove-greeter-compositor.patch
+Patch1:         0001-Remove-greeter-compositor.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
@@ -25,17 +24,17 @@ BuildRequires:  vala
 
 BuildRequires:  pkgconfig(accountsservice)
 BuildRequires:  pkgconfig(gdk-pixbuf-2.0)
-BuildRequires:  pkgconfig(gdk-wayland-3.0)
-BuildRequires:  pkgconfig(gdk-x11-3.0)
+BuildRequires:  pkgconfig(gtk4-wayland)
+BuildRequires:  pkgconfig(gtk4-x11)
 BuildRequires:  pkgconfig(gee-0.8)
 BuildRequires:  pkgconfig(gio-2.0)
 BuildRequires:  pkgconfig(gio-unix-2.0)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(gmodule-2.0)
 BuildRequires:  pkgconfig(gnome-desktop-3.0)
-BuildRequires:  pkgconfig(granite) >= 5.0
-BuildRequires:  pkgconfig(gtk+-3.0)
-BuildRequires:  pkgconfig(libhandy-1)
+BuildRequires:  pkgconfig(granite-7)
+BuildRequires:  pkgconfig(gtk4)
+BuildRequires:  pkgconfig(libadwaita-1)
 BuildRequires:  pkgconfig(liblightdm-gobject-1)
 
 Requires:       lightdm%{?_isa}
