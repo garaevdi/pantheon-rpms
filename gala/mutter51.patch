@@ -1,35 +1,35 @@
 diff --git a/lib/Effects/BoxBlurManager.vala b/lib/Effects/BoxBlurManager.vala
-index a8e1e65e..ca47ffda 100644
+index e42d8aac..41123cf9 100644
 --- a/lib/Effects/BoxBlurManager.vala
 +++ b/lib/Effects/BoxBlurManager.vala
 @@ -35,21 +35,30 @@ public class Gala.BoxBlurManager : Object {
  
          private const float[] HORIZONTAL_PASS_DATA = { 1.0f, 0.0f };
          private const float[] VERTICAL_PASS_DATA = { 0.0f, 1.0f };
-+    #if HAS_MUTTER51
++#if HAS_MUTTER51
 +        private string shader;
-+    #endif
++#endif
  
          public int radius { set { set_uniform_value ("RADIUS", value); } }
  
          public BoxBlurEffect (PassDirection direction) {
              Object (
-+    #if !HAS_MUTTER51
-     #if HAS_MUTTER48
++#if !HAS_MUTTER51
+ #if HAS_MUTTER48
                  shader_type: Cogl.ShaderType.FRAGMENT
-     #else
+ #else
                  shader_type: Clutter.ShaderType.FRAGMENT_SHADER
-+    #endif
-     #endif
++#endif
+ #endif
              );
  
              try {
                  var bytes = GLib.resources_lookup_data ("/io/elementary/desktop/gala/shaders/box-blur.frag", NONE);
-+    #if HAS_MUTTER51
++#if HAS_MUTTER51
 +                shader = (string) bytes.get_data ();
-+    #else
++#else
                  set_shader_source ((string) bytes.get_data ());
-+    #endif
++#endif
              } catch (Error e) {
                  critical ("Unable to load box-blur.frag: %s", e.message);
              }
@@ -37,12 +37,12 @@ index a8e1e65e..ca47ffda 100644
              set_uniform_value ("DIRECTION", direction_value);
          }
  
-+    #if HAS_MUTTER51
++#if HAS_MUTTER51
 +        public override Cogl.Snippet get_static_snippet () {
 +            // TODO: split declarations from shader code and put it here
 +            return new Cogl.Snippet (Cogl.SnippetHook.FRAGMENT, null, shader);
 +        }
-+    #endif
++#endif
 +
          public override void set_actor (Clutter.Actor? new_actor) {
              if (actor != null) {
@@ -95,11 +95,11 @@ index 641339bf..49a338c3 100644
          if (actor != null) {
              actor.notify["width"].disconnect (update_actor_size);
 diff --git a/meson.build b/meson.build
-index 9e99604a..0a8d09de 100644
+index c37cb609..e98acb03 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -151,6 +151,17 @@ if mutter50_dep.found()
- 	vala_flags = ['--define', 'HAS_MUTTER43', '--define', 'HAS_MUTTER44', '--define', 'HAS_MUTTER45', '--define', 'HAS_MUTTER46', '--define', 'HAS_MUTTER47', '--define', 'HAS_MUTTER48', '--define', 'HAS_MUTTER49', '--define', 'HAS_MUTTER50']
+@@ -140,6 +140,17 @@ if mutter50_dep.found()
+ 	vala_flags = ['--define', 'HAS_MUTTER47', '--define', 'HAS_MUTTER48', '--define', 'HAS_MUTTER49', '--define', 'HAS_MUTTER50']
  endif
  
 +mutter51_dep = dependency('libmutter-51', version: ['>= 51', '< 52'], required: false)
@@ -711,7 +711,7 @@ index 00000000..d08c01a0
 +libmutter-18.vapi
 \ No newline at end of file
 diff --git a/vapi/libmutter.vapi b/vapi/libmutter.vapi
-index c474aadf..6532492e 100644
+index 9b6a8157..f17f60c5 100644
 --- a/vapi/libmutter.vapi
 +++ b/vapi/libmutter.vapi
 @@ -29,8 +29,10 @@ namespace Meta {
@@ -725,7 +725,7 @@ index c474aadf..6532492e 100644
  		[CCode (cheader_filename = "meta/prefs.h")]
  		public static int get_cursor_size ();
  		[CCode (cheader_filename = "meta/prefs.h")]
-@@ -1132,10 +1134,16 @@ namespace Meta {
+@@ -1050,10 +1052,16 @@ namespace Meta {
  		public bool get_icon_geometry (out Mtk.Rectangle rect);
  		public uint64 get_id ();
  		public Meta.StackLayer get_layer ();
@@ -743,10 +743,10 @@ index c474aadf..6532492e 100644
  		public int get_monitor ();
  		public unowned string? get_mutter_hints ();
 diff --git a/vapi/meson.build b/vapi/meson.build
-index 9d11aef0..b62f2a3e 100644
+index 1e9695b4..8266eaa3 100644
 --- a/vapi/meson.build
 +++ b/vapi/meson.build
-@@ -486,3 +486,75 @@ if mutter50_dep.found()
+@@ -401,3 +401,75 @@ if mutter50_dep.found()
  		output: 'libmutter-18.vapi'
  	)
  endif
@@ -843,10 +843,10 @@ index 00000000..f71bfbc0
 +mutter-clutter-18.vapi
 \ No newline at end of file
 diff --git a/vapi/mutter-clutter.vapi b/vapi/mutter-clutter.vapi
-index b6c473e0..8a5dff5c 100644
+index e2908e84..c7c7855e 100644
 --- a/vapi/mutter-clutter.vapi
 +++ b/vapi/mutter-clutter.vapi
-@@ -5221,6 +5221,10 @@ namespace Clutter {
+@@ -5211,6 +5211,10 @@ namespace Clutter {
  		public Cogl.Color get_background_color ();
  #else
  		public Clutter.Color get_background_color ();
@@ -857,7 +857,7 @@ index b6c473e0..8a5dff5c 100644
  #endif
  		public unowned Clutter.Actor? get_child_at_index (int index_);
  		public Graphene.Matrix get_child_transform ();
-@@ -6192,6 +6196,9 @@ namespace Clutter {
+@@ -6117,6 +6121,9 @@ namespace Clutter {
  		public double get_gesture_pinch_scale ();
  		public uint32 get_im_delete_length ();
  		public bool get_im_location (int32 offset, int32 anchor);
@@ -867,7 +867,7 @@ index b6c473e0..8a5dff5c 100644
  		public Clutter.PreeditResetMode get_im_preedit_reset_mode ();
  		public unowned string get_im_text ();
  		public uint16 get_key_code ();
-@@ -6590,6 +6597,10 @@ namespace Clutter {
+@@ -6475,6 +6482,10 @@ namespace Clutter {
  	public abstract class InputFocus : GLib.Object {
  		[CCode (has_construct_function = false)]
  		protected InputFocus ();
@@ -878,7 +878,7 @@ index b6c473e0..8a5dff5c 100644
  		[NoWrapper]
  		public virtual void commit_text (string text);
  		[NoWrapper]
-@@ -6610,7 +6621,11 @@ namespace Clutter {
+@@ -6495,7 +6506,11 @@ namespace Clutter {
  		public void set_cursor_location (Graphene.Rect rect);
  		public void set_input_panel_state (Clutter.InputPanelState state);
  		[NoWrapper]
@@ -890,7 +890,7 @@ index b6c473e0..8a5dff5c 100644
  		public void set_surrounding (string text, uint cursor, uint anchor);
  	}
  	[CCode (cheader_filename = "clutter/clutter.h", type_id = "clutter_input_method_get_type ()")]
-@@ -6627,10 +6642,19 @@ namespace Clutter {
+@@ -6512,10 +6527,19 @@ namespace Clutter {
  		public virtual void reset ();
  		[NoWrapper]
  		public virtual void set_cursor_location (Graphene.Rect rect);
@@ -910,7 +910,7 @@ index b6c473e0..8a5dff5c 100644
  		[NoWrapper]
  		public virtual void update_content_hints (Clutter.InputContentHintFlags hint);
  		[NoWrapper]
-@@ -6683,6 +6707,23 @@ namespace Clutter {
+@@ -6564,6 +6588,23 @@ namespace Clutter {
  		public GLib.Value initial { owned get; set; }
  		public GLib.Type value_type { get; construct; }
  	}
@@ -934,7 +934,7 @@ index b6c473e0..8a5dff5c 100644
  	[CCode (cheader_filename = "clutter/clutter.h", has_type_id = false)]
  	[Compact]
  	public class KeyEvent : Clutter.Event {
-@@ -6813,6 +6854,16 @@ namespace Clutter {
+@@ -6650,6 +6691,16 @@ namespace Clutter {
  		[CCode (has_construct_function = false, type = "ClutterAction*")]
  		public LongPressGesture ();
  	}
@@ -951,7 +951,7 @@ index b6c473e0..8a5dff5c 100644
  #endif
  	[CCode (cheader_filename = "clutter/clutter.h", has_type_id = false)]
  	[Compact]
-@@ -7169,6 +7220,16 @@ namespace Clutter {
+@@ -6912,6 +6963,16 @@ namespace Clutter {
  		public void set_scroll_mode (Clutter.ScrollMode mode);
  		public Clutter.ScrollMode scroll_mode { get; set; }
  	}
@@ -968,8 +968,8 @@ index b6c473e0..8a5dff5c 100644
  #endif
  	[CCode (cheader_filename = "clutter/clutter.h", has_type_id = false)]
  	[Compact]
-@@ -7295,6 +7356,13 @@ namespace Clutter {
- #endif
+@@ -7032,6 +7093,13 @@ namespace Clutter {
+ 	}
  	[CCode (cheader_filename = "clutter/clutter.h", type_id = "clutter_shader_effect_get_type ()")]
  	public class ShaderEffect : Clutter.OffscreenEffect {
 +#if HAS_MUTTER51
@@ -982,7 +982,7 @@ index b6c473e0..8a5dff5c 100644
  		[CCode (has_construct_function = false, type = "ClutterEffect*")]
  #if HAS_MUTTER48
  		public ShaderEffect (Cogl.ShaderType shader_type);
-@@ -7311,12 +7379,18 @@ namespace Clutter {
+@@ -7043,12 +7111,18 @@ namespace Clutter {
  		[NoWrapper]
  		public virtual string get_static_shader_source ();
  		public bool set_shader_source (string source);
@@ -1001,7 +1001,7 @@ index b6c473e0..8a5dff5c 100644
  #endif
  	}
  	[CCode (cheader_filename = "clutter/clutter.h", type_id = "clutter_shader_float_get_type ()")]
-@@ -7420,6 +7494,9 @@ namespace Clutter {
+@@ -7148,6 +7222,9 @@ namespace Clutter {
  		public Clutter.Content paint_to_content (Mtk.Rectangle rect, float scale, Clutter.PaintFlag paint_flags) throws GLib.Error;
  		public void paint_to_framebuffer (Cogl.Framebuffer framebuffer, Mtk.Rectangle rect, float scale, Clutter.PaintFlag paint_flags);
  #endif
@@ -1011,7 +1011,7 @@ index b6c473e0..8a5dff5c 100644
  #if !HAS_MUTTER49
  		public bool pointing_input_foreach (Clutter.StageInputForeachFunc func);
  #endif
-@@ -7433,7 +7510,9 @@ namespace Clutter {
+@@ -7161,7 +7238,9 @@ namespace Clutter {
  		public void set_active (bool is_active);
  #endif
  		public void set_key_focus (Clutter.Actor? actor);
@@ -1020,8 +1020,8 @@ index b6c473e0..8a5dff5c 100644
 +#endif
  #if !HAS_MUTTER48
  		public void set_title (string title);
- #if HAS_MUTTER46
-@@ -8252,6 +8331,14 @@ namespace Clutter {
+ 		public void update_device (Clutter.InputDevice device, Clutter.EventSequence sequence, Clutter.InputDevice source_device, Graphene.Point point, uint32 time, Clutter.Actor new_actor, Mtk.Region region, bool emit_crossing);
+@@ -7855,6 +7934,14 @@ namespace Clutter {
  		public int dwell_delay;
  		public int dwell_threshold;
  	}
@@ -1036,7 +1036,7 @@ index b6c473e0..8a5dff5c 100644
  #if HAS_MUTTER48
  	[CCode (cheader_filename = "clutter/clutter.h", has_type_id = false)]
  	public struct Primaries {
-@@ -8638,6 +8725,9 @@ namespace Clutter {
+@@ -8195,6 +8282,9 @@ namespace Clutter {
  	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_PHASE_", type_id = "clutter_event_phase_get_type ()")]
  	public enum EventPhase {
  		CAPTURE,
@@ -1046,7 +1046,7 @@ index b6c473e0..8a5dff5c 100644
  		BUBBLE
  	}
  	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_", type_id = "clutter_event_type_get_type ()")]
-@@ -8752,6 +8842,20 @@ namespace Clutter {
+@@ -8300,6 +8390,20 @@ namespace Clutter {
  		TOP,
  		BOTTOM
  	}
@@ -1067,7 +1067,7 @@ index b6c473e0..8a5dff5c 100644
  	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_INPUT_AXIS_", type_id = "clutter_input_axis_get_type ()")]
  	public enum InputAxis {
  		IGNORE,
-@@ -8805,6 +8909,10 @@ namespace Clutter {
+@@ -8353,6 +8457,10 @@ namespace Clutter {
  		HIDDEN_TEXT,
  		SENSITIVE_DATA,
  		LATIN,
@@ -1078,7 +1078,7 @@ index b6c473e0..8a5dff5c 100644
  		MULTILINE
  	}
  	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_INPUT_CONTENT_PURPOSE_", type_id = "clutter_input_content_purpose_get_type ()")]
-@@ -9037,6 +9145,19 @@ namespace Clutter {
+@@ -8573,6 +8681,19 @@ namespace Clutter {
  		CLEAR,
  		COMMIT
  	}
@@ -1098,7 +1098,7 @@ index b6c473e0..8a5dff5c 100644
  	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_REPAINT_FLAGS_", type_id = "clutter_repaint_flags_get_type ()")]
  	[Flags]
  	public enum RepaintFlags {
-@@ -9061,6 +9182,17 @@ namespace Clutter {
+@@ -8597,6 +8718,17 @@ namespace Clutter {
  		NEAREST,
  		TRILINEAR
  	}

@@ -19,11 +19,25 @@ index ea079697..a726ae8b 100644
    </schema>
  
    <schema path="/io/elementary/desktop/wm/animations/" id="io.elementary.desktop.wm.animations">
-diff --git a/src/BrightnessManager.vala b/src/BrightnessManager.vala
+diff --git a/src/DBus.vala b/src/DBus.vala
+index d02a7595..3bd4c926 100644
+--- a/src/DBus.vala
++++ b/src/DBus.vala
+@@ -19,6 +19,9 @@ public class Gala.DBus {
+             (connection, name) => {
+                 try {
+                     connection.register_object ("/io/elementary/gala", WindowDragProvider.get_instance ());
++#if HAS_MUTTER50
++                    connection.register_object ("/io/elementary/gala/BrightnessManager", new BrightnessManager (wm.get_display ()));
++#endif
+                 } catch (Error e) {
+                     warning (e.message);
+                 }
+diff --git a/src/Misc/BrightnessManager.vala b/src/Misc/BrightnessManager.vala
 new file mode 100644
 index 00000000..ee1761cd
 --- /dev/null
-+++ b/src/BrightnessManager.vala
++++ b/src/Misc/BrightnessManager.vala
 @@ -0,0 +1,68 @@
 +/*
 + * Copyright 2026 elementary, Inc. (https://elementary.io)
@@ -93,31 +107,18 @@ index 00000000..ee1761cd
 +    }
 +}
 +#endif
-diff --git a/src/DBus.vala b/src/DBus.vala
-index d02a7595..3bd4c926 100644
---- a/src/DBus.vala
-+++ b/src/DBus.vala
-@@ -19,6 +19,9 @@ public class Gala.DBus {
-             (connection, name) => {
-                 try {
-                     connection.register_object ("/io/elementary/gala", WindowDragProvider.get_instance ());
-+#if HAS_MUTTER50
-+                    connection.register_object ("/io/elementary/gala/BrightnessManager", new BrightnessManager (wm.get_display ()));
-+#endif
-                 } catch (Error e) {
-                     warning (e.message);
-                 }
 diff --git a/src/meson.build b/src/meson.build
-index 1395c66a..78f3b17f 100644
+index f4e36e4c..69deb72a 100644
 --- a/src/meson.build
 +++ b/src/meson.build
-@@ -1,5 +1,6 @@
- gala_bin_sources = files(
-     'BlurManager.vala',
-+    'BrightnessManager.vala',
-     'DBus.vala',
-     'DBusAccelerator.vala',
-     'DaemonManager.vala',
+@@ -25,6 +25,7 @@ gala_bin_sources = files(
+     'HotCorners/HotCorner.vala',
+     'HotCorners/HotCornerManager.vala',
+     'Misc/BlurManager.vala',
++    'Misc/BrightnessManager.vala',
+     'Misc/DaemonManager.vala',
+     'Misc/DBusAccelerator.vala',
+     'Misc/DesktopIntegration.vala',
 diff --git a/vapi/Meta-18.metadata b/vapi/Meta-18.metadata
 index 05cf306e..d8525071 100644
 --- a/vapi/Meta-18.metadata
@@ -147,10 +148,10 @@ index 05cf306e..d8525071 100644
  MonitorSwitchConfigType cheader_filename="meta/meta-monitor-manager.h"
  MotionDirection cheader_filename="meta/common.h"
 diff --git a/vapi/libmutter.vapi b/vapi/libmutter.vapi
-index c474aadf..c8c56e70 100644
+index 9b6a8157..ff133b5f 100644
 --- a/vapi/libmutter.vapi
 +++ b/vapi/libmutter.vapi
-@@ -294,7 +294,7 @@ namespace Meta {
+@@ -276,7 +276,7 @@ namespace Meta {
  		public void purge (GLib.File file);
  	}
  #if HAS_MUTTER49
@@ -159,7 +160,7 @@ index c474aadf..c8c56e70 100644
  	public abstract class Backlight : GLib.Object {
  		[CCode (has_construct_function = false)]
  		protected Backlight ();
-@@ -691,14 +691,14 @@ namespace Meta {
+@@ -647,14 +647,14 @@ namespace Meta {
  		public Meta.Workspace workspace { owned get; set; }
  	}
  #if HAS_MUTTER49
