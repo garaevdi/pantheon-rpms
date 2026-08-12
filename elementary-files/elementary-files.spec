@@ -5,7 +5,7 @@
 
 Name:           elementary-files
 Summary:        File manager from elementary
-Version:        7.3.1
+Version:        7.3.2
 Release:        %autorelease
 License:        GPL-3.0-or-later AND GPL-3.0-only AND GPL-2.0-or-later AND LGPL-3.0-or-later AND LGPL-3.0-only AND LGPL-2.1-or-later
 
