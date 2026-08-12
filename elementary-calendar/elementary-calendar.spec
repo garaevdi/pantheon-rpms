@@ -9,7 +9,7 @@ calendars in one place, like Google Calendar, Outlook and CalDAV.}
 
 Name:           elementary-calendar
 Summary:        Desktop calendar app designed for elementary
-Version:        8.0.1
+Version:        8.0.2
 Release:        %autorelease
 License:        GPL-3.0-or-later AND GPL-2.0-or-later AND LGPL-2.1-or-later AND LGPL-2.0-or-later
 
