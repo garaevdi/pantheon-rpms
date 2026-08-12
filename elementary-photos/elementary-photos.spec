@@ -5,7 +5,7 @@
 
 Name:           elementary-photos
 Summary:        Photo manager and viewer from elementary
-Version:        8.0.1
+Version:        8.0.2
 Release:        %autorelease
 License:        LGPL-2.1-or-later
 
@@ -79,7 +79,7 @@ appstream-util validate-relax --nonet \
 
 
 %files -f %{appname}.lang
-%license COPYING
+%license LICENSE
 %doc README.md
 
 %{_bindir}/%{appname}
