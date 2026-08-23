@@ -1,23 +1,13 @@
 %global srcname icons
 
-%global commit      366f1963082be26d11da2a333cb21a6c9ea6d2b1
-%global shortcommit %(c=%{commit}; echo ${c:0:7})
-%global gitdate     20260530
-
 Name:           elementary-icon-theme
 Summary:        Named, vector icons for elementary OS
-Version:        8.2.0^%{gitdate}.git%{shortcommit}
+Version:        9.0.0
 Release:        %autorelease -b3
 License:        GPL-3.0-only
 
 URL:            https://github.com/elementary/%{srcname}
-Source0:        %{url}/archive/%{commit}/%{srcname}-%{shortcommit}.tar.gz
-Patch0:         actions-gtk422.patch
-Patch1:         apps-gtk422.patch
-Patch2:         categories-gtk422.patch
-Patch3:         devices-gtk422.patch
-Patch4:         emblems-gtk422.patch
-Patch5:         mimes-gtk422.patch
+Source0:        %{url}/archive/%{version}/%{srcname}-%{version}.tar.gz
 
 BuildRequires:  meson >= 0.61
 BuildRequires:  gettext
@@ -33,7 +23,7 @@ Requires:       hicolor-icon-theme
 
 
 %prep
-%autosetup -n %{srcname}-%{commit} -p1
+%autosetup -n %{srcname}-%{version} -p1
 
 
 %build
