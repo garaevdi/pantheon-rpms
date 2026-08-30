@@ -1,28 +1,31 @@
 %global appname io.elementary.quick-settings
 %global srcname quick-settings
 
+%global commit      f999414ae2d18e95617748b848fd8def339aceb7
+%global shortcommit %(c=%{commit}; echo ${c:0:7})
+%global gitdate     20260903
+
 Name:           wingpanel-quick-settings
 Summary:        Access frequently used settings and system actions
-Version:        1.4.0
+Version:        1.4.0^%{gitdate}.git%{shortcommit}
 Release:        %autorelease
 License:        GPL-3.0-or-later AND GPL-2.0-or-later
 
 URL:            https://github.com/elementary/%{srcname}
-Source:         %{url}/archive/%{version}/%{srcname}-%{version}.tar.gz
+Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
 
 BuildRequires:  libappstream-glib
 BuildRequires:  meson
 BuildRequires:  vala >= 0.32.1
 
 BuildRequires:  pkgconfig(accountsservice)
-BuildRequires:  pkgconfig(gdk-wayland-3.0)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(gobject-2.0)
-BuildRequires:  pkgconfig(granite) >= 6.0.0
-BuildRequires:  pkgconfig(gtk+-3.0)
-BuildRequires:  pkgconfig(libhandy-1) >= 1.0
+BuildRequires:  pkgconfig(granite-7)
+BuildRequires:  pkgconfig(gtk4)
+BuildRequires:  pkgconfig(libadwaita-1)
 BuildRequires:  pkgconfig(packagekit-glib2)
-BuildRequires:  pkgconfig(wingpanel)
+BuildRequires:  pkgconfig(wingpanel-9)
 BuildRequires:  pkgconfig(wayland-client)
 BuildRequires:  pkgconfig(libportal)
 
@@ -36,7 +39,7 @@ Obsoletes:      wingpanel-indicator-a11y
 
 
 %prep
-%autosetup -n %{srcname}-%{version} -p1
+%autosetup -n %{srcname}-%{commit} -p1
 
 
 %build
@@ -62,7 +65,7 @@ appstream-util validate-relax --nonet \
 %license LICENSE
 %doc README.md
 
-%{_libdir}/wingpanel/lib%{srcname}.so
+%{_libdir}/wingpanel-9/lib%{srcname}.so
 
 %{_datadir}/glib-2.0/schemas/%{srcname}.gschema.xml
 %{_datadir}/metainfo/%{appname}.metainfo.xml
