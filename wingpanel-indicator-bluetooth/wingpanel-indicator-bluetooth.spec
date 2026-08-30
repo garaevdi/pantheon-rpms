@@ -3,14 +3,18 @@
 %global srcname panel-bluetooth
 %global appname io.elementary.wingpanel.bluetooth
 
+%global commit      80489e6b555b5854996a27b8b02dddfdddb4c83c
+%global shortcommit %(c=%{commit}; echo ${c:0:7})
+%global gitdate     20260830
+
 Name:           wingpanel-indicator-bluetooth
 Summary:        Bluetooth Indicator for wingpanel
-Version:        8.0.0
+Version:        8.0.0^%{gitdate}.git%{shortcommit}
 Release:        %autorelease
 License:        GPL-3.0-or-later AND GPL-2.0-or-later AND LGPL-2.1-or-later
 
 URL:            https://github.com/elementary/%{name}
-Source0:        %{url}/archive/%{version}/%{srcname}-%{version}.tar.gz
+Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
 
 BuildRequires:  gettext
 BuildRequires:  libappstream-glib
@@ -18,10 +22,9 @@ BuildRequires:  meson
 BuildRequires:  vala >= 0.22.0
 
 BuildRequires:  pkgconfig(glib-2.0) >= 2.32
-BuildRequires:  pkgconfig(granite) >= 6.0.0
-BuildRequires:  pkgconfig(gtk+-3.0)
-BuildRequires:  pkgconfig(libnotify)
-BuildRequires:  pkgconfig(wingpanel) >= 3.0.0
+BuildRequires:  pkgconfig(granite-7)
+BuildRequires:  pkgconfig(gtk4)
+BuildRequires:  pkgconfig(wingpanel-9)
 
 Requires:       bluez
 Requires:       wingpanel%{?_isa}
@@ -34,7 +37,7 @@ A bluetooth indicator for wingpanel.
 
 
 %prep
-%autosetup -n %{srcname}-%{version} -p1
+%autosetup -n %{srcname}-%{commit} -p1
 
 
 %build
@@ -45,7 +48,7 @@ A bluetooth indicator for wingpanel.
 %install
 %meson_install
 
-%find_lang bluetooth-indicator
+%find_lang io.elementary.panel.bluetooth
 
 # remove the specified stock icon from appdata (invalid in libappstream-glib)
 sed -i '/icon type="stock"/d' %{buildroot}/%{_datadir}/metainfo/%{appname}.metainfo.xml
@@ -56,13 +59,12 @@ appstream-util validate-relax --nonet \
     %{buildroot}/%{_datadir}/metainfo/%{appname}.metainfo.xml
 
 
-%files -f bluetooth-indicator.lang
+%files -f io.elementary.panel.bluetooth.lang
 %license COPYING
 %doc README.md
 
-%{_libdir}/wingpanel/libbluetooth.so
+%{_libdir}/wingpanel-9/libbluetooth.so
 
-%{_datadir}/glib-2.0/schemas/io.elementary.desktop.wingpanel.bluetooth.gschema.xml
 %{_datadir}/metainfo/%{appname}.metainfo.xml
 
 
