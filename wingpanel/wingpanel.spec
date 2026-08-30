@@ -1,20 +1,19 @@
 %global appname io.elementary.wingpanel
 %global glib_version 2.32.0
 
-%global commit      cd4852e3a28fa5b14dc2ea88810a4754d7e1d226
+%global commit      9eda202f268adb70e89376063974a3f7895e095c
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
-%global gitdate     20260128
+%global gitdate     20260902
 
 Name:           wingpanel
 Summary:        Stylish top panel
 Version:        8.0.4^%{gitdate}.git%{shortcommit}
-Release:        %autorelease -b2
+Release:        %autorelease
 License:        GPL-3.0-or-later AND GPL-2.0-or-later AND LGPL-2.1-or-later
 
 URL:            https://github.com/elementary/%{name}
 Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
-Patch0:          0001-mutter50-wingpanel.patch
-Patch1:          0002-mutter51-wingpanel.patch
+Patch0:         0002-mutter51-wingpanel.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
@@ -57,13 +56,12 @@ BuildRequires:  pkgconfig(mutter-mtk-15)
 
 BuildRequires:  pkgconfig(gala) >= 8.3.0
 BuildRequires:  pkgconfig(gee-0.8)
-BuildRequires:  pkgconfig(gdk-x11-3.0)
 BuildRequires:  pkgconfig(gio-2.0)
 BuildRequires:  pkgconfig(gio-unix-2.0)
 BuildRequires:  pkgconfig(glib-2.0) >= 2.32
 BuildRequires:  pkgconfig(gmodule-2.0)
-BuildRequires:  pkgconfig(granite) >= 5.4.0
-BuildRequires:  pkgconfig(gtk+-3.0) >= 3.10
+BuildRequires:  pkgconfig(granite-7)
+BuildRequires:  pkgconfig(gtk4)
 
 Requires:       hicolor-icon-theme
 
@@ -117,7 +115,7 @@ appstream-util validate-relax --nonet \
 
 %{_bindir}/%{appname}
 
-%{_libdir}/libwingpanel.so.8*
+%{_libdir}/libwingpanel-9.so.*
 %{_libdir}/gala/plugins/libwingpanel-interface.so
 
 %{_datadir}/applications/%{appname}.desktop
@@ -126,13 +124,13 @@ appstream-util validate-relax --nonet \
 %{_datadir}/metainfo/%{appname}.metainfo.xml
 
 %files devel
-%{_includedir}/wingpanel/
+%{_includedir}/wingpanel-9/
 
-%{_libdir}/libwingpanel.so
-%{_libdir}/pkgconfig/wingpanel.pc
+%{_libdir}/libwingpanel-9.so
+%{_libdir}/pkgconfig/wingpanel-9.pc
 
-%{_datadir}/vala/vapi/wingpanel.deps
-%{_datadir}/vala/vapi/wingpanel.vapi
+%{_datadir}/vala/vapi/wingpanel-9.deps
+%{_datadir}/vala/vapi/wingpanel-9.vapi
 
 %changelog
 %{autochangelog}
