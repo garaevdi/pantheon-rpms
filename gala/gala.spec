@@ -1,17 +1,13 @@
 %global glib_version 2.74.0
 
-%global commit      e475da3d87dea69a0e5ee078e1907c4dae4ef68a
-%global shortcommit %(c=%{commit}; echo ${c:0:7})
-%global gitdate     20260728
-
 Name:           gala
 Summary:        Gala Window Manager for elementary OS and Pantheon
-Version:        8.5.1^%{gitdate}.git%{shortcommit}
+Version:        8.6.0
 Release:        %autorelease
 License:        GPL-3.0-or-later
 
 URL:            https://github.com/elementary/%{name}
-Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
+Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
 
 Patch0:         mutter51.patch
 Patch1:         dbus-backlight.patch
@@ -127,7 +123,7 @@ This package contains the development headers
 
 
 %prep
-%autosetup -n %{name}-%{commit} -p1
+%autosetup -n %{name}-%{version} -p1
 
 
 %build
