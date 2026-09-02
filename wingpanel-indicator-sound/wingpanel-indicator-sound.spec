@@ -1,12 +1,12 @@
 %global __provides_exclude_from ^%{_libdir}/wingpanel/.*\\.so$
 
-%global srcname wingpanel-indicator-sound
+%global srcname panel-sound
 %global appname io.elementary.wingpanel.sound
 
 Name:           wingpanel-indicator-sound
 Summary:        Sound Indicator for wingpanel
 Version:        8.0.3
-Release:        %autorelease
+Release:        %autorelease -b2
 License:        GPL-3.0-only AND GPL-2.0-or-later AND LGPL-2.1-or-later
 
 URL:            https://github.com/elementary/%{name}
