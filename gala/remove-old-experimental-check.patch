@@ -1,0 +1,23 @@
+diff --git a/lib/Utils.vala b/lib/Utils.vala
+index 3e8be102..cedd4f57 100644
+--- a/lib/Utils.vala
++++ b/lib/Utils.vala
+@@ -333,6 +333,10 @@ namespace Gala {
+ 
+         private static bool? framebuffer_is_logical = null;
+         public static bool get_framebuffer_is_logical () {
++#if HAS_MUTTER50
++            // Since mutter-50 all framebuffers are logical by default
++            return true;
++#else
+             if (framebuffer_is_logical != null) {
+                 return framebuffer_is_logical;
+             }
+@@ -348,6 +352,7 @@ namespace Gala {
+             }
+ 
+             return framebuffer_is_logical;
++#endif
+         }
+ 
+         public static float get_ui_scaling_factor (Meta.Display display, int monitor_index) {
