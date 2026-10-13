@@ -1,145 +1,497 @@
-From 8ec14ef867595e874363c02abc84c16366bf8d48 Mon Sep 17 00:00:00 2001
-From: Denis Garaev <garaevdi@yandex.ru>
-Date: Thu, 9 Jul 2026 13:32:43 +0300
-Subject: [PATCH 1/5] Vapi: additions for mutter 50.3
-
----
- vapi/mutter-clutter.vapi | 47 ++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 47 insertions(+)
-
-diff --git a/vapi/mutter-clutter.vapi b/vapi/mutter-clutter.vapi
-index cf652deb0..ef263d976 100644
---- a/vapi/mutter-clutter.vapi
-+++ b/vapi/mutter-clutter.vapi
-@@ -6117,6 +6117,9 @@ namespace Clutter {
- 		public double get_gesture_pinch_scale ();
- 		public uint32 get_im_delete_length ();
- 		public bool get_im_location (int32 offset, int32 anchor);
-+#if HAS_MUTTER50
-+		public bool get_im_preedit_hints (Clutter.PreeditAttribute preedit_hints, uint n_preedit_hints);
+diff --git a/.github/workflows/main.yml b/.github/workflows/main.yml
+index 2910b9f6..90a3d764 100644
+--- a/.github/workflows/main.yml
++++ b/.github/workflows/main.yml
+@@ -59,7 +59,7 @@ jobs:
+       - uses: actions/checkout@v7
+       - name: Install Dependencies
+         run: |
+-          dnf install -y desktop-file-utils gettext gsettings-desktop-schemas-devel atk-devel clutter-devel libgee-devel glib2-devel gnome-desktop3-devel granite-devel granite-7-devel gtk3-devel gtk4-devel ibus-devel libhandy-devel mutter-devel sqlite-devel meson valac valadoc
++          dnf install -y desktop-file-utils gettext gsettings-desktop-schemas-devel atk-devel clutter-devel libgee-devel glib2-devel gnome-desktop3-devel granite-devel granite-7-devel gtk3-devel gtk4-devel ibus-devel libhandy-devel mutter-devel sqlite-devel meson valac valadoc glycin-devel
+       - name: Build
+         env:
+           DESTDIR: out
+@@ -113,4 +113,3 @@ jobs:
+ 
+       - name: Check POTFILES
+         run: bash .github/workflows/check-potfiles.sh
+-
+diff --git a/data/gala.gresource.xml b/data/gala.gresource.xml
+index 1bcc5685..70d00475 100644
+--- a/data/gala.gresource.xml
++++ b/data/gala.gresource.xml
+@@ -20,12 +20,6 @@
+     <file alias="buttons/close.svg" compressed="true" preprocess="xml-stripblanks">close.svg</file>
+     <file alias="buttons/resize.svg" compressed="true" preprocess="xml-stripblanks">resize.svg</file>
+   </gresource>
+-  <gresource prefix="/io/elementary/desktop/gala">
+-    <file compressed="true">shaders/box-blur.frag</file>
+-    <file compressed="true">shaders/colorblindness-correction.frag</file>
+-    <file compressed="true">shaders/monochrome.frag</file>
+-    <file compressed="true">shaders/rounded-corners.frag</file>
+-  </gresource>
+   <gresource prefix="/io/elementary/desktop/gala-daemon">
+     <file compressed="true">gala-daemon.css</file>
+   </gresource>
+diff --git a/data/shaders/box-blur.frag b/data/shaders/box-blur.frag
+deleted file mode 100644
+index 474759d1..00000000
+--- a/data/shaders/box-blur.frag
++++ /dev/null
+@@ -1,28 +0,0 @@
+-/*
+- * Copyright 2026 elementary, Inc. <https://elementary.io>
+- * SPDX-License-Identifier: GPL-3.0-or-later
+- */
+-
+-uniform sampler2D tex;
+-uniform int RADIUS;
+-uniform vec2 PIXEL_STEP;
+-uniform vec2 DIRECTION;
+-
+-void main() {
+-    if (RADIUS == 0) {
+-        cogl_color_out = texture2D(tex, cogl_tex_coord0_in.xy);
+-        return;
+-    }
+-
+-    vec4 sum = vec4(0, 0, 0, 0);
+-    int count = 0;
+-
+-    for (int i = -RADIUS; i <= RADIUS; i++) {
+-        vec2 offset = DIRECTION * PIXEL_STEP * i;
+-
+-        sum += texture2D(tex, cogl_tex_coord0_in.xy + offset);
+-        count += 1;
+-    }
+-
+-    cogl_color_out = sum / count;
+-}
+diff --git a/data/shaders/colorblindness-correction.frag b/data/shaders/colorblindness-correction.frag
+deleted file mode 100644
+index d1086fc0..00000000
+--- a/data/shaders/colorblindness-correction.frag
++++ /dev/null
+@@ -1,107 +0,0 @@
+-/*
+- * Copyright 2022-2023 GdH <G-dH@github.com>
+- * Copyright 2023-2026 elementary, Inc. <https://elementary.io>
+- * SPDX-License-Identifier: GPL-3.0-or-later
+- */
+-
+-uniform sampler2D tex;
+-uniform int COLORBLIND_MODE;
+-uniform float STRENGTH;
+-uniform bool PAUSE_FOR_SCREENSHOT;
+-
+-const mat3 RGB_TO_LMS = mat3(
+-    17.8824, 3.45565, 0.0299566,
+-    43.5161, 27.1554, 0.184309,
+-    4.11935, 3.86714, 1.46709
+-);
+-
+-const mat3 LMS_TO_RGB = mat3(
+-    0.0809444479, -0.0102485335, -0.000365296938,
+-    -0.130504409, 0.0540193266, -0.00412161469,
+-    0.116721066, -0.113614708, 0.693511405
+-);
+-
+-void main() {
+-    vec4 c = texture2D(tex, cogl_tex_coord0_in.xy);
+-
+-    if (PAUSE_FOR_SCREENSHOT) {
+-        cogl_color_out = c;
+-        return;
+-    }
+-
+-    vec3 lms = RGB_TO_LMS * c.rgb;
+-
+-    // Remove invisible colors
+-    mat3 deficiencyMat;
+-    if (COLORBLIND_MODE == 1 || COLORBLIND_MODE == 2) { // Protanopia - reds are greatly reduced
+-        deficiencyMat = mat3(
+-            0.0, 0.0, 0.0,
+-            2.02344, 1.0, 0.0,
+-            -2.52581, 0.0, 1.0
+-        );
+-    } else if (COLORBLIND_MODE == 3 || COLORBLIND_MODE == 4) { // Deuteranopia - greens are greatly reduced
+-        deficiencyMat = mat3(
+-            1.0, 0.494207, 0.0,
+-            0.0, 0.0, 0.0,
+-            0.0, 1.24827, 1.0
+-        );
+-    } else if (COLORBLIND_MODE == 5 ) { // Tritanopia - blues are greatly reduced (1 of 10 000)
+-        // GdH - trinatopia vector calculated by me, all public sources were off
+-        deficiencyMat = mat3(
+-            1.0, 0.0, -0.012491378299329402,
+-            0.0, 1.0, 0.07203451899279534,
+-            0.0, 0.0, 0.0
+-        );
+-    } else {
+-        deficiencyMat = mat3(1.0);
+-    }
+-
+-    vec3 perceivedRGB = LMS_TO_RGB * (deficiencyMat * lms);
+-
+-    vec3 errorRGB = mix(c.rgb, perceivedRGB, STRENGTH);
+-
+-    // Isolate invisible colors to color vision deficiency (calculate error matrix)
+-    vec3 delta = c.rgb - errorRGB;
+-
+-    // Shift colors
+-    mat3 shiftMat;
+-    if ( COLORBLIND_MODE == 1 ) { // protanopia / protanomaly corrections
+-        //(kwin effect values)
+-        shiftMat = mat3(
+-            0.56667, 0.55833, 0.00000,
+-            0.43333, 0.44267, 0.24167,
+-            0.00000, 0.00000, 0.75833
+-        );
+-    } else if ( COLORBLIND_MODE == 2 ) { // protanopia / protanomaly high contrast G-R corrections
+-        shiftMat = mat3(
+-            2.56667, 1.55833, 0.00000,
+-            0.43333, 0.44267, 0.24167,
+-            0.00000, 0.00000, 0.75833
+-        );
+-    } else if ( COLORBLIND_MODE == 3 ) { // deuteranopia / deuteranomaly corrections (tries to mimic Android, GdH)
+-        shiftMat = mat3(
+-           -0.7,  0.5, -0.3,
+-            0.0,  1.0,  0.0,
+-            0.0,  0.0,  1.0
+-        );
+-    } else if ( COLORBLIND_MODE == 4 ) { // deuteranopia / deuteranomaly high contrast R-G corrections
+-        shiftMat = mat3(
+-           -1.5, -1.5,  1.5,
+-            1.5,  1.5,  0.0,
+-            0.0,  0.0,  0.0
+-        );
+-    } else if ( COLORBLIND_MODE == 5 ) { // tritanopia / tritanomaly corrections (GdH)
+-        shiftMat = mat3(
+-            0.3, 0.5, 0.0,
+-            0.5, 0.7, 0.0,
+-            0.4, 0.3, 1.0
+-        );
+-    } else {
+-        shiftMat = mat3(0.0);
+-    }
+-
+-    // Add compensation to original values
+-    vec3 compensated = c.rgb + (shiftMat * delta);
+-
+-    cogl_color_out = vec4(compensated, c.a);
+-}
+diff --git a/data/shaders/monochrome.frag b/data/shaders/monochrome.frag
+deleted file mode 100644
+index 54fd9356..00000000
+--- a/data/shaders/monochrome.frag
++++ /dev/null
+@@ -1,27 +0,0 @@
+-/*
+- * Copyright 2023-2026 elementary, Inc. <https://elementary.io>
+- * SPDX-License-Identifier: GPL-3.0-or-later
+- */
+-
+-uniform sampler2D tex;
+-uniform float STRENGTH;
+-uniform bool PAUSE_FOR_SCREENSHOT;
+-
+-const mat3 GRAY_MAT = mat3(
+-    0.2126, 0.2126, 0.2126,
+-    0.7152, 0.7152, 0.7152,
+-    0.0722, 0.0722, 0.0722
+-);
+-
+-void main() {
+-    vec4 sample = texture2D (tex, cogl_tex_coord0_in.xy);
+-
+-    if (PAUSE_FOR_SCREENSHOT) {
+-        cogl_color_out = sample;
+-        return;
+-    }
+-
+-    vec3 grayRGB = GRAY_MAT * sample.rgb;
+-    vec3 result = mix(sample.rgb, grayRGB, STRENGTH);
+-    cogl_color_out = vec4(result, sample.a);
+-}
+diff --git a/data/shaders/rounded-corners.frag b/data/shaders/rounded-corners.frag
+deleted file mode 100644
+index d43a57d6..00000000
+--- a/data/shaders/rounded-corners.frag
++++ /dev/null
+@@ -1,69 +0,0 @@
+-/*
+- * Copyright 2025 elementary, Inc. <https://elementary.io>
+- * SPDX-License-Identifier: LGPL-3.0-or-later
+- */
+-
+-// based on shader from mutter
+-
+-uniform sampler2D tex;
+-uniform int clip_radius;
+-uniform vec2 actor_size;
+-uniform vec2 offset;
+-uniform vec2 full_texture_size;
+-
+-float rounded_rect_coverage (vec2 p) {
+-  float center_left = clip_radius;
+-  float center_right = actor_size.x - clip_radius;
+-
+-  float center_x;
+-  if (p.x < center_left)
+-    center_x = center_left;
+-  else if (p.x > center_right)
+-    center_x = center_right;
+-  else
+-    return 1.0;
+-
+-  float center_top = clip_radius;
+-  float center_bottom = actor_size.y - clip_radius;
+-
+-  float center_y;
+-  if (p.y < center_top)
+-    center_y = center_top;
+-  else if (p.y > center_bottom)
+-    center_y = center_bottom;
+-  else
+-    return 1.0;
+-
+-  vec2 delta = p - vec2 (center_x, center_y);
+-  float dist_squared = dot (delta, delta);
+-
+-  // Fully outside the circle
+-  float outer_radius = clip_radius + 0.5;
+-  if (dist_squared > (outer_radius * outer_radius))
+-    return 0.0;
+-
+-  // Fully inside the circle
+-  float inner_radius = clip_radius - 0.5;
+-  if (dist_squared < (inner_radius * inner_radius))
+-    return 1.0;
+-
+-  // Only pixels on the edge of the curve need expensive antialiasing
+-  return smoothstep (outer_radius, inner_radius, sqrt (dist_squared));
+-}
+-
+-void main () {
+-  vec2 texture_coord = cogl_tex_coord0_in.xy * full_texture_size;
+-  if (texture_coord.x < offset.x || texture_coord.x > offset.x + actor_size.x ||
+-      texture_coord.y < offset.y || texture_coord.y > offset.y + actor_size.y
+-  ) {
+-      cogl_color_out = vec4 (0, 0, 0, 0);
+-      return;
+-  }
+-
+-  texture_coord.x -= offset.x;
+-  texture_coord.y -= offset.y;
+-
+-  vec4 sample = texture2D (tex, cogl_tex_coord0_in.xy);
+-  float res = rounded_rect_coverage (texture_coord);
+-  cogl_color_out = sample * cogl_color_in * res;
+-}
+diff --git a/lib/Drawing/Canvas.vala b/lib/Drawing/Canvas.vala
+index 3e52f083..da3ae975 100644
+--- a/lib/Drawing/Canvas.vala
++++ b/lib/Drawing/Canvas.vala
+@@ -34,7 +34,11 @@ public class Gala.Drawing.Canvas : GLib.Object, Clutter.Content {
+         int real_width = (int) Math.ceilf (width * scale_factor);
+         int real_height = (int) Math.ceilf (height * scale_factor);
+         if (bitmap == null) {
++#if HAS_MUTTER51
++            bitmap = new Cogl.Bitmap.with_size (cogl_context, real_width, real_height, Cogl.PixelFormat.ARGB32_NATIVE);
++#else
+             bitmap = new Cogl.Bitmap.with_size (cogl_context, real_width, real_height, Cogl.PixelFormat.CAIRO_ARGB32_COMPAT);
 +#endif
- 		public Clutter.PreeditResetMode get_im_preedit_reset_mode ();
- 		public unowned string get_im_text ();
- 		public uint16 get_key_code ();
-@@ -6512,10 +6515,19 @@ namespace Clutter {
- 		public virtual void reset ();
- 		[NoWrapper]
- 		public virtual void set_cursor_location (Graphene.Rect rect);
-+#if HAS_MUTTER50
-+		public virtual void set_handled_actions (Clutter.InputActionFlags actions);
-+#endif
- 		public void set_input_panel_state (Clutter.InputPanelState state);
- 		public void set_preedit_text (string? preedit, uint cursor, uint anchor, Clutter.PreeditResetMode mode);
-+#if HAS_MUTTER50
-+		public void set_preedit_text_with_attrs (string? preedit, uint cursor, uint anchor, Clutter.PreeditResetMode mode, [CCode (array_length_cname = "n_preedit_hints", array_length_pos = 5.1, array_length_type = "guint")] Clutter.PreeditAttribute[]? preedit_hints);
-+#endif
- 		[NoWrapper]
- 		public virtual void set_surrounding (string text, uint cursor, uint anchor);
-+#if HAS_MUTTER50
-+		public void trigger_action (Clutter.InputAction action);
-+#endif
- 		[NoWrapper]
- 		public virtual void update_content_hints (Clutter.InputContentHintFlags hint);
- 		[NoWrapper]
-@@ -7857,6 +7869,14 @@ namespace Clutter {
- 		public int dwell_delay;
- 		public int dwell_threshold;
- 	}
-+#if HAS_MUTTER50
-+	[CCode (cheader_filename = "clutter/clutter.h", has_type_id = false)]
-+	public struct PreeditAttribute {
-+		public Clutter.PreeditStyleHint hint;
-+		public uint start;
-+		public uint end;
-+	}
-+#endif
+         }
+ 
+         unowned Cogl.Buffer? buffer = bitmap.get_buffer ();
+diff --git a/lib/Effects/BoxBlurManager.vala b/lib/Effects/BoxBlurManager.vala
+index e42d8aac..113a744c 100644
+--- a/lib/Effects/BoxBlurManager.vala
++++ b/lib/Effects/BoxBlurManager.vala
+@@ -36,24 +36,48 @@ public class Gala.BoxBlurManager : Object {
+         private const float[] HORIZONTAL_PASS_DATA = { 1.0f, 0.0f };
+         private const float[] VERTICAL_PASS_DATA = { 0.0f, 1.0f };
+ 
++        private static string decls = """
++            uniform sampler2D tex;
++            uniform int RADIUS;
++            uniform vec2 PIXEL_STEP;
++            uniform vec2 DIRECTION;
++        """;
++
++        private static string post = """
++            if (RADIUS == 0) {
++                cogl_color_out = texture2D(tex, cogl_tex_coord0_in.xy);
++                return;
++            }
++
++            vec4 sum = vec4(0, 0, 0, 0);
++            int count = 0;
++
++            for (int i = -RADIUS; i <= RADIUS; i++) {
++                vec2 offset = DIRECTION * PIXEL_STEP * i;
++
++                sum += texture2D(tex, cogl_tex_coord0_in.xy + offset);
++                count += 1;
++            }
++
++            cogl_color_out = sum / count;
++        """;
++
+         public int radius { set { set_uniform_value ("RADIUS", value); } }
+ 
+         public BoxBlurEffect (PassDirection direction) {
+             Object (
++#if !HAS_MUTTER51
  #if HAS_MUTTER48
- 	[CCode (cheader_filename = "clutter/clutter.h", has_type_id = false)]
- 	public struct Primaries {
-@@ -8302,6 +8322,20 @@ namespace Clutter {
- 		TOP,
- 		BOTTOM
- 	}
-+#if HAS_MUTTER50
-+	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_INPUT_ACTION_", type_id = "clutter_input_action_get_type ()")]
-+	public enum InputAction {
-+		SUBMIT,
-+		LAST
-+	}
-+	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_INPUT_ACTION_FLAG_", type_id = "clutter_input_action_flags_get_type ()")]
-+	[Flags]
-+	public enum InputActionFlags {
-+		NONE,
-+		SUBMIT,
-+		ALL
-+	}
+-                shader_type: Cogl.ShaderType.FRAGMENT
++                    shader_type: Cogl.ShaderType.FRAGMENT
+ #else
+-                shader_type: Clutter.ShaderType.FRAGMENT_SHADER
++                    shader_type: Clutter.ShaderType.FRAGMENT_SHADER
 +#endif
- 	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_INPUT_AXIS_", type_id = "clutter_input_axis_get_type ()")]
- 	public enum InputAxis {
- 		IGNORE,
-@@ -8575,6 +8609,19 @@ namespace Clutter {
- 		CLEAR,
- 		COMMIT
- 	}
-+#if HAS_MUTTER50
-+	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_PREEDIT_STYLE_", type_id = "clutter_preedit_style_hint_get_type ()")]
-+	public enum PreeditStyleHint {
-+		NONE,
-+		WHOLE,
-+		SELECTION,
-+		PREDICTION,
-+		PREFIX,
-+		SUFFIX,
-+		SPELLING_ERROR,
-+		COMPOSE_ERROR
-+	}
+ #endif
+             );
+ 
+-            try {
+-                var bytes = GLib.resources_lookup_data ("/io/elementary/desktop/gala/shaders/box-blur.frag", NONE);
+-                set_shader_source ((string) bytes.get_data ());
+-            } catch (Error e) {
+-                critical ("Unable to load box-blur.frag: %s", e.message);
+-            }
+-
++#if !HAS_MUTTER51
++            set_shader_source (@"$decls \n void main() { $post }");
 +#endif
- 	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_REPAINT_FLAGS_", type_id = "clutter_repaint_flags_get_type ()")]
- 	[Flags]
- 	public enum RepaintFlags {
-
-From 2dcac9dee3d95352ba8d4d24b11e14ae7ecf2b41 Mon Sep 17 00:00:00 2001
-From: Denis Garaev <garaevdi@yandex.ru>
-Date: Sat, 11 Jul 2026 20:12:41 +0300
-Subject: [PATCH 2/5] Vapi: update for mutter 51
-
----
- meson.build                 |  11 ++
- vapi/Clutter-51.metadata    | 146 +++++++++++++++++
- vapi/Cogl-51-custom.vala    |  66 ++++++++
- vapi/Cogl-51.metadata       |  40 +++++
- vapi/Meta-51-custom.vala    |   5 +
- vapi/Meta-51.metadata       | 184 ++++++++++++++++++++++
- vapi/Mtk-51.metadata        |   6 +
- vapi/libmutter-51.deps      |   1 +
- vapi/libmutter-51.vapi      |   1 +
- vapi/libmutter.vapi         |  60 +++++++
- vapi/meson.build            |  72 +++++++++
- vapi/mutter-clutter-51.deps |   6 +
- vapi/mutter-clutter-51.vapi |   1 +
- vapi/mutter-clutter.vapi    | 305 ++++++++++++++++++++++++++++++++++++
- vapi/mutter-cogl-14.vapi    | 131 +++++++++++++++-
- vapi/mutter-cogl-51.deps    |   5 +
- vapi/mutter-cogl-51.vapi    |   1 +
- vapi/mutter-mtk-14.vapi     |   2 +
- vapi/mutter-mtk-51.vapi     |   1 +
- 19 files changed, 1040 insertions(+), 4 deletions(-)
- create mode 100644 vapi/Clutter-51.metadata
- create mode 100644 vapi/Cogl-51-custom.vala
- create mode 100644 vapi/Cogl-51.metadata
- create mode 100644 vapi/Meta-51-custom.vala
- create mode 100644 vapi/Meta-51.metadata
- create mode 100644 vapi/Mtk-51.metadata
- create mode 120000 vapi/libmutter-51.deps
- create mode 120000 vapi/libmutter-51.vapi
- create mode 100644 vapi/mutter-clutter-51.deps
- create mode 120000 vapi/mutter-clutter-51.vapi
- create mode 100644 vapi/mutter-cogl-51.deps
- create mode 120000 vapi/mutter-cogl-51.vapi
- create mode 120000 vapi/mutter-mtk-51.vapi
-
+             radius = 0;
+ 
+             var direction_value = GLib.Value (typeof (Clutter.ShaderFloat));
+@@ -63,6 +87,13 @@ public class Gala.BoxBlurManager : Object {
+             set_uniform_value ("DIRECTION", direction_value);
+         }
+ 
++#if HAS_MUTTER51
++        public override Cogl.Snippet get_static_snippet () {
++            return new Cogl.Snippet (Cogl.SnippetHook.FRAGMENT, decls, post);
++        }
++
++#endif
++
+         public override void set_actor (Clutter.Actor? new_actor) {
+             if (actor != null) {
+                 actor.notify["width"].disconnect (update_pixel_step);
+diff --git a/lib/Effects/RoundedCornersEffect.vala b/lib/Effects/RoundedCornersEffect.vala
+index 641339bf..8d155ab2 100644
+--- a/lib/Effects/RoundedCornersEffect.vala
++++ b/lib/Effects/RoundedCornersEffect.vala
+@@ -32,13 +32,81 @@ public class Gala.RoundedCornersEffect : Clutter.ShaderEffect {
+             }
+         }
+     }
++    private static string decls = """
++        // based on shader from mutter
++        uniform sampler2D tex;
++        uniform int clip_radius;
++        uniform vec2 actor_size;
++        uniform vec2 offset;
++        uniform vec2 full_texture_size;
++
++        float rounded_rect_coverage(vec2 p) {
++            float center_left = clip_radius;
++            float center_right = actor_size.x - clip_radius;
++
++            float center_x;
++            if (p.x < center_left)
++                center_x = center_left;
++            else if (p.x > center_right)
++                center_x = center_right;
++            else
++                return 1.0;
++
++            float center_top = clip_radius;
++            float center_bottom = actor_size.y - clip_radius;
++
++            float center_y;
++            if (p.y < center_top)
++                center_y = center_top;
++            else if (p.y > center_bottom)
++                center_y = center_bottom;
++            else
++                return 1.0;
++
++            vec2 delta = p - vec2(center_x, center_y);
++            float dist_squared = dot(delta, delta);
++
++            // Fully outside the circle
++            float outer_radius = clip_radius + 0.5;
++            if (dist_squared > (outer_radius * outer_radius))
++                return 0.0;
++
++            // Fully inside the circle
++            float inner_radius = clip_radius - 0.5;
++            if (dist_squared < (inner_radius * inner_radius))
++                return 1.0;
++
++            // Only pixels on the edge of the curve need expensive antialiasing
++            return smoothstep(outer_radius, inner_radius, sqrt(dist_squared));
++        }
++    """;
++
++    private static string post = """
++        vec2 texture_coord = cogl_tex_coord0_in.xy * full_texture_size;
++        if (texture_coord.x < offset.x || texture_coord.x > offset.x + actor_size.x ||
++            texture_coord.y < offset.y || texture_coord.y > offset.y + actor_size.y
++        ) {
++            cogl_color_out = vec4(0, 0, 0, 0);
++            return;
++        }
++
++        texture_coord.x -= offset.x;
++        texture_coord.y -= offset.y;
++
++        vec4
++        sample = texture2D(tex, cogl_tex_coord0_in.xy);
++        float res = rounded_rect_coverage(texture_coord);
++        cogl_color_out = sample * cogl_color_in * res;
++    """;
+ 
+     public RoundedCornersEffect (int clip_radius, float monitor_scale) {
+         Object (
++#if !HAS_MUTTER51
+ #if HAS_MUTTER48
+             shader_type: Cogl.ShaderType.FRAGMENT,
+ #else
+             shader_type: Clutter.ShaderType.FRAGMENT_SHADER,
++#endif
+ #endif
+             clip_radius: clip_radius,
+             monitor_scale: monitor_scale
+@@ -46,14 +114,17 @@ public class Gala.RoundedCornersEffect : Clutter.ShaderEffect {
+     }
+ 
+     construct {
+-        try {
+-            var bytes = GLib.resources_lookup_data ("/io/elementary/desktop/gala/shaders/rounded-corners.frag", NONE);
+-            set_shader_source ((string) bytes.get_data ());
+-        } catch (Error e) {
+-            critical ("Unable to load rounded-corners.frag: %s", e.message);
+-        }
++#if !HAS_MUTTER51
++        set_shader_source (@"$decls \n void main() { $post }");
++#endif
+     }
+ 
++#if HAS_MUTTER51
++    public override Cogl.Snippet get_static_snippet () {
++        return new Cogl.Snippet (Cogl.SnippetHook.FRAGMENT, decls, post);
++    }
++#endif
++
+     public override void set_actor (Clutter.Actor? new_actor) {
+         if (actor != null) {
+             actor.notify["width"].disconnect (update_actor_size);
 diff --git a/meson.build b/meson.build
-index c37cb6091..e98acb039 100644
+index 6ff037cf..f6bcffa3 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -140,6 +140,17 @@ if mutter50_dep.found()
@@ -152,7 +504,7 @@ index c37cb6091..e98acb039 100644
 +	mutter_dep = [
 +		libmutter_dep,
 +		dependency('mutter-mtk-51'), dependency('mutter-cogl-51'),
-+		dependency('mutter-clutter-51')
++		dependency('mutter-clutter-51'), dependency('glycin-2')
 +	]
 +	vala_flags = ['--define', 'HAS_MUTTER43', '--define', 'HAS_MUTTER44', '--define', 'HAS_MUTTER45', '--define', 'HAS_MUTTER46', '--define', 'HAS_MUTTER47', '--define', 'HAS_MUTTER48', '--define', 'HAS_MUTTER49', '--define', 'HAS_MUTTER50', '--define', 'HAS_MUTTER51']
 +endif
@@ -160,12 +512,570 @@ index c37cb6091..e98acb039 100644
  if mutter_dep.length() == 0
      error ('No supported mutter library found!')
  endif
+diff --git a/src/Background/Background.vala b/src/Background/Background.vala
+index 371ffb5c..59f258a0 100644
+--- a/src/Background/Background.vala
++++ b/src/Background/Background.vala
+@@ -128,7 +128,11 @@ public class Gala.Background : Object {
+ 
+         file_watches[filename] = cache.file_changed.connect ((changed_file) => {
+             if (changed_file == filename) {
++#if HAS_MUTTER51
++                var image_cache = BackgroundTextureCache.get_default (display);
++#else
+                 var image_cache = Meta.BackgroundImageCache.get_default ();
++#endif
+                 image_cache.purge (File.new_for_path (changed_file));
+                 changed ();
+             }
+@@ -144,13 +148,25 @@ public class Gala.Background : Object {
+ 
+     private void finish_animation (string[] files) {
+         set_loaded ();
++#if HAS_MUTTER51
++        var cache = BackgroundTextureCache.get_default (display);
++#endif
+ 
++#if HAS_MUTTER51
++        if (files.length > 1)
++            background.set_blend_textures (cache.get_texture (files[0]), cache.get_texture (files[1]), animation.transition_progress, style, null);
++        else if (files.length > 0)
++            background.set_texture (cache.get_texture (files[0]), style, null);
++        else
++            background.set_texture (null, style, null);
++#else
+         if (files.length > 1)
+             background.set_blend (File.new_for_path (files[0]), File.new_for_path (files[1]), animation.transition_progress, style);
+         else if (files.length > 0)
+             background.set_file (File.new_for_path (files[0]), style);
+         else
+             background.set_file (null, style);
++#endif
+ 
+         queue_update_animation ();
+     }
+@@ -161,7 +177,11 @@ public class Gala.Background : Object {
+         animation.update (display.get_monitor_geometry (monitor_index));
+         var files = animation.key_frame_files;
+ 
++#if HAS_MUTTER51
++        var cache = BackgroundTextureCache.get_default (display);
++#else
+         var cache = Meta.BackgroundImageCache.get_default ();
++#endif
+         var num_pending_images = files.length;
+         for (var i = 0; i < files.length; i++) {
+             watch_file (files[i]);
+@@ -223,16 +243,29 @@ public class Gala.Background : Object {
+     }
+ 
+     private void load_image (string filename) {
++#if !HAS_MUTTER51
+         background.set_file (File.new_for_path (filename), style);
++#endif
+         watch_file (filename);
+ 
++#if HAS_MUTTER51
++        var cache = BackgroundTextureCache.get_default (display);
++#else
+         var cache = Meta.BackgroundImageCache.get_default ();
++#endif
+         var image = cache.load (File.new_for_path (filename));
+-        if (image.is_loaded ())
++        if (image.is_loaded ()) {
++#if HAS_MUTTER51
++            background.set_texture (image.texture, style, null);
++#endif
+             set_loaded ();
++        }
+         else {
+             ulong handler = 0;
+             handler = image.loaded.connect (() => {
++#if HAS_MUTTER51
++                background.set_texture (image.texture, style, null);
++#endif
+                 set_loaded ();
+                 image.disconnect (handler);
+             });
+diff --git a/src/Background/BackgroundTexture.vala b/src/Background/BackgroundTexture.vala
+new file mode 100644
+index 00000000..5d3be1b8
+--- /dev/null
++++ b/src/Background/BackgroundTexture.vala
+@@ -0,0 +1,113 @@
++/*
++ * Copyright 2026 elementary, Inc. (https://elementary.io)
++ * SPDX-License-Identifier: GPL-3.0-or-later
++ *
++ * Authored by: Denis Garaev <garaevdi@yandex.ru>
++ */
++
++#if HAS_MUTTER51
++public errordomain TextureLoadError {
++    UNSUPPOERTED_FORMAT,
++    FAILED_TO_SET_TEXTURE_DATA
++}
++
++public class Gala.BackgroundTexture : Object {
++    public Cogl.Texture? texture { get; private set; default = null; }
++    public signal void loaded ();
++
++    public bool is_loaded () {
++        return texture != null;
++    }
++
++    // This function is a port of gnome-shell's method of loading textures with glycin
++    // https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/2177bdf9624b2d285de7c1d34274073d3769d6b8/js/ui/background.js#L240
++    public async void load_texture (File file, Meta.Display display) throws Error {
++        var stream = yield file.read_async (Priority.DEFAULT_IDLE, null);
++
++        var loader = new Gly.Loader.for_stream (stream);
++
++        loader.set_accepted_memory_formats (
++            Gly.MemoryFormatSelection.B8G8R8A8_PREMULTIPLIED |
++            Gly.MemoryFormatSelection.A8R8G8B8_PREMULTIPLIED |
++            Gly.MemoryFormatSelection.R8G8B8A8_PREMULTIPLIED |
++            Gly.MemoryFormatSelection.B8G8R8A8 |
++            Gly.MemoryFormatSelection.A8R8G8B8 |
++            Gly.MemoryFormatSelection.R8G8B8A8 |
++            Gly.MemoryFormatSelection.A8B8G8R8 |
++            Gly.MemoryFormatSelection.R8G8B8 |
++            Gly.MemoryFormatSelection.B8G8R8 |
++            Gly.MemoryFormatSelection.R16G16B16A16_PREMULTIPLIED |
++            Gly.MemoryFormatSelection.R16G16B16A16 |
++            Gly.MemoryFormatSelection.R16G16B16A16_FLOAT |
++            Gly.MemoryFormatSelection.R32G32B32A32_FLOAT_PREMULTIPLIED |
++            Gly.MemoryFormatSelection.R32G32B32A32_FLOAT
++        );
++
++        var image = yield loader.load_async (null);
++
++        var frame = image.next_frame ();
++
++        var width = (int) frame.get_width ();
++        var height = (int) frame.get_height ();
++        var bytes = frame.get_buf_bytes ();
++        var format = frame.get_memory_format ();
++
++        var components = format.has_alpha () ? Cogl.TextureComponents.RGBA : Cogl.TextureComponents.RGB;
++        var ctx = Utils.get_clutter_backend_from_display (display).get_cogl_context ();
++
++        Cogl.Texture texture = new Cogl.Texture2D.with_size (ctx, width, height);
++        texture.set_components (components);
++
++        try {
++            texture.allocate ();
++        } catch {
++            texture = new Cogl.Texture2DSliced.with_size (ctx, width, height, Cogl.TEXTURE_MAX_WASTE);
++            texture.set_components (components);
++        }
++
++        var cogl_format = gly_to_cogl_format (frame.get_memory_format ());
++
++        if (!texture.set_data (cogl_format, (int) frame.get_stride (), bytes.get_data (), 0)) {
++            throw (new TextureLoadError.FAILED_TO_SET_TEXTURE_DATA ("Failed to set texture data"));
++        }
++
++       this.texture = texture;
++       loaded ();
++    }
++
++    private Cogl.PixelFormat gly_to_cogl_format (Gly.MemoryFormat format) throws Error {
++        switch (format) {
++        case Gly.MemoryFormat.B8G8R8A8_PREMULTIPLIED:
++            return Cogl.PixelFormat.BGRA_8888_PRE;
++        case Gly.MemoryFormat.A8R8G8B8_PREMULTIPLIED:
++            return Cogl.PixelFormat.ARGB_8888_PRE;
++        case Gly.MemoryFormat.R8G8B8A8_PREMULTIPLIED:
++            return Cogl.PixelFormat.RGBA_8888_PRE;
++        case Gly.MemoryFormat.B8G8R8A8:
++            return Cogl.PixelFormat.BGRA_8888;
++        case Gly.MemoryFormat.A8R8G8B8:
++            return Cogl.PixelFormat.ARGB_8888;
++        case Gly.MemoryFormat.R8G8B8A8:
++            return Cogl.PixelFormat.RGBA_8888;
++        case Gly.MemoryFormat.A8B8G8R8:
++            return Cogl.PixelFormat.ABGR_8888;
++        case Gly.MemoryFormat.R8G8B8:
++            return Cogl.PixelFormat.RGB_888;
++        case Gly.MemoryFormat.B8G8R8:
++            return Cogl.PixelFormat.BGR_888;
++        case Gly.MemoryFormat.R16G16B16A16_PREMULTIPLIED:
++            return Cogl.PixelFormat.RGBA_16161616_PRE;
++        case Gly.MemoryFormat.R16G16B16A16:
++            return Cogl.PixelFormat.RGBA_16161616;
++        case Gly.MemoryFormat.R16G16B16A16_FLOAT:
++            return Cogl.PixelFormat.RGBA_FP_16161616;
++        case Gly.MemoryFormat.R32G32B32A32_FLOAT_PREMULTIPLIED:
++            return Cogl.PixelFormat.RGBA_FP_32323232_PRE;
++        case Gly.MemoryFormat.R32G32B32A32_FLOAT:
++            return Cogl.PixelFormat.RGBA_FP_32323232;
++        default:
++            throw (new TextureLoadError.UNSUPPOERTED_FORMAT ("Unsupported color format"));
++        }
++    }
++}
++#endif
+diff --git a/src/Background/BackgroundTextureCache.vala b/src/Background/BackgroundTextureCache.vala
+new file mode 100644
+index 00000000..c5b8e1f0
+--- /dev/null
++++ b/src/Background/BackgroundTextureCache.vala
+@@ -0,0 +1,57 @@
++/*
++ * Copyright 2026 elementary, Inc. (https://elementary.io)
++ * SPDX-License-Identifier: GPL-3.0-or-later
++ *
++ * Authored by: Denis Garaev <garaevdi@yandex.ru>
++ */
++
++#if HAS_MUTTER51
++public class Gala.BackgroundTextureCache : Object {
++    public Meta.Display display { private get; construct; }
++
++    private static GLib.Once<BackgroundTextureCache> instance;
++    public static unowned BackgroundTextureCache get_default (Meta.Display display) {
++        return instance.once (() => new BackgroundTextureCache (display));
++    }
++
++    private Gee.HashMap<string, BackgroundTexture> textures;
++
++    private BackgroundTextureCache (Meta.Display display) {
++        Object (display: display);
++    }
++
++    construct {
++        textures = new Gee.HashMap<string, BackgroundTexture> ();
++    }
++
++    public BackgroundTexture load (File file) throws Error {
++        var uri = file.get_uri ();
++
++        if (textures.has_key (uri)) {
++            return textures.get (uri);
++        }
++
++        var background_texture = new BackgroundTexture ();
++        background_texture.load_texture.begin (file, display);
++        textures.set (uri, background_texture);
++        return background_texture;
++    }
++
++    public Cogl.Texture? get_texture (string path) {
++        var file = File.new_for_path (path);
++        var uri = file.get_uri ();
++        if (textures.has_key (uri)) {
++            return textures.get (uri).texture;
++        }
++
++        return null;
++    }
++
++    public void purge (File file) {
++        var uri = file.get_uri ();
++        if (textures.has_key (uri)) {
++            textures.unset (uri, null);
++        }
++    }
++}
++#endif
+diff --git a/src/ColorFilters/ColorblindnessCorrectionEffect.vala b/src/ColorFilters/ColorblindnessCorrectionEffect.vala
+index 4cb5416f..1c74191b 100644
+--- a/src/ColorFilters/ColorblindnessCorrectionEffect.vala
++++ b/src/ColorFilters/ColorblindnessCorrectionEffect.vala
+@@ -6,6 +6,110 @@
+ public class Gala.ColorblindnessCorrectionEffect : Clutter.ShaderEffect {
+     public const string EFFECT_NAME = "colorblindness-correction-filter";
+ 
++    private static string decls = """
++        uniform sampler2D tex;
++        uniform int COLORBLIND_MODE;
++        uniform float STRENGTH;
++        uniform bool PAUSE_FOR_SCREENSHOT;
++
++        const mat3 RGB_TO_LMS = mat3(
++            17.8824, 3.45565, 0.0299566,
++            43.5161, 27.1554, 0.184309,
++            4.11935, 3.86714, 1.46709
++        );
++
++        const mat3 LMS_TO_RGB = mat3(
++            0.0809444479, -0.0102485335, -0.000365296938,
++            -0.130504409, 0.0540193266, -0.00412161469,
++            0.116721066, -0.113614708, 0.693511405
++        );
++    """;
++
++    private static string post = """
++        vec4 c = texture2D(tex, cogl_tex_coord0_in.xy);
++
++        if (PAUSE_FOR_SCREENSHOT) {
++            cogl_color_out = c;
++            return;
++        }
++
++        vec3 lms = RGB_TO_LMS * c.rgb;
++
++        // Remove invisible colors
++        mat3 deficiencyMat;
++        if (COLORBLIND_MODE == 1 || COLORBLIND_MODE == 2) { // Protanopia - reds are greatly reduced
++            deficiencyMat = mat3(
++                0.0, 0.0, 0.0,
++                2.02344, 1.0, 0.0,
++                -2.52581, 0.0, 1.0
++            );
++        } else if (COLORBLIND_MODE == 3 || COLORBLIND_MODE == 4) { // Deuteranopia - greens are greatly reduced
++            deficiencyMat = mat3(
++                1.0, 0.494207, 0.0,
++                0.0, 0.0, 0.0,
++                0.0, 1.24827, 1.0
++            );
++        } else if (COLORBLIND_MODE == 5 ) { // Tritanopia - blues are greatly reduced (1 of 10 000)
++            // GdH - trinatopia vector calculated by me, all public sources were off
++            deficiencyMat = mat3(
++                1.0, 0.0, -0.012491378299329402,
++                0.0, 1.0, 0.07203451899279534,
++                0.0, 0.0, 0.0
++            );
++        } else {
++            deficiencyMat = mat3(1.0);
++        }
++
++        vec3 perceivedRGB = LMS_TO_RGB * (deficiencyMat * lms);
++
++        vec3 errorRGB = mix(c.rgb, perceivedRGB, STRENGTH);
++
++        // Isolate invisible colors to color vision deficiency (calculate error matrix)
++        vec3 delta = c.rgb - errorRGB;
++
++        // Shift colors
++        mat3 shiftMat;
++        if ( COLORBLIND_MODE == 1 ) { // protanopia / protanomaly corrections
++            //(kwin effect values)
++            shiftMat = mat3(
++                0.56667, 0.55833, 0.00000,
++                0.43333, 0.44267, 0.24167,
++                0.00000, 0.00000, 0.75833
++            );
++        } else if ( COLORBLIND_MODE == 2 ) { // protanopia / protanomaly high contrast G-R corrections
++            shiftMat = mat3(
++                2.56667, 1.55833, 0.00000,
++                0.43333, 0.44267, 0.24167,
++                0.00000, 0.00000, 0.75833
++            );
++        } else if ( COLORBLIND_MODE == 3 ) { // deuteranopia / deuteranomaly corrections (tries to mimic Android, GdH)
++            shiftMat = mat3(
++            -0.7,  0.5, -0.3,
++                0.0,  1.0,  0.0,
++                0.0,  0.0,  1.0
++            );
++        } else if ( COLORBLIND_MODE == 4 ) { // deuteranopia / deuteranomaly high contrast R-G corrections
++            shiftMat = mat3(
++            -1.5, -1.5,  1.5,
++                1.5,  1.5,  0.0,
++                0.0,  0.0,  0.0
++            );
++        } else if ( COLORBLIND_MODE == 5 ) { // tritanopia / tritanomaly corrections (GdH)
++            shiftMat = mat3(
++                0.3, 0.5, 0.0,
++                0.5, 0.7, 0.0,
++                0.4, 0.3, 1.0
++            );
++        } else {
++            shiftMat = mat3(0.0);
++        }
++
++        // Add compensation to original values
++        vec3 compensated = c.rgb + (shiftMat * delta);
++
++        cogl_color_out = vec4(compensated, c.a);
++    """;
++
+     private int _mode;
+     public int mode {
+         get { return _mode; }
+@@ -37,22 +141,30 @@ public class Gala.ColorblindnessCorrectionEffect : Clutter.ShaderEffect {
+ 
+     public ColorblindnessCorrectionEffect (int mode, double strength) {
+         Object (
++#if !HAS_MUTTER51
+ #if HAS_MUTTER48
+             shader_type: Cogl.ShaderType.FRAGMENT,
+ #else
+             shader_type: Clutter.ShaderType.FRAGMENT_SHADER,
++#endif
+ #endif
+             mode: mode,
+             strength: strength
+         );
++    }
+ 
+-        try {
+-            var bytes = GLib.resources_lookup_data ("/io/elementary/desktop/gala/shaders/colorblindness-correction.frag", GLib.ResourceLookupFlags.NONE);
+-            set_shader_source ((string) bytes.get_data ());
+-        } catch (Error e) {
+-            critical ("Unable to load colorblindness-correction.frag: %s", e.message);
+-        }
++    construct {
++#if !HAS_MUTTER51
++        set_shader_source (@"$decls \n void main() { $post }");
++#endif
+ 
+         pause_for_screenshot = false;
+     }
++
++#if HAS_MUTTER51
++    public override Cogl.Snippet get_static_snippet () {
++        // TODO: split declarations from shader code and put it here
++        return new Cogl.Snippet (Cogl.SnippetHook.FRAGMENT, decls, post);
++    }
++#endif
+ }
+diff --git a/src/ColorFilters/MonochromeEffect.vala b/src/ColorFilters/MonochromeEffect.vala
+index c5b8034d..cc6348ac 100644
+--- a/src/ColorFilters/MonochromeEffect.vala
++++ b/src/ColorFilters/MonochromeEffect.vala
+@@ -6,6 +6,32 @@
+ public class Gala.MonochromeEffect : Clutter.ShaderEffect {
+     public const string EFFECT_NAME = "monochrome-filter";
+ 
++    private static string decls = """
++        uniform sampler2D tex;
++        uniform float STRENGTH;
++        uniform bool PAUSE_FOR_SCREENSHOT;
++
++        const mat3 GRAY_MAT = mat3(
++            0.2126, 0.2126, 0.2126,
++            0.7152, 0.7152, 0.7152,
++            0.0722, 0.0722, 0.0722
++        );
++    """;
++
++    private static string post = """
++        vec4 sample = texture2D (tex, cogl_tex_coord0_in.xy);
++
++        if (PAUSE_FOR_SCREENSHOT) {
++            cogl_color_out = sample;
++            return;
++        }
++
++        vec3 grayRGB = GRAY_MAT * sample.rgb;
++        vec3 result = mix(sample.rgb, grayRGB, STRENGTH);
++        cogl_color_out = vec4(result, sample.a);
++    """;
++
++
+     private double _strength;
+     public double strength {
+         get { return _strength; }
+@@ -29,21 +55,28 @@ public class Gala.MonochromeEffect : Clutter.ShaderEffect {
+ 
+     public MonochromeEffect (double strength) {
+         Object (
++#if !HAS_MUTTER51
+ #if HAS_MUTTER48
+             shader_type: Cogl.ShaderType.FRAGMENT,
+ #else
+             shader_type: Clutter.ShaderType.FRAGMENT_SHADER,
++#endif
+ #endif
+             strength: strength
+         );
++    }
+ 
+-        try {
+-            var bytes = GLib.resources_lookup_data ("/io/elementary/desktop/gala/shaders/monochrome.frag", GLib.ResourceLookupFlags.NONE);
+-            set_shader_source ((string) bytes.get_data ());
+-        } catch (Error e) {
+-            critical ("Unable to load monochrome.frag: %s", e.message);
+-        }
++    construct {
++#if !HAS_MUTTER51
++        set_shader_source (@"$decls \n void main() { $post }");
++#endif
+ 
+         pause_for_screenshot = false;
+     }
++
++#if HAS_MUTTER51
++    public override Cogl.Snippet get_static_snippet () {
++        return new Cogl.Snippet (Cogl.SnippetHook.FRAGMENT, decls, post);
++    }
++#endif
+ }
+diff --git a/src/Misc/ScreenshotManager.vala b/src/Misc/ScreenshotManager.vala
+index 8d7eb19b..f29bc6ff 100644
+--- a/src/Misc/ScreenshotManager.vala
++++ b/src/Misc/ScreenshotManager.vala
+@@ -414,7 +414,16 @@ public class Gala.ScreenshotManager : Object {
+         var resource_scale = window_actor.get_resource_scale ();
+ 
+         Mtk.Rectangle main_clip = { main_rect.x - (int) window_actor.x, main_rect.y - (int) window_actor.y, main_rect.width, main_rect.height };
++#if HAS_MUTTER51
++        var bitmap = window_actor.paint_to_bitmap (null, Cogl.PixelFormat.ARGB32_NATIVE);
++        var bitmap_width = bitmap.get_width ();
++        var bitmap_height = bitmap.get_height ();
++        var bitmap_stride = bitmap.get_rowstride ();
++        var data = bitmap.map (Cogl.BufferAccess.READ, Cogl.BufferMapHint.DISCARD);
++        var window_image = new Cairo.ImageSurface.for_data ((uchar[]) data, Cairo.Format.ARGB32, bitmap_width, bitmap_height, bitmap_stride);
++#else
+         var window_image = (Cairo.ImageSurface) window_actor.get_image (main_clip);
++#endif
+ 
+         var image = new Cairo.ImageSurface (
+             ARGB32,
+@@ -440,7 +449,16 @@ public class Gala.ScreenshotManager : Object {
+                 transient_rect.width,
+                 transient_rect.height
+             };
++#if HAS_MUTTER51
++            var transient_bitmap = transient_actor.paint_to_bitmap (transient_clip, Cogl.PixelFormat.ARGB32_NATIVE);
++            var transient_bitmap_width = bitmap.get_width ();
++            var transient_bitmap_height = bitmap.get_height ();
++            var transient_bitmap_stride = bitmap.get_rowstride ();
++            var transient_data = transient_bitmap.map (Cogl.BufferAccess.READ, Cogl.BufferMapHint.DISCARD);
++            var transient_image = new Cairo.ImageSurface.for_data ((uchar[]) transient_data, Cairo.Format.ARGB32, transient_bitmap_width, transient_bitmap_height, transient_bitmap_stride);
++#else
+             var transient_image = (Cairo.ImageSurface) transient_actor.get_image (transient_clip);
++#endif
+ 
+             cairo_context.set_source_surface (
+                 transient_image,
+diff --git a/src/WindowManager.vala b/src/WindowManager.vala
+index 8d9a8c5b..181c77de 100644
+--- a/src/WindowManager.vala
++++ b/src/WindowManager.vala
+@@ -138,9 +138,11 @@ namespace Gala {
+             DBus.init (this, notifications_manager, screenshot_manager, layout_manager.window_overview);
+ 
+             unowned Meta.Display display = get_display ();
++#if !HAS_MUTTER51
+             display.gl_video_memory_purged.connect (() => {
+                 Meta.Background.refresh_all ();
+             });
++#endif
+ 
+             display.notify["focus-window"].connect (on_focus_window_changed);
+ 
+diff --git a/src/meson.build b/src/meson.build
+index 6b941f24..4bfb3723 100644
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -13,6 +13,8 @@ gala_bin_sources = files(
+     'Background/BackgroundContainer.vala',
+     'Background/BackgroundManager.vala',
+     'Background/BackgroundSource.vala',
++    'Background/BackgroundTexture.vala',
++    'Background/BackgroundTextureCache.vala',
+     'Background/BlurEffect.vala',
+     'Background/SystemBackground.vala',
+     'ColorFilters/ColorblindnessCorrectionEffect.vala',
 diff --git a/vapi/Clutter-51.metadata b/vapi/Clutter-51.metadata
 new file mode 100644
-index 000000000..8c22eeeba
+index 00000000..2175e9d2
 --- /dev/null
 +++ b/vapi/Clutter-51.metadata
-@@ -0,0 +1,146 @@
+@@ -0,0 +1,150 @@
 +// Non mini-object
 +ActorBox struct
 +Margin struct
@@ -228,6 +1138,10 @@ index 000000000..8c22eeeba
 +// Skipped by g-i for unknown reasons
 +LayoutManager
 +	.create_child_meta skip=false
++
++// It gets skiped for some reason
++PaintContext
++    .get_stage_view skip=false
 +
 +// We can use static strings
 +PaintNode
@@ -314,11 +1228,13 @@ index 000000000..8c22eeeba
 +EVENT_PROPAGATE skip=false type="bool"
 diff --git a/vapi/Cogl-51-custom.vala b/vapi/Cogl-51-custom.vala
 new file mode 100644
-index 000000000..90d46b330
+index 00000000..33c2e2d2
 --- /dev/null
 +++ b/vapi/Cogl-51-custom.vala
-@@ -0,0 +1,66 @@
+@@ -0,0 +1,62 @@
 +namespace Cogl {
++	public class Texture2D : Cogl.Texture {
++	}
 +	public struct Color {
 +		[CCode (cname="cogl_color_init_from_4f")]
 +		public Color.from_4f (float red, float green, float blue, float alpha);
@@ -327,10 +1243,8 @@ index 000000000..90d46b330
 +		[CCode (cname = "_vala_cogl_color_from_string")]
 +		public static Cogl.Color? from_string (string str) {
 +			Cogl.Color color = {};
-+			if (color.init_from_string (str))
-+				return color;
-+
-+			return null;
++			color.init_from_string (str);
++			return color;
 +		}
 +	}
 +	[CCode (cheader_filename = "cogl/cogl.h", has_type_id = false)]
@@ -379,17 +1293,13 @@ index 000000000..90d46b330
 +		public float s;
 +		public float t;
 +	}
-+	[CCode (cheader_filename = "cogl/cogl.h", cprefix = "COGL_PIXEL_FORMAT_", type_id = "cogl_pixel_format_get_type ()")]
-+	public enum PixelFormat {
-+		CAIRO_ARGB32_COMPAT;
-+	}
 +}
 diff --git a/vapi/Cogl-51.metadata b/vapi/Cogl-51.metadata
 new file mode 100644
-index 000000000..f66d6f40f
+index 00000000..6e88c8ce
 --- /dev/null
 +++ b/vapi/Cogl-51.metadata
-@@ -0,0 +1,40 @@
+@@ -0,0 +1,41 @@
 +* cheader_filename="cogl/cogl.h"
 +
 +Color struct
@@ -409,9 +1319,6 @@ index 000000000..f66d6f40f
 +  .set_data.data type="uint8[]"
 +  .set_region.data type="uint8[]"
 +
-+Texture2D
-+  .new_from_data skip=false
-+
 +Texture.error_quark parent="Cogl.TextureError" name="quark"
 +
 +RendererError errordomain
@@ -422,6 +1329,10 @@ index 000000000..f66d6f40f
 +
 +Onscreen
 +  .add_frame_callback unowned
++  .swap_buffers_with_damage#virtual_method name="swap_buffers_with_damage_vfunc"
++  .swap_region#virtual_method name="swap_region_vfunc"
++
++FramebufferState skip
 +
 +A_BIT parent="Cogl.Bits" name="A"
 +BGR_BIT parent="Cogl.Bits" name="BGR"
@@ -432,7 +1343,7 @@ index 000000000..f66d6f40f
 +PIXEL_FORMAT_MAX_PLANES parent = "Cogl.PixelFormat" name="MAX_PLANES"
 diff --git a/vapi/Meta-51-custom.vala b/vapi/Meta-51-custom.vala
 new file mode 100644
-index 000000000..6c2ad8938
+index 00000000..6c2ad893
 --- /dev/null
 +++ b/vapi/Meta-51-custom.vala
 @@ -0,0 +1,5 @@
@@ -443,10 +1354,10 @@ index 000000000..6c2ad8938
 +}
 diff --git a/vapi/Meta-51.metadata b/vapi/Meta-51.metadata
 new file mode 100644
-index 000000000..727fc2f68
+index 00000000..9956ca57
 --- /dev/null
 +++ b/vapi/Meta-51.metadata
-@@ -0,0 +1,184 @@
+@@ -0,0 +1,179 @@
 +* skip=false
 +*.* skip=false
 +* cheader_filename="meta/main.h"
@@ -454,13 +1365,10 @@ index 000000000..727fc2f68
 +Backend cheader_filename="meta/meta-backend.h"
 +Backend.gpu_added skip
 +Background cheader_filename="meta/meta-background.h"
-+Background.set_file.file nullable
 +BackgroundContent.new symbol_type="constructor"
 +BackgroundActor cheader_filename="meta/meta-background-actor.h"
 +BackgroundContent cheader_filename="meta/meta-background-content.h"
 +BackgroundGroup cheader_filename="meta/meta-background-group.h"
-+BackgroundImage cheader_filename="meta/meta-background-image.h"
-+BackgroundImageCache cheader_filename="meta/meta-background-image.h"
 +Barrier cheader_filename="meta/barrier.h"
 +BarrierDirection cheader_filename="meta/barrier.h"
 +BarrierEvent cheader_filename="meta/barrier.h"
@@ -615,8 +1523,6 @@ index 000000000..727fc2f68
 +
 +BackgroundActor sealed
 +BackgroundContent sealed
-+BackgroundImage sealed
-+BackgroundImageCache sealed
 +Background sealed
 +Dnd sealed
 +IdleMonitor sealed
@@ -633,7 +1539,7 @@ index 000000000..727fc2f68
 +WorkspaceManager sealed
 diff --git a/vapi/Mtk-51.metadata b/vapi/Mtk-51.metadata
 new file mode 100644
-index 000000000..f804d1bc0
+index 00000000..f804d1bc
 --- /dev/null
 +++ b/vapi/Mtk-51.metadata
 @@ -0,0 +1,6 @@
@@ -645,7 +1551,7 @@ index 000000000..f804d1bc0
 +MONITOR_N_TRANSFORMS skip
 diff --git a/vapi/libmutter-51.deps b/vapi/libmutter-51.deps
 new file mode 120000
-index 000000000..5209af8bf
+index 00000000..5209af8b
 --- /dev/null
 +++ b/vapi/libmutter-51.deps
 @@ -0,0 +1 @@
@@ -653,14 +1559,14 @@ index 000000000..5209af8bf
 \ No newline at end of file
 diff --git a/vapi/libmutter-51.vapi b/vapi/libmutter-51.vapi
 new file mode 120000
-index 000000000..d08c01a0c
+index 00000000..d08c01a0
 --- /dev/null
 +++ b/vapi/libmutter-51.vapi
 @@ -0,0 +1 @@
 +libmutter-18.vapi
 \ No newline at end of file
 diff --git a/vapi/libmutter.vapi b/vapi/libmutter.vapi
-index 9b6a81576..79e3c70a4 100644
+index 9b6a8157..ef6160cc 100644
 --- a/vapi/libmutter.vapi
 +++ b/vapi/libmutter.vapi
 @@ -29,8 +29,10 @@ namespace Meta {
@@ -674,7 +1580,20 @@ index 9b6a81576..79e3c70a4 100644
  		[CCode (cheader_filename = "meta/prefs.h")]
  		public static int get_cursor_size ();
  		[CCode (cheader_filename = "meta/prefs.h")]
-@@ -129,7 +131,9 @@ namespace Meta {
+@@ -114,10 +116,12 @@ namespace Meta {
+ 		[CCode (cheader_filename = "meta/util.h", cname = "meta_is_wayland_compositor")]
+ 		public static bool is_wayland_compositor ();
+ #endif
++#if !HAS_MUTTER51
+ 		[CCode (cheader_filename = "meta/util.h", cname = "meta_pop_no_msg_prefix")]
+ 		public static void pop_no_msg_prefix ();
+ 		[CCode (cheader_filename = "meta/util.h", cname = "meta_push_no_msg_prefix")]
+ 		public static void push_no_msg_prefix ();
++#endif
+ 		[CCode (cheader_filename = "meta/util.h", cname = "meta_remove_verbose_topic")]
+ 		public static void remove_verbose_topic (Meta.DebugTopic topic);
+ 		[CCode (cheader_filename = "meta/util.h", cname = "meta_unsigned_long_equal")]
+@@ -129,7 +133,9 @@ namespace Meta {
  	public abstract class Backend : GLib.Object, GLib.Initable {
  		[CCode (has_construct_function = false)]
  		protected Backend ();
@@ -684,7 +1603,17 @@ index 9b6a81576..79e3c70a4 100644
  		public Meta.BackendCapabilities get_capabilities ();
  		public unowned Meta.Context get_context ();
  		public unowned Meta.IdleMonitor get_core_idle_monitor ();
-@@ -176,6 +180,9 @@ namespace Meta {
+@@ -142,6 +148,9 @@ namespace Meta {
+ 		public unowned Meta.Dnd get_dnd ();
+ #if HAS_MUTTER50
+ 		public unowned Meta.KeymapDescription get_keymap_description ();
++#endif
++#if HAS_MUTTER51
++		public unowned Clutter.InputDevice? get_last_input_device ();
+ #endif
+ 		public unowned Meta.MonitorManager get_monitor_manager ();
+ #if HAS_MUTTER47
+@@ -176,6 +185,9 @@ namespace Meta {
  #endif
  		public Meta.BackendCapabilities capabilities { get; }
  		public Meta.Context context { get; construct; }
@@ -694,8 +1623,57 @@ index 9b6a81576..79e3c70a4 100644
  		public signal void keymap_changed ();
  		public signal void keymap_layout_group_changed (uint object);
  		public signal void last_device_changed (Clutter.InputDevice object);
-@@ -342,6 +349,9 @@ namespace Meta {
+@@ -197,18 +209,27 @@ namespace Meta {
+ 	public sealed class Background : GLib.Object {
+ 		[CCode (has_construct_function = false)]
+ 		public Background (Meta.Display display);
++#if HAS_MUTTER51
++		public void set_blend_textures (Cogl.Texture? texture1, Cogl.Texture? texture2, double blend_factor, GDesktop.BackgroundStyle style, Clutter.ColorState? color_state);
++#else
+ 		public static void refresh_all ();
+ 		public void set_blend (GLib.File file1, GLib.File file2, double blend_factor, GDesktop.BackgroundStyle style);
++#endif
+ #if HAS_MUTTER47
+ 		public void set_color (Cogl.Color color);
+ #else
+ 		public void set_color (Clutter.Color color);
+ #endif
++#if !HAS_MUTTER51
+ 		public void set_file (GLib.File? file, GDesktop.BackgroundStyle style);
++#endif
+ #if HAS_MUTTER47
+ 		public void set_gradient (GDesktop.BackgroundShading shading_direction, Cogl.Color color, Cogl.Color second_color);
+ #else
+ 		public void set_gradient (GDesktop.BackgroundShading shading_direction, Clutter.Color color, Clutter.Color second_color);
++#endif
++#if HAS_MUTTER51
++		public void set_texture (Cogl.Texture? texture, GDesktop.BackgroundStyle style, Clutter.ColorState? color_state);
+ #endif
+ 		[NoAccessorMethod]
+ 		public Meta.Display meta_display { owned get; construct; }
+@@ -258,6 +279,7 @@ namespace Meta {
+ 		[CCode (has_construct_function = false, type = "ClutterActor*")]
+ 		public BackgroundGroup ();
+ 	}
++#if !HAS_MUTTER51
+ 	[CCode (cheader_filename = "meta/meta-background-image.h", type_id = "meta_background_image_get_type ()")]
+ 	public sealed class BackgroundImage : GLib.Object {
+ 		[CCode (has_construct_function = false)]
+@@ -275,6 +297,7 @@ namespace Meta {
+ 		public Meta.BackgroundImage load (GLib.File file);
+ 		public void purge (GLib.File file);
+ 	}
++#endif
+ #if HAS_MUTTER49
+ 	[CCode (cheader_filename = "meta/main.h", type_id = "meta_backlight_get_type ()")]
+ 	public abstract class Backlight : GLib.Object {
+@@ -340,14 +363,23 @@ namespace Meta {
+ 		public void disable_unredirect ();
+ 		public void enable_unredirect ();
  		public unowned Meta.Backend get_backend ();
++#endif
++#if HAS_MUTTER51
++		public void get_background_blur_params (out float blur_radius, out float saturation, out float noise);
  #endif
  		public unowned Clutter.Actor get_feedback_group ();
 +#if HAS_MUTTER51
@@ -704,7 +1682,16 @@ index 9b6a81576..79e3c70a4 100644
  		public unowned Meta.Laters get_laters ();
  #if HAS_MUTTER48
  		public unowned Clutter.Stage get_stage ();
-@@ -398,6 +408,22 @@ namespace Meta {
+ 		public unowned Clutter.Actor get_top_window_group ();
+ 		public unowned GLib.List<Meta.WindowActor> get_window_actors ();
+ 		public unowned Clutter.Actor get_window_group ();
++#if HAS_MUTTER51
++		public void set_background_blur_params (float blur_radius, float saturation, float noise);
++#endif
+ 		public Meta.Backend backend { get; construct; }
+ #else
+ 		[NoAccessorMethod]
+@@ -398,6 +430,22 @@ namespace Meta {
  		public signal void prepare_shutdown ();
  		public signal void started ();
  	}
@@ -727,10 +1714,13 @@ index 9b6a81576..79e3c70a4 100644
  	[CCode (cheader_filename = "meta/meta-cursor-tracker.h", type_id = "meta_cursor_tracker_get_type ()")]
  	public class CursorTracker : GLib.Object {
  		[CCode (has_construct_function = false)]
-@@ -520,7 +546,11 @@ namespace Meta {
+@@ -519,8 +567,14 @@ namespace Meta {
+ #endif
  		[CCode (cname = "focus-window")]
  		public signal void do_focus_window (Meta.Window object, int64 p0);
++#if !HAS_MUTTER51
  		public signal void gl_video_memory_purged ();
++#endif
 +#if HAS_MUTTER51
 +		public signal void grab_op_begin (Meta.Window object, Meta.GrabOp p0, Clutter.Sprite p1);
 +#else
@@ -739,7 +1729,7 @@ index 9b6a81576..79e3c70a4 100644
  		public signal void grab_op_end (Meta.Window object, Meta.GrabOp p0);
  		public signal void in_fullscreen_changed ();
  		public signal bool init_xserver (GLib.Task object);
-@@ -659,12 +689,18 @@ namespace Meta {
+@@ -659,12 +713,18 @@ namespace Meta {
  		[CCode (has_construct_function = false)]
  		protected Monitor ();
  		public unowned Meta.Backlight? get_backlight ();
@@ -758,11 +1748,11 @@ index 9b6a81576..79e3c70a4 100644
  		public bool is_builtin ();
  		public bool is_primary ();
  		public bool is_virtual ();
-@@ -889,8 +925,13 @@ namespace Meta {
+@@ -889,8 +949,13 @@ namespace Meta {
  	public sealed class ShapedTexture : GLib.Object, Clutter.Content {
  		[CCode (has_construct_function = false)]
  		protected ShapedTexture ();
-+#if !HAS_MUTTER
++#if !HAS_MUTTER51
  		public Cairo.Surface? get_image (Mtk.Rectangle? clip);
 +#endif
  		public unowned Meta.MultiTexture get_texture ();
@@ -772,7 +1762,7 @@ index 9b6a81576..79e3c70a4 100644
  		public void set_create_mipmaps (bool create_mipmaps);
  		public void set_mask_texture (Cogl.Texture mask_texture);
  #if HAS_MUTTER47
-@@ -1044,16 +1085,24 @@ namespace Meta {
+@@ -1044,16 +1109,24 @@ namespace Meta {
  		public unowned string? get_gtk_application_id ();
  		public unowned string? get_gtk_application_object_path ();
  		public unowned string? get_gtk_menubar_object_path ();
@@ -797,7 +1787,7 @@ index 9b6a81576..79e3c70a4 100644
  #endif
  		public int get_monitor ();
  		public unowned string? get_mutter_hints ();
-@@ -1246,11 +1295,19 @@ namespace Meta {
+@@ -1246,11 +1319,19 @@ namespace Meta {
  		[CCode (has_construct_function = false)]
  		protected WindowActor ();
  		public void freeze ();
@@ -817,7 +1807,30 @@ index 9b6a81576..79e3c70a4 100644
  		public void sync_visibility ();
  		public void thaw ();
  		public Meta.Window meta_window { get; construct; }
-@@ -1907,6 +1964,9 @@ namespace Meta {
+@@ -1266,13 +1347,22 @@ namespace Meta {
+ 		public WindowConfig ();
+ 		public bool get_is_fullscreen ();
+ 		public bool get_is_initial ();
++#if HAS_MUTTER51
++		public Meta.MaximizeFlags get_maximize_flags ();
++#endif
+ 		public void get_position (int x, int y);
+ 		public Mtk.Rectangle? get_rect ();
+ 		public void get_size (int width, int height);
+ 		public void set_is_fullscreen (bool is_fullscreen);
++#if HAS_MUTTER51
++		public void set_maximize_flags (Meta.MaximizeFlags flags);
++#endif
+ 		public void set_position (int x, int y);
+ 		public void set_rect (Mtk.Rectangle rect);
+ 		public void set_size (int width, int height);
++#if HAS_MUTTER51
++		public void unset_maximize_flags (Meta.MaximizeFlags flags);
++#endif
+ 		public bool is_fullscreen { get; set; }
+ 		public Mtk.Rectangle rect { owned get; set; }
+ 	}
+@@ -1907,6 +1997,9 @@ namespace Meta {
  	[CCode (cheader_filename = "meta/window.h", cprefix = "META_MAXIMIZE_", type_id = "meta_maximize_flags_get_type ()")]
  	[Flags]
  	public enum MaximizeFlags {
@@ -827,8 +1840,19 @@ index 9b6a81576..79e3c70a4 100644
  		HORIZONTAL,
  		VERTICAL,
  		BOTH
+@@ -2168,6 +2261,10 @@ namespace Meta {
+ 	public delegate bool WindowForeachFunc (Meta.Window window);
+ 	[CCode (cheader_filename = "meta/common.h", cname = "META_CURRENT_TIME")]
+ 	public const int CURRENT_TIME;
++#if HAS_MUTTER51
++	[CCode (cheader_filename = "meta/main.h", cname = "META_CURSOR_EXTENSION_POINT_NAME")]
++	public const string CURSOR_EXTENSION_POINT_NAME;
++#endif
+ #if HAS_MUTTER48
+ 	[CCode (cheader_filename = "meta/main.h", cname = "META_N_ORIENTATIONS")]
+ 	public const int N_ORIENTATIONS;
 diff --git a/vapi/meson.build b/vapi/meson.build
-index 1e9695b4a..8266eaa33 100644
+index 1e9695b4..8266eaa3 100644
 --- a/vapi/meson.build
 +++ b/vapi/meson.build
 @@ -401,3 +401,75 @@ if mutter50_dep.found()
@@ -909,7 +1933,7 @@ index 1e9695b4a..8266eaa33 100644
 +endif
 diff --git a/vapi/mutter-clutter-51.deps b/vapi/mutter-clutter-51.deps
 new file mode 100644
-index 000000000..9549905db
+index 00000000..9549905d
 --- /dev/null
 +++ b/vapi/mutter-clutter-51.deps
 @@ -0,0 +1,6 @@
@@ -921,14 +1945,14 @@ index 000000000..9549905db
 +graphene-gobject-1.0
 diff --git a/vapi/mutter-clutter-51.vapi b/vapi/mutter-clutter-51.vapi
 new file mode 120000
-index 000000000..f71bfbc08
+index 00000000..f71bfbc0
 --- /dev/null
 +++ b/vapi/mutter-clutter-51.vapi
 @@ -0,0 +1 @@
 +mutter-clutter-18.vapi
 \ No newline at end of file
 diff --git a/vapi/mutter-clutter.vapi b/vapi/mutter-clutter.vapi
-index ef263d976..dfed083ba 100644
+index cf652deb..d8363c04 100644
 --- a/vapi/mutter-clutter.vapi
 +++ b/vapi/mutter-clutter.vapi
 @@ -5211,6 +5211,10 @@ namespace Clutter {
@@ -942,7 +1966,27 @@ index ef263d976..dfed083ba 100644
  #endif
  		public unowned Clutter.Actor? get_child_at_index (int index_);
  		public Graphene.Matrix get_child_transform ();
-@@ -5664,6 +5668,9 @@ namespace Clutter {
+@@ -5596,6 +5600,9 @@ namespace Clutter {
+ 		public virtual signal void pick (Clutter.PickContext pick_context);
+ 		[HasEmitter]
+ 		public virtual signal void queue_relayout ();
++#if HAS_MUTTER51
++		public signal void real_resource_scale_changed ();
++#endif
+ 		[HasEmitter]
+ 		[Version (deprecated = true, deprecated_since = "1.16")]
+ 		public virtual signal void realize ();
+@@ -5605,6 +5612,9 @@ namespace Clutter {
+ 		public virtual signal void show ();
+ 		public signal void stage_views_changed ();
+ 		public virtual signal bool touch_event (Clutter.Event event);
++#if HAS_MUTTER51
++		public signal void transition_removed (Clutter.Transition transition, bool is_finished);
++#endif
+ 		public signal void transition_stopped (string name, bool is_finished);
+ 		public signal void transitions_completed ();
+ 		[HasEmitter]
+@@ -5664,6 +5674,9 @@ namespace Clutter {
  		[CCode (has_construct_function = false)]
  		protected Backend ();
  		public unowned Cogl.Context get_cogl_context ();
@@ -952,7 +1996,7 @@ index ef263d976..dfed083ba 100644
  		public unowned Clutter.Seat get_default_seat ();
  #if !HAS_MUTTER48
  		public unowned Cairo.FontOptions get_font_options ();
-@@ -5847,6 +5854,119 @@ namespace Clutter {
+@@ -5847,6 +5860,119 @@ namespace Clutter {
  		public ColorNode (Clutter.Color? color);
  #endif
  	}
@@ -1072,7 +2116,7 @@ index ef263d976..dfed083ba 100644
  	[CCode (cheader_filename = "clutter/clutter.h", type_id = "clutter_color_state_get_type ()")]
  	public sealed class ColorState : GLib.Object {
  		[CCode (has_construct_function = false)]
-@@ -5856,12 +5976,15 @@ namespace Clutter {
+@@ -5856,12 +5982,15 @@ namespace Clutter {
  #else
  		public ColorState (Clutter.Context context, Clutter.Colorspace colorspace, Clutter.TransferFunction transfer_function);
  #endif
@@ -1088,7 +2132,7 @@ index ef263d976..dfed083ba 100644
  #if HAS_MUTTER49
  		[NoWrapper]
  		public virtual void append_transform_snippet (Clutter.ColorState target_color_state, GLib.StringBuilder snippet_globals, GLib.StringBuilder snippet_source, string snippet_color_var);
-@@ -5872,6 +5995,7 @@ namespace Clutter {
+@@ -5872,9 +6001,13 @@ namespace Clutter {
  		public virtual void do_transform_to_XYZ ([CCode (array_length = false)] float[] data, int n_samples);
  #else
  		public virtual void do_transform (Clutter.ColorState target_color_state, [CCode (array_length = false)] float[] input, [CCode (array_length = false)] float[] output, int n_samples);
@@ -1096,23 +2140,27 @@ index ef263d976..dfed083ba 100644
  #endif
  		public virtual bool equals (Clutter.ColorState other_color_state);
  		public virtual Clutter.ColorState get_blending (bool force);
-@@ -5890,6 +6014,7 @@ namespace Clutter {
++#if HAS_MUTTER51
++		public unowned Clutter.Context get_context ();
++#endif
+ #else
+ 		public bool equals (Clutter.ColorState other_color_state);
+ 		[CCode (has_construct_function = false)]
+@@ -5889,7 +6022,12 @@ namespace Clutter {
+ #endif
  #if HAS_MUTTER47
  		public uint get_id ();
- #if HAS_MUTTER48
-+#if !HAS_MUTTER51
+-#if HAS_MUTTER48
++#if HAS_MUTTER51
++		public virtual unowned Clutter.Luminance? get_luminance ();
++		public virtual uint hash ();
++		public virtual Clutter.EncodingRequiredFormat required_format ();
++		public virtual string to_string ();
++#elif HAS_MUTTER48
  		[NoWrapper]
  #if HAS_MUTTER50
  		public virtual void init_color_transform_key (Clutter.ColorState target_color_state, Clutter.ColorStateTransformFlags flags, Clutter.ColorTransformKey key);
-@@ -5897,6 +6022,7 @@ namespace Clutter {
- #else
- 		public virtual void init_color_transform_key (Clutter.ColorState target_color_state, Clutter.ColorTransformKey key);
- #endif
-+#endif
- #if HAS_MUTTER49
- 		public void params_do_tone_mapping (Clutter.ColorState other_color_state, [CCode (array_length = false)] float[] data, int n_samples);
- #endif
-@@ -5937,6 +6063,10 @@ namespace Clutter {
+@@ -5937,6 +6075,10 @@ namespace Clutter {
  		[CCode (has_construct_function = false, type = "ClutterColorState*")]
  		public ColorStateIcc (Clutter.Context context, uint8 icc_bytes, uint32 icc_length) throws GLib.Error;
  		public unowned Mtk.AnonymousFile get_file ();
@@ -1123,7 +2171,7 @@ index ef263d976..dfed083ba 100644
  	}
  #endif
  #if HAS_MUTTER48
-@@ -5960,10 +6090,18 @@ namespace Clutter {
+@@ -5960,10 +6102,18 @@ namespace Clutter {
  		public unowned Clutter.EOTF? get_eotf ();
  		public unowned Clutter.Luminance? get_luminance ();
  	}
@@ -1142,7 +2190,7 @@ index ef263d976..dfed083ba 100644
  #endif
  	[CCode (cheader_filename = "clutter/clutter.h", type_id = "clutter_colorize_effect_get_type ()")]
  	public class ColorizeEffect : Clutter.OffscreenEffect {
-@@ -5994,7 +6132,11 @@ namespace Clutter {
+@@ -5994,7 +6144,11 @@ namespace Clutter {
  		protected Context ();
  		public unowned Clutter.Backend get_backend ();
  #if HAS_MUTTER47
@@ -1154,17 +2202,21 @@ index ef263d976..dfed083ba 100644
  		public unowned Clutter.Settings get_settings ();
  #endif
  		public Clutter.TextDirection get_text_direction ();
-@@ -6008,20 +6150,38 @@ namespace Clutter {
+@@ -6008,21 +6162,49 @@ namespace Clutter {
  	public abstract class Cursor : GLib.Object {
  		[CCode (has_construct_function = false)]
  		protected Cursor ();
 +#if HAS_MUTTER51
-+		public void emit_texture_changed ();
++		public void emit_image_changed ();
 +#endif
  		[NoWrapper]
  		public virtual uint get_current_frame_time ();
 +#if HAS_MUTTER51
 +		public Clutter.CursorType get_cursor_type ();
++		[NoWrapper]
++		public virtual uint8 get_data (int out_stride);
++		[NoWrapper]
++		public virtual void get_geometry (int width, int height, int hot_x, int hot_y);
 +#endif
  		[NoWrapper]
  		public virtual void invalidate ();
@@ -1176,8 +2228,10 @@ index ef263d976..dfed083ba 100644
 +#else
  		public virtual void prepare_at (float best_scale, int x, int y);
 +#endif
++#if !HAS_MUTTER51
  		[NoWrapper]
  		public virtual bool realize_texture ();
++#endif
 +#if HAS_MUTTER51
 +		public void reset_viewport_dst_size ();
 +		public void set_viewport_dst_size (int dst_width, int dst_height);
@@ -1190,10 +2244,84 @@ index ef263d976..dfed083ba 100644
 +		[NoAccessorMethod]
 +		public Clutter.CursorType cursor_type { construct; }
 +#endif
++#if HAS_MUTTER51
++		public signal void image_changed ();
++#else
  		public signal void texture_changed ();
++#endif
  	}
  #endif
-@@ -6478,6 +6638,10 @@ namespace Clutter {
+ 	[CCode (cheader_filename = "clutter/clutter.h", type_id = "clutter_deform_effect_get_type ()")]
+@@ -6117,6 +6299,9 @@ namespace Clutter {
+ 		public double get_gesture_pinch_scale ();
+ 		public uint32 get_im_delete_length ();
+ 		public bool get_im_location (int32 offset, int32 anchor);
++#if HAS_MUTTER50
++		public bool get_im_preedit_hints (Clutter.PreeditAttribute preedit_hints, uint n_preedit_hints);
++#endif
+ 		public Clutter.PreeditResetMode get_im_preedit_reset_mode ();
+ 		public unowned string get_im_text ();
+ 		public uint16 get_key_code ();
+@@ -6135,6 +6320,9 @@ namespace Clutter {
+ 		public Clutter.ScrollFlags get_scroll_flags ();
+ #endif
+ 		public Clutter.ScrollSource get_scroll_source ();
++#if HAS_MUTTER51
++		public unowned Clutter.Actor get_source ();
++#endif
+ 		public unowned Clutter.InputDevice get_source_device ();
+ 		public Clutter.ModifierType get_state ();
+ 		public uint32 get_time ();
+@@ -6210,6 +6398,9 @@ namespace Clutter {
+ 	[CCode (cheader_filename = "clutter/clutter.h", ref_function = "clutter_frame_ref", type_id = "clutter_frame_get_type ()", unref_function = "clutter_frame_unref")]
+ 	[Compact]
+ 	public class Frame {
++#if HAS_MUTTER51
++		public unowned Cogl.FrameInfo get_cogl_frame_info ();
++#endif
+ 		public int64 get_count ();
+ #if HAS_MUTTER50
+ 		public bool get_expected_presentation_time (int64 expected_presentation_time_us);
+@@ -6219,6 +6410,9 @@ namespace Clutter {
+ 		public bool has_result ();
+ 		public unowned Clutter.Frame @ref ();
+ 		public void set_result (Clutter.FrameResult result);
++#if HAS_MUTTER51
++		public void take_cogl_frame_info (Cogl.FrameInfo frame_info);
++#endif
+ 		public void unref ();
+ 	}
+ 	[CCode (cheader_filename = "clutter/clutter.h", type_id = "clutter_frame_clock_get_type ()")]
+@@ -6246,6 +6440,9 @@ namespace Clutter {
+ #endif
+ 		public void schedule_update ();
+ 		public void schedule_update_now ();
++#if HAS_MUTTER51
++		public void schedule_update_throttled ();
++#endif
+ #if HAS_MUTTER47
+ 		public void set_deadline_evasion (int64 deadline_evasion_us);
+ #if HAS_MUTTER50
+@@ -6462,10 +6659,18 @@ namespace Clutter {
+ 		[CCode (has_construct_function = false)]
+ 		protected InputDeviceTool ();
+ 		public Clutter.InputAxisFlags get_axes ();
++#if HAS_MUTTER51
++		public uint get_eraser_button ();
++#endif
+ 		public uint64 get_id ();
+ 		public uint64 get_serial ();
+ 		public Clutter.InputDeviceToolType get_tool_type ();
+ 		public Clutter.InputAxisFlags axes { get; construct; }
++#if HAS_MUTTER51
++		public uint eraser_button { get; construct; }
++		[NoAccessorMethod]
++		public bool has_eraser_button { get; construct; }
++#endif
+ 		public uint64 id { get; construct; }
+ 		public uint64 serial { get; construct; }
+ 		[NoAccessorMethod]
+@@ -6475,6 +6680,10 @@ namespace Clutter {
  	public abstract class InputFocus : GLib.Object {
  		[CCode (has_construct_function = false)]
  		protected InputFocus ();
@@ -1204,19 +2332,44 @@ index ef263d976..dfed083ba 100644
  		[NoWrapper]
  		public virtual void commit_text (string text);
  		[NoWrapper]
-@@ -6498,7 +6662,11 @@ namespace Clutter {
+@@ -6493,9 +6702,16 @@ namespace Clutter {
+ 		public void set_content_hints (Clutter.InputContentHintFlags hint);
+ 		public void set_content_purpose (Clutter.InputContentPurpose purpose);
  		public void set_cursor_location (Graphene.Rect rect);
++#if HAS_MUTTER51
++		public void set_handled_actions (Clutter.InputActionFlags actions);
++#endif
  		public void set_input_panel_state (Clutter.InputPanelState state);
  		[NoWrapper]
-+	#if HAS_MUTTER51
++#if HAS_MUTTER51
 +		public virtual void set_preedit_text (string preedit, uint cursor, uint anchor, Clutter.PreeditAttribute style_hints, uint n_style_hints);
-+	#else
++#else
  		public virtual void set_preedit_text (string preedit, uint cursor, uint anchor);
-+	#endif
++#endif
  		public void set_surrounding (string text, uint cursor, uint anchor);
  	}
  	[CCode (cheader_filename = "clutter/clutter.h", type_id = "clutter_input_method_get_type ()")]
-@@ -6538,6 +6706,9 @@ namespace Clutter {
+@@ -6512,10 +6728,19 @@ namespace Clutter {
+ 		public virtual void reset ();
+ 		[NoWrapper]
+ 		public virtual void set_cursor_location (Graphene.Rect rect);
++#if HAS_MUTTER50
++		public virtual void set_handled_actions (Clutter.InputActionFlags actions);
++#endif
+ 		public void set_input_panel_state (Clutter.InputPanelState state);
+ 		public void set_preedit_text (string? preedit, uint cursor, uint anchor, Clutter.PreeditResetMode mode);
++#if HAS_MUTTER50
++		public void set_preedit_text_with_attrs (string? preedit, uint cursor, uint anchor, Clutter.PreeditResetMode mode, [CCode (array_length_cname = "n_preedit_hints", array_length_pos = 5.1, array_length_type = "guint")] Clutter.PreeditAttribute[]? preedit_hints);
++#endif
+ 		[NoWrapper]
+ 		public virtual void set_surrounding (string text, uint cursor, uint anchor);
++#if HAS_MUTTER50
++		public void trigger_action (Clutter.InputAction action);
++#endif
+ 		[NoWrapper]
+ 		public virtual void update_content_hints (Clutter.InputContentHintFlags hint);
+ 		[NoWrapper]
+@@ -6526,6 +6751,9 @@ namespace Clutter {
  		public Clutter.InputContentHintFlags content_hints { get; set; }
  		[NoAccessorMethod]
  		public Clutter.InputContentPurpose content_purpose { get; set; }
@@ -1226,7 +2379,7 @@ index ef263d976..dfed083ba 100644
  		[HasEmitter]
  		public signal void commit (string text);
  		public signal void cursor_location_changed (Graphene.Rect object);
-@@ -6576,6 +6747,23 @@ namespace Clutter {
+@@ -6564,6 +6792,23 @@ namespace Clutter {
  		public GLib.Value initial { owned get; set; }
  		public GLib.Type value_type { get; construct; }
  	}
@@ -1250,7 +2403,7 @@ index ef263d976..dfed083ba 100644
  	[CCode (cheader_filename = "clutter/clutter.h", has_type_id = false)]
  	[Compact]
  	public class KeyEvent : Clutter.Event {
-@@ -6662,6 +6850,16 @@ namespace Clutter {
+@@ -6650,6 +6895,16 @@ namespace Clutter {
  		[CCode (has_construct_function = false, type = "ClutterAction*")]
  		public LongPressGesture ();
  	}
@@ -1267,23 +2420,21 @@ index ef263d976..dfed083ba 100644
  #endif
  	[CCode (cheader_filename = "clutter/clutter.h", has_type_id = false)]
  	[Compact]
-@@ -6830,6 +7028,7 @@ namespace Clutter {
+@@ -6818,7 +7073,12 @@ namespace Clutter {
  		public unowned Clutter.PickContext @ref ();
  		public void unref ();
  	}
-+#if !HAS_MUTTER51
- #if HAS_MUTTER47
+-#if HAS_MUTTER47
++#if HAS_MUTTER51
++	[CCode (cheader_filename = "clutter/clutter.h", has_type_id = false)]
++	[Compact]
++	public class PipelineCache {
++	}
++#elif HAS_MUTTER47
  	[CCode (cheader_filename = "clutter/clutter.h", type_id = "clutter_pipeline_cache_get_type ()")]
  	public class PipelineCache : GLib.Object {
-@@ -6838,6 +7037,7 @@ namespace Clutter {
- 		public void set_pipeline (Clutter.PipelineGroup group, int slot, Clutter.ColorState source_color_state, Clutter.ColorState target_color_state, Cogl.Pipeline pipeline);
- 		public void unset_all_pipelines (Clutter.PipelineGroup group);
- 	}
-+#endif
- #endif
- 	[CCode (cheader_filename = "clutter/clutter.h", type_id = "clutter_pipeline_node_get_type ()")]
- 	public class PipelineNode : Clutter.PaintNode {
-@@ -6924,6 +7124,16 @@ namespace Clutter {
+ 		[CCode (has_construct_function = false)]
+@@ -6912,6 +7172,16 @@ namespace Clutter {
  		public void set_scroll_mode (Clutter.ScrollMode mode);
  		public Clutter.ScrollMode scroll_mode { get; set; }
  	}
@@ -1300,7 +2451,17 @@ index ef263d976..dfed083ba 100644
  #endif
  	[CCode (cheader_filename = "clutter/clutter.h", has_type_id = false)]
  	[Compact]
-@@ -7046,6 +7256,13 @@ namespace Clutter {
+@@ -6994,7 +7264,9 @@ namespace Clutter {
+ #if HAS_MUTTER47
+ 		[Version (deprecated = true)]
+ #endif
++#if !HAS_MUTTER51
+ 		public static unowned Clutter.Settings get_default ();
++#endif
+ 		[NoAccessorMethod]
+ 		public int dnd_drag_threshold { get; set; }
+ 		[NoAccessorMethod]
+@@ -7034,6 +7306,13 @@ namespace Clutter {
  	}
  	[CCode (cheader_filename = "clutter/clutter.h", type_id = "clutter_shader_effect_get_type ()")]
  	public class ShaderEffect : Clutter.OffscreenEffect {
@@ -1314,7 +2475,7 @@ index ef263d976..dfed083ba 100644
  		[CCode (has_construct_function = false, type = "ClutterEffect*")]
  #if HAS_MUTTER48
  		public ShaderEffect (Cogl.ShaderType shader_type);
-@@ -7057,12 +7274,18 @@ namespace Clutter {
+@@ -7045,12 +7324,18 @@ namespace Clutter {
  		[NoWrapper]
  		public virtual string get_static_shader_source ();
  		public bool set_shader_source (string source);
@@ -1333,7 +2494,7 @@ index ef263d976..dfed083ba 100644
  #endif
  	}
  	[CCode (cheader_filename = "clutter/clutter.h", type_id = "clutter_shader_float_get_type ()")]
-@@ -7162,6 +7385,9 @@ namespace Clutter {
+@@ -7150,6 +7435,9 @@ namespace Clutter {
  		public Clutter.Content paint_to_content (Mtk.Rectangle rect, float scale, Clutter.PaintFlag paint_flags) throws GLib.Error;
  		public void paint_to_framebuffer (Cogl.Framebuffer framebuffer, Mtk.Rectangle rect, float scale, Clutter.PaintFlag paint_flags);
  #endif
@@ -1343,7 +2504,7 @@ index ef263d976..dfed083ba 100644
  #if !HAS_MUTTER49
  		public bool pointing_input_foreach (Clutter.StageInputForeachFunc func);
  #endif
-@@ -7175,7 +7401,9 @@ namespace Clutter {
+@@ -7163,7 +7451,9 @@ namespace Clutter {
  		public void set_active (bool is_active);
  #endif
  		public void set_key_focus (Clutter.Actor? actor);
@@ -1353,7 +2514,7 @@ index ef263d976..dfed083ba 100644
  #if !HAS_MUTTER48
  		public void set_title (string title);
  		public void update_device (Clutter.InputDevice device, Clutter.EventSequence sequence, Clutter.InputDevice source_device, Graphene.Point point, uint32 time, Clutter.Actor new_actor, Mtk.Region region, bool emit_crossing);
-@@ -7332,9 +7560,15 @@ namespace Clutter {
+@@ -7320,9 +7610,15 @@ namespace Clutter {
  		public bool get_cursor_visible ();
  		public bool get_editable ();
  		public Pango.EllipsizeMode get_ellipsize ();
@@ -1369,7 +2530,7 @@ index ef263d976..dfed083ba 100644
  		public Clutter.InputContentPurpose get_input_purpose ();
  		public bool get_justify ();
  		public unowned Pango.Layout get_layout ();
-@@ -7379,9 +7613,15 @@ namespace Clutter {
+@@ -7367,9 +7663,15 @@ namespace Clutter {
  		public void set_cursor_visible (bool cursor_visible);
  		public void set_editable (bool editable);
  		public void set_ellipsize (Pango.EllipsizeMode mode);
@@ -1385,7 +2546,7 @@ index ef263d976..dfed083ba 100644
  		public void set_input_purpose (Clutter.InputContentPurpose purpose);
  		public void set_justify (bool justify);
  		public void set_line_alignment (Pango.Alignment alignment);
-@@ -7430,9 +7670,17 @@ namespace Clutter {
+@@ -7418,9 +7720,17 @@ namespace Clutter {
  		public bool cursor_visible { get; set; }
  		public bool editable { get; set; }
  		public Pango.EllipsizeMode ellipsize { get; set; }
@@ -1403,11 +2564,12 @@ index ef263d976..dfed083ba 100644
  		public Clutter.InputContentPurpose input_purpose { get; set; }
  		public bool justify { get; set; }
  		public Pango.Alignment line_alignment { get; set; }
-@@ -7752,13 +8000,26 @@ namespace Clutter {
+@@ -7740,13 +8050,27 @@ namespace Clutter {
  		public Clutter.ColorimetryType type;
  		public Clutter.Colorspace colorspace;
  		public Clutter.Primaries primaries;
 +#if HAS_MUTTER51
++		public void clear ();
 +		public bool equal (Clutter.Colorimetry other_colorimetry);
 +		public void from_XYZ (Graphene.Matrix from_XYZ);
 +		public unowned Clutter.Primaries? get_primaries ();
@@ -1430,7 +2592,7 @@ index ef263d976..dfed083ba 100644
  	}
  	[CCode (cheader_filename = "clutter/clutter.h", has_type_id = false)]
  	public struct Luminance {
-@@ -7768,6 +8029,10 @@ namespace Clutter {
+@@ -7756,6 +8080,10 @@ namespace Clutter {
  		public float @ref;
  #if HAS_MUTTER50
  		public float mastering_max;
@@ -1441,7 +2603,7 @@ index ef263d976..dfed083ba 100644
  #endif
  	}
  #endif
-@@ -7835,6 +8100,9 @@ namespace Clutter {
+@@ -7823,6 +8151,9 @@ namespace Clutter {
  		public float get_height ();
  		public Graphene.Point3D get_origin ();
  		public float get_width ();
@@ -1451,7 +2613,22 @@ index ef263d976..dfed083ba 100644
  		public void set_depth (float depth);
  		public bool set_from_allocation (Clutter.Actor actor);
  		public void set_height (float height);
-@@ -7889,6 +8157,9 @@ namespace Clutter {
+@@ -7857,6 +8188,14 @@ namespace Clutter {
+ 		public int dwell_delay;
+ 		public int dwell_threshold;
+ 	}
++#if HAS_MUTTER50
++	[CCode (cheader_filename = "clutter/clutter.h", has_type_id = false)]
++	public struct PreeditAttribute {
++		public Clutter.PreeditStyleHint hint;
++		public uint start;
++		public uint end;
++	}
++#endif
+ #if HAS_MUTTER48
+ 	[CCode (cheader_filename = "clutter/clutter.h", has_type_id = false)]
+ 	public struct Primaries {
+@@ -7869,6 +8208,9 @@ namespace Clutter {
  		public float w_x;
  		public float w_y;
  		public void ensure_normalized_range ();
@@ -1461,7 +2638,29 @@ index ef263d976..dfed083ba 100644
  	}
  #endif
  #if HAS_MUTTER47
-@@ -8217,6 +8488,9 @@ namespace Clutter {
+@@ -8036,6 +8378,9 @@ namespace Clutter {
+ #endif
+ 		NTSC;
+ 		public unowned Clutter.Primaries? to_primaries ();
++#if HAS_MUTTER51
++		public unowned string to_string ();
++#endif
+ #else
+ 		BT2020
+ #endif
+@@ -8102,7 +8447,10 @@ namespace Clutter {
+ 		ZOOM_IN,
+ 		ZOOM_OUT,
+ 		DND_ASK,
+-		ALL_RESIZE
++		ALL_RESIZE;
++#if HAS_MUTTER51
++		public unowned string to_name ();
++#endif
+ 	}
+ #endif
+ #if !HAS_MUTTER48
+@@ -8197,6 +8545,9 @@ namespace Clutter {
  	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_PHASE_", type_id = "clutter_event_phase_get_type ()")]
  	public enum EventPhase {
  		CAPTURE,
@@ -1471,7 +2670,28 @@ index ef263d976..dfed083ba 100644
  		BUBBLE
  	}
  	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_", type_id = "clutter_event_type_get_type ()")]
-@@ -8389,6 +8663,10 @@ namespace Clutter {
+@@ -8302,6 +8653,20 @@ namespace Clutter {
+ 		TOP,
+ 		BOTTOM
+ 	}
++#if HAS_MUTTER50
++	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_INPUT_ACTION_", type_id = "clutter_input_action_get_type ()")]
++	public enum InputAction {
++		SUBMIT,
++		LAST
++	}
++	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_INPUT_ACTION_FLAG_", type_id = "clutter_input_action_flags_get_type ()")]
++	[Flags]
++	public enum InputActionFlags {
++		NONE,
++		SUBMIT,
++		ALL
++	}
++#endif
+ 	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_INPUT_AXIS_", type_id = "clutter_input_axis_get_type ()")]
+ 	public enum InputAxis {
+ 		IGNORE,
+@@ -8355,6 +8720,10 @@ namespace Clutter {
  		HIDDEN_TEXT,
  		SENSITIVE_DATA,
  		LATIN,
@@ -1482,7 +2702,46 @@ index ef263d976..dfed083ba 100644
  		MULTILINE
  	}
  	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_INPUT_CONTENT_PURPOSE_", type_id = "clutter_input_content_purpose_get_type ()")]
-@@ -8646,6 +8924,17 @@ namespace Clutter {
+@@ -8530,9 +8899,18 @@ namespace Clutter {
+ 		ALL
+ 	}
+ #if HAS_MUTTER47
++#if HAS_MUTTER51
++	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_PIPELINE_CAPABILITY_", type_id = "clutter_pipeline_capability_get_type ()")]
++#else
+ 	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_PIPELINE_CAPABILITY_COLOR_", type_id = "clutter_pipeline_capability_get_type ()")]
++#endif
+ 	public enum PipelineCapability {
++#if HAS_MUTTER51
++		COLOR_STATE,
++		SHADER_EFFECT;
++#else
+ 		STATE;
++#endif
+ 		public static GLib.Quark quark ();
+ 	}
+ #endif
+@@ -8575,6 +8953,19 @@ namespace Clutter {
+ 		CLEAR,
+ 		COMMIT
+ 	}
++#if HAS_MUTTER50
++	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_PREEDIT_STYLE_", type_id = "clutter_preedit_style_hint_get_type ()")]
++	public enum PreeditStyleHint {
++		NONE,
++		WHOLE,
++		SELECTION,
++		PREDICTION,
++		PREFIX,
++		SUFFIX,
++		SPELLING_ERROR,
++		COMPOSE_ERROR
++	}
++#endif
+ 	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_REPAINT_FLAGS_", type_id = "clutter_repaint_flags_get_type ()")]
+ 	[Flags]
+ 	public enum RepaintFlags {
+@@ -8599,6 +8990,17 @@ namespace Clutter {
  		NEAREST,
  		TRILINEAR
  	}
@@ -1500,7 +2759,20 @@ index ef263d976..dfed083ba 100644
  	[CCode (cheader_filename = "clutter/clutter.h", cprefix = "CLUTTER_SCROLL_", type_id = "clutter_scroll_direction_get_type ()")]
  	public enum ScrollDirection {
  		UP,
-@@ -8770,6 +9059,18 @@ namespace Clutter {
+@@ -8700,7 +9102,12 @@ namespace Clutter {
+ #if !HAS_MUTTER50
+ 		DEFAULT,
+ #endif
++#if HAS_MUTTER51
++		SRGB_PIECEWISE,
++		GAMMA22,
++#else
+ 		SRGB,
++#endif
+ 		PQ,
+ #if HAS_MUTTER48
+ #if HAS_MUTTER50
+@@ -8723,6 +9130,18 @@ namespace Clutter {
  		POINTER,
  		TOUCHSCREEN
  	}
@@ -1519,7 +2791,49 @@ index ef263d976..dfed083ba 100644
  	[CCode (cheader_filename = "clutter/clutter.h", instance_pos = 1.9)]
  	public delegate Clutter.Actor ActorCreateChildFunc (GLib.Object item);
  	[CCode (cheader_filename = "clutter/clutter.h", instance_pos = 2.9)]
-@@ -8863,4 +9164,8 @@ namespace Clutter {
+@@ -8761,6 +9180,14 @@ namespace Clutter {
+ #if HAS_MUTTER50
+ 	[Version (replacement = "Colorspace.to_primaries")]
+ 	public static unowned Clutter.Primaries? colorspace_to_primaries (Clutter.Colorspace colorspace);
++#endif
++#if HAS_MUTTER51
++	[CCode (cheader_filename = "clutter/clutter.h")]
++	[Version (replacement = "Colorspace.to_string")]
++	public static unowned string colorspace_to_string (Clutter.Colorspace colorspace);
++	[CCode (cheader_filename = "clutter/clutter.h")]
++	[Version (replacement = "CursorType.to_name")]
++	public static unowned string cursor_type_to_name (Clutter.CursorType cursor);
+ #endif
+ 	[CCode (cheader_filename = "clutter/clutter.h")]
+ 	public static void debug_set_max_render_time_constant (int max_render_time_constant_us);
+@@ -8789,8 +9216,10 @@ namespace Clutter {
+ 	public static uint32 get_current_event_time ();
+ 	[CCode (cheader_filename = "clutter/clutter.h")]
+ 	public static void get_debug_flags (out Clutter.DebugFlag debug_flags, out Clutter.DrawDebugFlag draw_flags, out Clutter.PickDebugFlag pick_flags);
++#if !HAS_MUTTER51
+ 	[CCode (cheader_filename = "clutter/clutter.h")]
+ 	public static unowned Clutter.Backend get_default_backend ();
++#endif
+ 	[CCode (cheader_filename = "clutter/clutter.h")]
+ 	public static Clutter.TextDirection get_default_text_direction ();
+ #if !HAS_MUTTER47
+@@ -8805,6 +9234,15 @@ namespace Clutter {
+ 	public static void keyval_convert_case (uint symbol, out uint lower, out uint upper);
+ 	[CCode (cheader_filename = "clutter/clutter.h")]
+ 	public static unowned string? keyval_name (uint keyval);
++#if HAS_MUTTER51
++	[CCode (cheader_filename = "clutter/clutter.h")]
++	public static uint keyval_to_lower (uint keyval);
++	[CCode (cheader_filename = "clutter/clutter.h")]
++	public static uint keyval_to_upper (uint keyval);
++	[CCode (cheader_filename = "clutter/clutter.h")]
++	[Version (replacement = "Luminance.get_default_sdr")]
++	public static unowned Clutter.Luminance? luminance_get_default_sdr ();
++#endif
+ #if HAS_MUTTER50
+ 	[CCode (cheader_filename = "clutter/clutter.h")]
+ 	[Version (replacement = "PipelineCapability.quark")]
+@@ -8816,4 +9254,8 @@ namespace Clutter {
  #endif
  	[CCode (cheader_filename = "clutter/clutter.h")]
  	public static uint unicode_to_keysym (uint32 wc);
@@ -1529,7 +2843,7 @@ index ef263d976..dfed083ba 100644
 +#endif
  }
 diff --git a/vapi/mutter-cogl-14.vapi b/vapi/mutter-cogl-14.vapi
-index b0306668e..a64a0f779 100644
+index b0306668..695ac20b 100644
 --- a/vapi/mutter-cogl-14.vapi
 +++ b/vapi/mutter-cogl-14.vapi
 @@ -90,6 +90,12 @@ namespace Cogl {
@@ -1563,7 +2877,26 @@ index b0306668e..a64a0f779 100644
  #if HAS_MUTTER47
  		public void flush ();
  #else
-@@ -159,14 +173,35 @@ namespace Cogl {
+@@ -140,7 +154,7 @@ namespace Cogl {
+ #if !HAS_MUTTER50
+ 		public Cogl.GraphicsResetStatus get_graphics_reset_status ();
+ #endif
+-#if HAS_MUTTER48
++#if HAS_MUTTER48 && !HAS_MUTTER51
+ 		public int get_latest_sync_fd ();
+ #endif
+ 		public unowned Cogl.Pipeline get_named_pipeline (Cogl.PipelineKey key);
+@@ -151,7 +165,9 @@ namespace Cogl {
+ #if !HAS_MUTTER47
+ 		[CCode (cheader_filename = "cogl/cogl.h", cname = "cogl_has_feature")]
+ #endif
++#if !HAS_MUTTER51
+ 		public bool has_feature (Cogl.FeatureID feature);
++#endif
+ #if HAS_MUTTER47
+ 		public bool has_winsys_feature (Cogl.WinsysFeature feature);
+ #endif
+@@ -159,14 +175,35 @@ namespace Cogl {
  		public bool is_hardware_accelerated ();
  #endif
  		public void set_named_pipeline (Cogl.PipelineKey key, Cogl.Pipeline? pipeline);
@@ -1572,17 +2905,17 @@ index b0306668e..a64a0f779 100644
 +#endif
  #if !HAS_MUTTER50
  		public int64 timestamp_query_get_time_ns (Cogl.TimestampQuery query);
-+#endif
+ #endif
 +#if HAS_MUTTER51
 +		public Cogl.Display display { get; construct; }
- #endif
- 	}
++#endif
++	}
 +#if HAS_MUTTER51
 +	[CCode (cheader_filename = "cogl/cogl.h", type_id = "cogl_context_egl_get_type ()")]
 +	public class ContextEGL : Cogl.Context {
 +		[CCode (has_construct_function = false, type = "CoglContext*")]
 +		public ContextEGL (Cogl.Display display) throws GLib.Error;
-+	}
+ 	}
 +#endif
  	[CCode (cheader_filename = "cogl/cogl.h", type_id = "cogl_display_get_type ()")]
 +#if HAS_MUTTER51
@@ -1600,14 +2933,17 @@ index b0306668e..a64a0f779 100644
  		public Display (Cogl.Renderer renderer);
  #else
  		public Display (Cogl.Renderer renderer, Cogl.OnscreenTemplate onscreen_template);
-@@ -176,7 +211,21 @@ namespace Cogl {
+@@ -175,8 +212,24 @@ namespace Cogl {
+ #if !HAS_MUTTER47
  		public void set_onscreen_template (Cogl.OnscreenTemplate onscreen_template);
  #endif
- 		public bool setup () throws GLib.Error;
 +#if HAS_MUTTER51
++		public virtual bool setup () throws GLib.Error;
 +		public Cogl.Renderer renderer { get; construct; }
++#else
+ 		public bool setup () throws GLib.Error;
 +#endif
- 	}
++	}
 +#if HAS_MUTTER51
 +	[CCode (cheader_filename = "cogl/cogl.h", type_id = "cogl_display_egl_get_type ()")]
 +	public class DisplayEGL : Cogl.Display {
@@ -1617,12 +2953,52 @@ index b0306668e..a64a0f779 100644
 +		public virtual void cleanup_context ();
 +		[NoWrapper]
 +		public virtual bool context_created () throws GLib.Error;
-+	}
+ 	}
 +#endif
  	[CCode (cheader_filename = "cogl/cogl.h", free_function = "cogl_dma_buf_handle_free", has_type_id = false)]
  	[Compact]
  	public class DmaBufHandle {
-@@ -281,6 +330,9 @@ namespace Cogl {
+@@ -214,10 +267,22 @@ namespace Cogl {
+ 		public Cogl.GraphicsResetStatus get_graphics_reset_status ();
+ 		public unowned string get_vendor ();
+ 		public bool has_feature (Cogl.FeatureID feature);
++#if !HAS_MUTTER51
+ 		public bool is_hardware_accelerated ();
++#endif
+ 		public void set_feature (Cogl.FeatureID feature, bool value);
+ 	}
+ #endif
++#if HAS_MUTTER51
++	[CCode (cheader_filename = "cogl/cogl.h", type_id = "cogl_driver_gl_get_type ()")]
++	public class DriverGL : Cogl.Driver {
++		[CCode (has_construct_function = false)]
++		protected DriverGL ();
++		public uint get_gl_error ();
++		[CCode (array_length = false, array_null_terminated = true)]
++		public string[] get_gl_extensions (Cogl.Renderer renderer);
++	}
++#endif
+ #if !HAS_MUTTER47
+ 	[CCode (cheader_filename = "cogl/cogl.h", has_type_id = false)]
+ 	[Compact]
+@@ -244,6 +309,9 @@ namespace Cogl {
+ 		public bool get_is_symbolic ();
+ #if HAS_MUTTER50
+ 		public int64 get_kms_ready_time_us ();
++#endif
++#if HAS_MUTTER51
++		public unowned Cogl.Onscreen get_onscreen ();
+ #endif
+ 		public int64 get_presentation_time_us ();
+ 		public float get_refresh_rate ();
+@@ -277,10 +345,16 @@ namespace Cogl {
+ 		public unowned Cogl.FenceClosure? add_fence_callback ([CCode (scope = "async")] Cogl.FenceCallback callback);
+ #endif
+ 		public virtual bool allocate () throws GLib.Error;
++#if HAS_MUTTER51
++		public void bind_renderbuffers (Cogl.Renderbuffers renderbuffers);
++#endif
+ #if !HAS_MUTTER48
  		[CCode (cheader_filename = "cogl/cogl.h", cname = "cogl_blit_framebuffer")]
  #endif
  		public bool blit (Cogl.Framebuffer dst, int src_x, int src_y, int dst_x, int dst_y, int width, int height) throws GLib.Error;
@@ -1632,21 +3008,48 @@ index b0306668e..a64a0f779 100644
  #if !HAS_MUTTER47
  		public void cancel_fence_callback (Cogl.FenceClosure closure);
  #endif
-@@ -477,7 +529,12 @@ namespace Cogl {
+@@ -328,6 +402,9 @@ namespace Cogl {
+ 		[NoWrapper]
+ 		public virtual bool is_y_flipped ();
+ 		public void orthographic (float x_1, float y_1, float x_2, float y_2, float near, float far);
++#if HAS_MUTTER51
++		public unowned Cogl.Renderbuffers peek_renderbuffers ();
++#endif
+ 		public void perspective (float fov_y, float aspect, float z_near, float z_far);
+ 		public void pop_clip ();
+ 		public void pop_matrix ();
+@@ -454,7 +531,9 @@ namespace Cogl {
+ 		public unowned Cogl.OnscreenDirtyClosure add_dirty_callback (owned Cogl.OnscreenDirtyCallback callback);
+ #endif
+ 		public unowned Cogl.FrameClosure add_frame_callback (owned Cogl.FrameCallback callback);
++#if !HAS_MUTTER51
+ 		public void add_frame_info (owned Cogl.FrameInfo info);
++#endif
+ 		[NoWrapper]
+ 		public virtual void bind ();
+ 		public virtual bool direct_scanout (Cogl.Scanout scanout, Cogl.FrameInfo info) throws GLib.Error;
+@@ -476,8 +555,19 @@ namespace Cogl {
+ #if !HAS_MUTTER47
  		public void show ();
  #endif
++#if !HAS_MUTTER51
  		public void swap_buffers (Cogl.FrameInfo frame_info, void* user_data);
 -#if HAS_MUTTER48
++#endif
 +#if HAS_MUTTER51
++		public void swap_buffers_with_damage (Mtk.Region region, Cogl.FrameInfo info, void* user_data);
++		[CCode (vfunc_name = "swap_buffers_with_damage")]
 +		[NoWrapper]
-+		public virtual bool swap_buffers_with_damage (Mtk.Region region, Cogl.FrameInfo info);
++		public virtual bool swap_buffers_with_damage_vfunc (Mtk.Region region, Cogl.FrameInfo info);
++		public void swap_region (Mtk.Region region, Cogl.FrameInfo info, void* user_data);
++		[CCode (vfunc_name = "swap_region")]
 +		[NoWrapper]
-+		public virtual bool swap_region (Mtk.Region region, Cogl.FrameInfo info);
++		public virtual bool swap_region_vfunc (Mtk.Region region, Cogl.FrameInfo info);
 +#elif HAS_MUTTER48
  		public virtual void swap_buffers_with_damage (Mtk.Region region, Cogl.FrameInfo info);
  		public virtual void swap_region (Mtk.Region region, Cogl.FrameInfo info);
  #else
-@@ -522,6 +579,9 @@ namespace Cogl {
+@@ -522,6 +612,9 @@ namespace Cogl {
  	public sealed class Pipeline : GLib.Object {
  		[CCode (has_construct_function = false)]
  		public Pipeline (Cogl.Context context);
@@ -1656,7 +3059,17 @@ index b0306668e..a64a0f779 100644
  		public void add_layer_snippet (int layer, Cogl.Snippet snippet);
  		public void add_snippet (Cogl.Snippet snippet);
  		public Cogl.Pipeline copy ();
-@@ -544,7 +604,9 @@ namespace Cogl {
+@@ -529,6 +622,9 @@ namespace Cogl {
+ 		public Cogl.PipelineAlphaFunc get_alpha_test_function ();
+ 		public float get_alpha_test_reference ();
+ 		public Cogl.Color get_color ();
++#if HAS_MUTTER51
++		public unowned Cogl.Context get_context ();
++#endif
+ 		public Cogl.PipelineCullFaceMode get_cull_face_mode ();
+ 		public Cogl.DepthState get_depth_state ();
+ 		public Cogl.Winding get_front_face_winding ();
+@@ -544,7 +640,9 @@ namespace Cogl {
  		public bool get_per_vertex_point_size ();
  		public float get_point_size ();
  		public int get_uniform_location (string uniform_name);
@@ -1666,7 +3079,7 @@ index b0306668e..a64a0f779 100644
  #if HAS_MUTTER48
  		public bool has_capability (GLib.Quark domain, uint capability);
  #endif
-@@ -583,7 +645,9 @@ namespace Cogl {
+@@ -583,7 +681,9 @@ namespace Cogl {
  		public void set_uniform_int (int uniform_location, int n_components, int count, int value);
  		public void set_uniform_matrix (int uniform_location, int dimensions, int count, bool transpose, float value);
  #endif
@@ -1676,7 +3089,7 @@ index b0306668e..a64a0f779 100644
  	}
  	[CCode (cheader_filename = "cogl/cogl.h", type_id = "cogl_pixel_buffer_get_type ()")]
  	public sealed class PixelBuffer : Cogl.Buffer {
-@@ -640,6 +704,7 @@ namespace Cogl {
+@@ -640,6 +740,7 @@ namespace Cogl {
  		[CCode (has_construct_function = false)]
  		public Primitive.with_attributes (Cogl.VerticesMode mode, int n_vertices, [CCode (array_length_cname = "n_attributes", array_length_pos = 3.1)] Cogl.Attribute[] attributes);
  	}
@@ -1684,10 +3097,16 @@ index b0306668e..a64a0f779 100644
  	[CCode (cheader_filename = "cogl/cogl.h", type_id = "cogl_program_get_type ()")]
  	public sealed class Program : GLib.Object {
  		[CCode (has_construct_function = false)]
-@@ -667,10 +732,17 @@ namespace Cogl {
+@@ -667,35 +768,64 @@ namespace Cogl {
  		[Version (deprecated = true, deprecated_since = "1.16")]
  		public void set_uniform_matrix (int uniform_location, int dimensions, bool transpose, [CCode (array_length_cname = "count", array_length_pos = 2.5)] float[] value);
  	}
++#endif
++#if HAS_MUTTER51
++	[CCode (cheader_filename = "cogl/cogl.h", has_type_id = false)]
++	[Compact]
++	public class Renderbuffers {
++	}
 +#endif
  	[CCode (cheader_filename = "cogl/cogl.h", type_id = "cogl_renderer_get_type ()")]
 +#if HAS_MUTTER51
@@ -1702,33 +3121,71 @@ index b0306668e..a64a0f779 100644
  #if !HAS_MUTTER47
  		public void add_constraint (Cogl.RendererConstraint constraint);
  #endif
-@@ -696,6 +768,10 @@ namespace Cogl {
++#if HAS_MUTTER51
++		public virtual void bind_api ();
++#else
+ 		public void bind_api ();
++#endif
+ #if !HAS_MUTTER47
+ 		public bool check_onscreen_template (Cogl.OnscreenTemplate onscreen_template) throws GLib.Error;
+ #endif
++#if HAS_MUTTER51
++		public virtual bool connect () throws GLib.Error;
++#else
+ 		public bool connect () throws GLib.Error;
+-#if !HAS_MUTTER50
+-#if HAS_MUTTER49
+-		public void* get_custom_winsys_data ();
+ #endif
++#if HAS_MUTTER49 && !HAS_MUTTER51
++		public void* get_custom_winsys_data ();
+ #endif
+ #if !HAS_MUTTER47
+ 		public void foreach_output (Cogl.OutputCallback callback);
+ #endif
+ #if HAS_MUTTER48
+ 		public Cogl.DriverId get_driver_id ();
++#if HAS_MUTTER51
++		public virtual uint64 get_implicit_drm_modifier ();
++		public int get_latest_sync_fd ();
++#else
+ 		public uint64 get_implicit_drm_modifier ();
++#endif
+ #else
+ 		public Cogl.Driver get_driver ();
+ #endif
  #if HAS_MUTTER47
  		public void* get_proc_address (string name);
  #endif
 +#if HAS_MUTTER51
++		[NoWrapper]
 +		public virtual int get_sync_fd ();
 +#endif
 +#if !HAS_MUTTER51
  #if HAS_MUTTER50
  		public unowned Cogl.Winsys get_winsys ();
  #elif HAS_MUTTER49
-@@ -705,6 +781,7 @@ namespace Cogl {
- 		public void* get_winsys_data ();
+@@ -706,7 +836,13 @@ namespace Cogl {
  #else
  		public Cogl.WinsysID get_winsys_id ();
-+#endif
  #endif
++#endif
++#if HAS_MUTTER51
++		public virtual bool is_dma_buf_supported ();
++		public virtual bool is_hardware_accelerated ();
++#else
  		public bool is_dma_buf_supported ();
++#endif
  #if HAS_MUTTER48
-@@ -719,6 +796,15 @@ namespace Cogl {
+ 		public bool is_implicit_drm_modifier (uint64 modifier);
+ #endif
+@@ -719,6 +855,14 @@ namespace Cogl {
  #if !HAS_MUTTER47
  		public void set_winsys_id (Cogl.WinsysID winsys_id);
  #endif
 +#if HAS_MUTTER51
 +		[NoWrapper]
 +		public virtual bool load_driver (Cogl.DriverId driver_id) throws GLib.Error;
-+		public void set_driver_id (Cogl.DriverId driver);
 +		[NoWrapper]
 +		public virtual void update_sync ();
 +		[NoAccessorMethod]
@@ -1737,25 +3194,26 @@ index b0306668e..a64a0f779 100644
  #if HAS_MUTTER50
  		public void set_custom_winsys (Cogl.Winsys winsys);
  #endif
-@@ -729,8 +815,17 @@ namespace Cogl {
- #else
+@@ -730,7 +874,18 @@ namespace Cogl {
  		public void set_winsys (void* winsys);
  #endif
-+#endif
  #endif
- 	}
++#endif
++	}
 +#if HAS_MUTTER51
 +	[CCode (cheader_filename = "cogl/cogl.h", type_id = "cogl_renderer_egl_get_type ()")]
 +	public class RendererEGL : Cogl.Renderer {
 +		[CCode (has_construct_function = false)]
 +		public RendererEGL ();
 +		public bool has_feature (Cogl.EGLWinsysFeature feature);
-+	}
++		public bool has_set_damage_region ();
++		public bool has_swap_buffers_with_damage ();
+ 	}
 +#endif
  	[CCode (cheader_filename = "cogl/cogl.h", type_id = "cogl_scanout_get_type ()")]
  	public sealed class Scanout : GLib.Object {
  		[CCode (has_construct_function = false)]
-@@ -754,6 +849,7 @@ namespace Cogl {
+@@ -754,6 +909,7 @@ namespace Cogl {
  		public void set_src_rect (Graphene.Rect rect);
  		public signal void scanout_failed (Cogl.Onscreen object);
  	}
@@ -1763,7 +3221,7 @@ index b0306668e..a64a0f779 100644
  	[CCode (cheader_filename = "cogl/cogl.h", type_id = "cogl_shader_get_type ()")]
  	public sealed class Shader : GLib.Object {
  		[CCode (has_construct_function = false)]
-@@ -771,10 +867,14 @@ namespace Cogl {
+@@ -771,10 +927,14 @@ namespace Cogl {
  		[Version (deprecated = true, deprecated_since = "1.16")]
  		public void source (string source);
  	}
@@ -1778,7 +3236,19 @@ index b0306668e..a64a0f779 100644
  		public unowned string get_declarations ();
  		public Cogl.SnippetHook get_hook ();
  		public unowned string get_post ();
-@@ -881,6 +981,7 @@ namespace Cogl {
+@@ -853,7 +1013,11 @@ namespace Cogl {
+ 		public int width { construct; }
+ 	}
+ 	[CCode (cheader_filename = "cogl/cogl.h", lower_case_csuffix = "texture_2d", type_id = "cogl_texture_2d_get_type ()")]
++#if HAS_MUTTER51
++	public class Texture2D : Cogl.Texture {
++#else
+ 	public sealed class Texture2D : Cogl.Texture {
++#endif
+ 		[CCode (has_construct_function = false)]
+ 		protected Texture2D ();
+ 		[CCode (has_construct_function = false, type = "CoglTexture*")]
+@@ -881,6 +1045,7 @@ namespace Cogl {
  		[CCode (has_construct_function = false, type = "CoglTexture*")]
  		public Texture2DSliced.with_size (Cogl.Context ctx, int width, int height, int max_waste);
  	}
@@ -1786,7 +3256,7 @@ index b0306668e..a64a0f779 100644
  #if HAS_MUTTER50
  	[CCode (cheader_filename = "cogl/cogl.h", type_id = "cogl_winsys_get_type ()")]
  	public abstract class Winsys : GLib.Object {
-@@ -921,6 +1022,7 @@ namespace Cogl {
+@@ -921,6 +1086,7 @@ namespace Cogl {
  	[Compact]
  	public class TimestampQuery {
  	}
@@ -1794,7 +3264,7 @@ index b0306668e..a64a0f779 100644
  #endif
  	[CCode (cheader_filename = "cogl/cogl.h", type_cname = "CoglScanoutBufferInterface", type_id = "cogl_scanout_buffer_get_type ()")]
  	public interface ScanoutBuffer : GLib.Object {
-@@ -989,7 +1091,7 @@ namespace Cogl {
+@@ -989,7 +1155,7 @@ namespace Cogl {
  		public void set_test_function (Cogl.DepthTestFunction function);
  		public void set_write_enabled (bool enable);
  	}
@@ -1803,7 +3273,7 @@ index b0306668e..a64a0f779 100644
  	[CCode (cheader_filename = "cogl/cogl.h", has_type_id = false)]
  	public struct DisplayEGL {
  		public void* platform;
-@@ -1023,7 +1125,7 @@ namespace Cogl {
+@@ -1023,7 +1189,7 @@ namespace Cogl {
  		public Cogl.Color color;
  	}
  #endif
@@ -1812,7 +3282,7 @@ index b0306668e..a64a0f779 100644
  	[CCode (cheader_filename = "cogl/cogl.h", has_type_id = false)]
  	public struct RendererEGL {
  		public Cogl.EGLWinsysFeature private_features;
-@@ -1240,8 +1342,10 @@ namespace Cogl {
+@@ -1240,8 +1406,10 @@ namespace Cogl {
  		OGL_FEATURE_ID_MAP_BUFFER_FOR_READ,
  		[CCode (cname = "COGL_FEATURE_ID_MAP_BUFFER_FOR_WRITE")]
  		OGL_FEATURE_ID_MAP_BUFFER_FOR_WRITE,
@@ -1823,7 +3293,7 @@ index b0306668e..a64a0f779 100644
  		[CCode (cname = "COGL_FEATURE_ID_TEXTURE_RG")]
  		OGL_FEATURE_ID_TEXTURE_RG,
  		[CCode (cname = "COGL_FEATURE_ID_TEXTURE_RGBA1010102")]
-@@ -1254,8 +1358,10 @@ namespace Cogl {
+@@ -1254,8 +1422,10 @@ namespace Cogl {
  		[CCode (cname = "COGL_FEATURE_ID_BUFFER_AGE")]
  		OGL_FEATURE_ID_BUFFER_AGE,
  #endif
@@ -1834,19 +3304,30 @@ index b0306668e..a64a0f779 100644
  		[CCode (cname = "COGL_FEATURE_ID_BLIT_FRAMEBUFFER")]
  		OGL_FEATURE_ID_BLIT_FRAMEBUFFER,
  #if HAS_MUTTER47 && !HAS_MUTTER50
-@@ -1373,7 +1479,11 @@ namespace Cogl {
+@@ -1295,8 +1465,10 @@ namespace Cogl {
+ 		OGL_FEATURE_ID_TEXTURE_MAX_LEVEL,
+ 		[CCode (cname = "COGL_FEATURE_ID_TEXTURE_LOD_BIAS")]
+ 		OGL_FEATURE_ID_TEXTURE_LOD_BIAS,
++#if !HAS_MUTTER51
+ 		[CCode (cname = "COGL_FEATURE_ID_OES_EGL_SYNC")]
+ 		OGL_FEATURE_ID_OES_EGL_SYNC,
++#endif
+ 		[CCode (cname = "COGL_FEATURE_ID_QUIRK_GENERATE_MIPMAP_NEEDS_FLUSH")]
+ 		OGL_FEATURE_ID_QUIRK_GENERATE_MIPMAP_NEEDS_FLUSH,
+ #endif
+@@ -1373,7 +1545,11 @@ namespace Cogl {
  	}
  	[CCode (cheader_filename = "cogl/cogl.h", cprefix = "COGL_PIXEL_FORMAT_", type_id = "cogl_pixel_format_get_type ()")]
  	public enum PixelFormat {
 +#if HAS_MUTTER51
-+        ARGB32_NATIVE,
++		ARGB32_NATIVE,
 +#else
  		CAIRO_ARGB32_COMPAT,
 +#endif
  		ANY,
  		A_8,
  		RGB_565,
-@@ -1467,6 +1577,7 @@ namespace Cogl {
+@@ -1467,6 +1643,7 @@ namespace Cogl {
  		EGL
  	}
  #endif
@@ -1854,7 +3335,7 @@ index b0306668e..a64a0f779 100644
  #if HAS_MUTTER48
  	[CCode (cheader_filename = "cogl/cogl.h", cprefix = "COGL_SHADER_TYPE_", type_id = "cogl_shader_type_get_type ()")]
  #else
-@@ -1476,6 +1587,7 @@ namespace Cogl {
+@@ -1476,6 +1653,7 @@ namespace Cogl {
  		VERTEX,
  		FRAGMENT
  	}
@@ -1862,7 +3343,7 @@ index b0306668e..a64a0f779 100644
  	[CCode (cheader_filename = "cogl/cogl.h", cprefix = "COGL_SNIPPET_HOOK_", has_type_id = false)]
  	public enum SnippetHook {
  		VERTEX,
-@@ -1563,7 +1675,11 @@ namespace Cogl {
+@@ -1563,7 +1741,11 @@ namespace Cogl {
  		SWAP_REGION_SYNCHRONIZED,
  #endif
  		BUFFER_AGE,
@@ -1874,7 +3355,7 @@ index b0306668e..a64a0f779 100644
  		N_FEATURES
  	}
  #if !HAS_MUTTER50
-@@ -1626,8 +1742,15 @@ namespace Cogl {
+@@ -1626,8 +1808,15 @@ namespace Cogl {
  	[CCode (cheader_filename = "cogl/cogl.h", cprefix = "COGL_SYSTEM_ERROR_", has_type_id = false)]
  #endif
  	public errordomain SystemError {
@@ -1890,9 +3371,20 @@ index b0306668e..a64a0f779 100644
  	}
  	[CCode (cheader_filename = "cogl/cogl.h", cprefix = "COGL_TEXTURE_ERROR_", has_type_id = false)]
  	public errordomain TextureError {
+@@ -1682,6 +1871,10 @@ namespace Cogl {
+ #if HAS_MUTTER50
+ 	[CCode (cheader_filename = "cogl/cogl.h")]
+ 	public static bool can_blit_between_formats (Cogl.PixelFormat src_format, Cogl.PixelFormat dst_format);
++#if HAS_MUTTER51
++	[CCode (cheader_filename = "cogl/cogl.h")]
++	public static bool check_extension (string name, string ext);
++#endif
+ 	[CCode (cheader_filename = "cogl/cogl.h")]
+ 	[Version (replacement = "Color.from_string")]
+ 	public static bool color_from_string (out Cogl.Color color, string str);
 diff --git a/vapi/mutter-cogl-51.deps b/vapi/mutter-cogl-51.deps
 new file mode 100644
-index 000000000..35fbfd0ab
+index 00000000..35fbfd0a
 --- /dev/null
 +++ b/vapi/mutter-cogl-51.deps
 @@ -0,0 +1,5 @@
@@ -1903,313 +3395,63 @@ index 000000000..35fbfd0ab
 +x11
 diff --git a/vapi/mutter-cogl-51.vapi b/vapi/mutter-cogl-51.vapi
 new file mode 120000
-index 000000000..e85846834
+index 00000000..e8584683
 --- /dev/null
 +++ b/vapi/mutter-cogl-51.vapi
 @@ -0,0 +1 @@
 +mutter-cogl-18.vapi
 \ No newline at end of file
 diff --git a/vapi/mutter-mtk-14.vapi b/vapi/mutter-mtk-14.vapi
-index 29815d2b2..2e2c59591 100644
+index 29815d2b..1312bb54 100644
 --- a/vapi/mutter-mtk-14.vapi
 +++ b/vapi/mutter-mtk-14.vapi
-@@ -172,6 +172,8 @@ namespace Mtk {
+@@ -172,6 +172,16 @@ namespace Mtk {
  #if HAS_MUTTER50
  	[CCode (cheader_filename = "mtk/mtk.h")]
  	public static int64 find_nearest_interval_boundary (int64 boundary_us, int64 base_us, int64 interval_us);
++#endif
++#if HAS_MUTTER51
++	[CCode (cheader_filename = "mtk/mtk.h")]
++	public static uint idle_add (GLib.SourceFunc function);
++	[CCode (cheader_filename = "mtk/mtk.h")]
++	public static uint idle_add_full (int priority, owned GLib.SourceFunc function);
++	[CCode (cheader_filename = "mtk/mtk.h")]
++	public static uint idle_add_once (GLib.SourceOnceFunc function);
 +	[CCode (cheader_filename = "mtk/mtk.h")]
 +	public static bool is_fd_readable (int fd);
  #endif
  	[CCode (cheader_filename = "mtk/mtk.h")]
  	[Version (replacement = "Rectangle.from_graphene_rect")]
+@@ -185,6 +195,24 @@ namespace Mtk {
+ 	[CCode (cheader_filename = "mtk/mtk.h")]
+ 	[Version (replacement = "Region.create_rectangles")]
+ 	public static Mtk.Region region_create_rectangles (Mtk.Rectangle rects, int n_rects);
++#if HAS_MUTTER51
++	[CCode (cheader_filename = "mtk/mtk.h")]
++	public static bool source_remove (uint tag);
++	[CCode (cheader_filename = "mtk/mtk.h")]
++	public static void source_set_name_by_id (uint tag, string name);
++	[CCode (cheader_filename = "mtk/mtk.h")]
++	public static uint timeout_add (uint interval, GLib.SourceFunc function);
++	[CCode (cheader_filename = "mtk/mtk.h")]
++	public static uint timeout_add_full (int priority, uint interval, owned GLib.SourceFunc function);
++	[CCode (cheader_filename = "mtk/mtk.h")]
++	public static uint timeout_add_once (uint interval, GLib.SourceOnceFunc function);
++	[CCode (cheader_filename = "mtk/mtk.h")]
++	public static uint timeout_add_seconds (uint interval, GLib.SourceFunc function);
++	[CCode (cheader_filename = "mtk/mtk.h")]
++	public static uint timeout_add_seconds_full (int priority, uint interval, owned GLib.SourceFunc function);
++	[CCode (cheader_filename = "mtk/mtk.h")]
++	public static uint timeout_add_seconds_once (uint interval, GLib.SourceOnceFunc function);
++#endif
+ 	[CCode (cheader_filename = "mtk/mtk.h")]
+ 	public static void x11_errors_deinit ();
+ }
 diff --git a/vapi/mutter-mtk-51.vapi b/vapi/mutter-mtk-51.vapi
 new file mode 120000
-index 000000000..914519b0e
+index 00000000..914519b0
 --- /dev/null
 +++ b/vapi/mutter-mtk-51.vapi
 @@ -0,0 +1 @@
 +mutter-mtk-18.vapi
 \ No newline at end of file
-
-From f50a4bc1372496c3c0575cb63640c8b26a47f7bd Mon Sep 17 00:00:00 2001
-From: Denis Garaev <garaevdi@yandex.ru>
-Date: Sun, 12 Jul 2026 15:21:09 +0300
-Subject: [PATCH 3/5] Shaders: use `Cogl.Snippet`
-
----
- lib/Effects/BoxBlurManager.vala                 | 16 ++++++++++++++++
- lib/Effects/RoundedCornersEffect.vala           | 17 +++++++++++++++++
- .../ColorblindnessCorrectionEffect.vala         | 16 ++++++++++++++++
- src/ColorFilters/MonochromeEffect.vala          | 15 +++++++++++++++
- 4 files changed, 64 insertions(+)
-
-diff --git a/lib/Effects/BoxBlurManager.vala b/lib/Effects/BoxBlurManager.vala
-index e42d8aaca..41123cf97 100644
---- a/lib/Effects/BoxBlurManager.vala
-+++ b/lib/Effects/BoxBlurManager.vala
-@@ -35,21 +35,30 @@ public class Gala.BoxBlurManager : Object {
- 
-         private const float[] HORIZONTAL_PASS_DATA = { 1.0f, 0.0f };
-         private const float[] VERTICAL_PASS_DATA = { 0.0f, 1.0f };
-+#if HAS_MUTTER51
-+        private string shader;
-+#endif
- 
-         public int radius { set { set_uniform_value ("RADIUS", value); } }
- 
-         public BoxBlurEffect (PassDirection direction) {
-             Object (
-+#if !HAS_MUTTER51
- #if HAS_MUTTER48
-                 shader_type: Cogl.ShaderType.FRAGMENT
- #else
-                 shader_type: Clutter.ShaderType.FRAGMENT_SHADER
-+#endif
- #endif
-             );
- 
-             try {
-                 var bytes = GLib.resources_lookup_data ("/io/elementary/desktop/gala/shaders/box-blur.frag", NONE);
-+#if HAS_MUTTER51
-+                shader = (string) bytes.get_data ();
-+#else
-                 set_shader_source ((string) bytes.get_data ());
-+#endif
-             } catch (Error e) {
-                 critical ("Unable to load box-blur.frag: %s", e.message);
-             }
-@@ -63,6 +72,13 @@ public class Gala.BoxBlurManager : Object {
-             set_uniform_value ("DIRECTION", direction_value);
-         }
- 
-+#if HAS_MUTTER51
-+        public override Cogl.Snippet get_static_snippet () {
-+            // TODO: split declarations from shader code and put it here
-+            return new Cogl.Snippet (Cogl.SnippetHook.FRAGMENT, null, shader);
-+        }
-+#endif
-+
-         public override void set_actor (Clutter.Actor? new_actor) {
-             if (actor != null) {
-                 actor.notify["width"].disconnect (update_pixel_step);
-diff --git a/lib/Effects/RoundedCornersEffect.vala b/lib/Effects/RoundedCornersEffect.vala
-index 641339bf6..49a338c39 100644
---- a/lib/Effects/RoundedCornersEffect.vala
-+++ b/lib/Effects/RoundedCornersEffect.vala
-@@ -33,12 +33,18 @@ public class Gala.RoundedCornersEffect : Clutter.ShaderEffect {
-         }
-     }
- 
-+#if HAS_MUTTER51
-+    private string shader;
-+#endif
-+
-     public RoundedCornersEffect (int clip_radius, float monitor_scale) {
-         Object (
-+#if !HAS_MUTTER51
- #if HAS_MUTTER48
-             shader_type: Cogl.ShaderType.FRAGMENT,
- #else
-             shader_type: Clutter.ShaderType.FRAGMENT_SHADER,
-+#endif
- #endif
-             clip_radius: clip_radius,
-             monitor_scale: monitor_scale
-@@ -48,12 +54,23 @@ public class Gala.RoundedCornersEffect : Clutter.ShaderEffect {
-     construct {
-         try {
-             var bytes = GLib.resources_lookup_data ("/io/elementary/desktop/gala/shaders/rounded-corners.frag", NONE);
-+#if HAS_MUTTER51
-+            shader = (string) bytes.get_data ();
-+#else
-             set_shader_source ((string) bytes.get_data ());
-+#endif
-         } catch (Error e) {
-             critical ("Unable to load rounded-corners.frag: %s", e.message);
-         }
-     }
- 
-+#if HAS_MUTTER51
-+    public override Cogl.Snippet get_static_snippet () {
-+        // TODO: split declarations from shader code and put it here
-+        return new Cogl.Snippet (Cogl.SnippetHook.FRAGMENT, null, shader);
-+    }
-+#endif
-+
-     public override void set_actor (Clutter.Actor? new_actor) {
-         if (actor != null) {
-             actor.notify["width"].disconnect (update_actor_size);
-diff --git a/src/ColorFilters/ColorblindnessCorrectionEffect.vala b/src/ColorFilters/ColorblindnessCorrectionEffect.vala
-index 4cb5416f4..df02247a4 100644
---- a/src/ColorFilters/ColorblindnessCorrectionEffect.vala
-+++ b/src/ColorFilters/ColorblindnessCorrectionEffect.vala
-@@ -29,6 +29,9 @@ public class Gala.ColorblindnessCorrectionEffect : Clutter.ShaderEffect {
-             queue_repaint ();
-         }
-     }
-+#if HAS_MUTTER51
-+    private string shader;
-+#endif
- 
-     /*
-      * Used for fading in and out the effect, since you can't add transitions to effects.
-@@ -37,10 +40,12 @@ public class Gala.ColorblindnessCorrectionEffect : Clutter.ShaderEffect {
- 
-     public ColorblindnessCorrectionEffect (int mode, double strength) {
-         Object (
-+#if !HAS_MUTTER51
- #if HAS_MUTTER48
-             shader_type: Cogl.ShaderType.FRAGMENT,
- #else
-             shader_type: Clutter.ShaderType.FRAGMENT_SHADER,
-+#endif
- #endif
-             mode: mode,
-             strength: strength
-@@ -48,11 +53,22 @@ public class Gala.ColorblindnessCorrectionEffect : Clutter.ShaderEffect {
- 
-         try {
-             var bytes = GLib.resources_lookup_data ("/io/elementary/desktop/gala/shaders/colorblindness-correction.frag", GLib.ResourceLookupFlags.NONE);
-+#if HAS_MUTTER51
-+            shader = (string) bytes.get_data ();
-+#else
-             set_shader_source ((string) bytes.get_data ());
-+#endif
-         } catch (Error e) {
-             critical ("Unable to load colorblindness-correction.frag: %s", e.message);
-         }
- 
-         pause_for_screenshot = false;
-     }
-+
-+#if HAS_MUTTER51
-+    public override Cogl.Snippet get_static_snippet () {
-+        // TODO: split declarations from shader code and put it here
-+        return new Cogl.Snippet (Cogl.SnippetHook.FRAGMENT, null, shader);
-+    }
-+#endif
- }
-diff --git a/src/ColorFilters/MonochromeEffect.vala b/src/ColorFilters/MonochromeEffect.vala
-index c5b8034d7..a51370284 100644
---- a/src/ColorFilters/MonochromeEffect.vala
-+++ b/src/ColorFilters/MonochromeEffect.vala
-@@ -21,6 +21,9 @@ public class Gala.MonochromeEffect : Clutter.ShaderEffect {
-             queue_repaint ();
-         }
-     }
-+#if HAS_MUTTER51
-+    private string shader;
-+#endif
- 
-     /*
-      * Used for fading in and out the effect, since you can't add transitions to effects.
-@@ -29,21 +32,33 @@ public class Gala.MonochromeEffect : Clutter.ShaderEffect {
- 
-     public MonochromeEffect (double strength) {
-         Object (
-+#if !HAS_MUTTER51
- #if HAS_MUTTER48
-             shader_type: Cogl.ShaderType.FRAGMENT,
- #else
-             shader_type: Clutter.ShaderType.FRAGMENT_SHADER,
-+#endif
- #endif
-             strength: strength
-         );
- 
-         try {
-             var bytes = GLib.resources_lookup_data ("/io/elementary/desktop/gala/shaders/monochrome.frag", GLib.ResourceLookupFlags.NONE);
-+#if HAS_MUTTER51
-+            shader = (string) bytes.get_data ();
-+#else
-             set_shader_source ((string) bytes.get_data ());
-+#endif
-         } catch (Error e) {
-             critical ("Unable to load monochrome.frag: %s", e.message);
-         }
- 
-         pause_for_screenshot = false;
-     }
-+#if HAS_MUTTER51
-+    public override Cogl.Snippet get_static_snippet () {
-+        // TODO: split declarations from shader code and put it here
-+        return new Cogl.Snippet (Cogl.SnippetHook.FRAGMENT, null, shader);
-+    }
-+#endif
- }
-
-From dc58f78ea4df2e3cd1335282791165c806c5ca82 Mon Sep 17 00:00:00 2001
-From: Denis Garaev <garaevdi@yandex.ru>
-Date: Sun, 30 Aug 2026 23:10:46 +0300
-Subject: [PATCH 4/5] Canvas: update PixelFormat
-
----
- lib/Drawing/Canvas.vala | 4 ++++
- 1 file changed, 4 insertions(+)
-
-diff --git a/lib/Drawing/Canvas.vala b/lib/Drawing/Canvas.vala
-index 3e52f083c..da3ae975f 100644
---- a/lib/Drawing/Canvas.vala
-+++ b/lib/Drawing/Canvas.vala
-@@ -34,7 +34,11 @@ public class Gala.Drawing.Canvas : GLib.Object, Clutter.Content {
-         int real_width = (int) Math.ceilf (width * scale_factor);
-         int real_height = (int) Math.ceilf (height * scale_factor);
-         if (bitmap == null) {
-+#if HAS_MUTTER51
-+            bitmap = new Cogl.Bitmap.with_size (cogl_context, real_width, real_height, Cogl.PixelFormat.ARGB32_NATIVE);
-+#else
-             bitmap = new Cogl.Bitmap.with_size (cogl_context, real_width, real_height, Cogl.PixelFormat.CAIRO_ARGB32_COMPAT);
-+#endif
-         }
- 
-         unowned Cogl.Buffer? buffer = bitmap.get_buffer ();
-
-From e9e62f758c41123df4095c9eba6011efeac5caf4 Mon Sep 17 00:00:00 2001
-From: Denis Garaev <garaevdi@yandex.ru>
-Date: Sun, 30 Aug 2026 23:13:16 +0300
-Subject: [PATCH 5/5] ScreenshotManager: use new Meta.WindowActor API
-
-Inspired by
-https://gitlab.gnome.org/GNOME/gnome-shell/-/commit/e7a5d3836514677c61568158630cd0762af56015
----
- src/Misc/ScreenshotManager.vala | 18 ++++++++++++++++++
- 1 file changed, 18 insertions(+)
-
-diff --git a/src/Misc/ScreenshotManager.vala b/src/Misc/ScreenshotManager.vala
-index 27f982c9a..ebaa6281b 100644
---- a/src/Misc/ScreenshotManager.vala
-+++ b/src/Misc/ScreenshotManager.vala
-@@ -365,7 +365,16 @@ public class Gala.ScreenshotManager : Object {
-         var resource_scale = window_actor.get_resource_scale ();
- 
-         Mtk.Rectangle main_clip = { main_rect.x - (int) window_actor.x, main_rect.y - (int) window_actor.y, main_rect.width, main_rect.height };
-+#if HAS_MUTTER51
-+        var bitmap = window_actor.paint_to_bitmap (null, Cogl.PixelFormat.ARGB32_NATIVE);
-+        var bitmap_width = bitmap.get_width ();
-+        var bitmap_height = bitmap.get_height ();
-+        var bitmap_stride = bitmap.get_rowstride ();
-+        var data = bitmap.map (Cogl.BufferAccess.READ, Cogl.BufferMapHint.DISCARD);
-+        var window_image = new Cairo.ImageSurface.for_data ((uchar[]) data, Cairo.Format.ARGB32, bitmap_width, bitmap_height, bitmap_stride);
-+#else
-         var window_image = (Cairo.ImageSurface) window_actor.get_image (main_clip);
-+#endif
- 
-         var image = new Cairo.ImageSurface (
-             ARGB32,
-@@ -391,7 +400,16 @@ public class Gala.ScreenshotManager : Object {
-                 transient_rect.width,
-                 transient_rect.height
-             };
-+#if HAS_MUTTER51
-+            var transient_bitmap = transient_actor.paint_to_bitmap (transient_clip, Cogl.PixelFormat.ARGB32_NATIVE);
-+            var transient_bitmap_width = bitmap.get_width ();
-+            var transient_bitmap_height = bitmap.get_height ();
-+            var transient_bitmap_stride = bitmap.get_rowstride ();
-+            var transient_data = transient_bitmap.map (Cogl.BufferAccess.READ, Cogl.BufferMapHint.DISCARD);
-+            var transient_image = new Cairo.ImageSurface.for_data ((uchar[]) transient_data, Cairo.Format.ARGB32, transient_bitmap_width, transient_bitmap_height, transient_bitmap_stride);
-+#else
-             var transient_image = (Cairo.ImageSurface) transient_actor.get_image (transient_clip);
-+#endif
- 
-             cairo_context.set_source_surface (
-                 transient_image,

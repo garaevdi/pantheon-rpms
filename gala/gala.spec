@@ -2,7 +2,7 @@
 
 Name:           gala
 Summary:        Gala Window Manager for elementary OS and Pantheon
-Version:        8.6.1
+Version:        8.6.2
 Release:        %autorelease
 License:        GPL-3.0-or-later
 
@@ -10,8 +10,6 @@ URL:            https://github.com/elementary/%{name}
 Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
 
 Patch0:         mutter51.patch
-Patch1:         dbus-backlight.patch
-Patch2:         remove-old-experimental-check.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gcc
