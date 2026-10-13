@@ -1,48 +1,6 @@
-From 8bc5eeb8f97c436494f744211046992d83a5e0b4 Mon Sep 17 00:00:00 2001
-From: Denis Garaev <64484944+garaevdi@users.noreply.github.com>
-Date: Tue, 31 Mar 2026 17:29:36 +0000
-Subject: [PATCH] Update vapi for Mutter50 (#679)
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-
-Co-authored-by: Danielle Foré <danielle@elementary.io>
----
- vapi/Clutter-18.metadata        | 145 ++++++++++++++++++++
- vapi/Cogl-18-custom.vala        |  66 ++++++++++
- vapi/Cogl-18.metadata           |  40 ++++++
- vapi/Meta-18.metadata           | 176 +++++++++++++++++++++++++
- vapi/Mtk-18.metadata            |   6 +
- vapi/libmutter-18.deps          |   1 +
- vapi/libmutter-18.vapi          |   1 +
- vapi/libmutter.vapi             | 164 ++++++++++++++++++++++-
- vapi/meson.build                |  69 ++++++++++
- vapi/mutter-clutter-18.deps     |   6 +
- vapi/mutter-clutter-18.vapi     |   1 +
- vapi/mutter-clutter.vapi        | 188 +++++++++++++++++++++++++-
- vapi/mutter-cogl-14.vapi        | 227 +++++++++++++++++++++++++++++++-
- vapi/mutter-cogl-18.deps        |   5 +
- vapi/mutter-cogl-18.vapi        |   1 +
- vapi/mutter-mtk-13.vapi         |  11 ++
- vapi/mutter-mtk-18.vapi         |   1 +
- wingpanel-interface/meson.build |  11 ++
- 18 files changed, 1107 insertions(+), 12 deletions(-)
- create mode 100644 vapi/Clutter-18.metadata
- create mode 100644 vapi/Cogl-18-custom.vala
- create mode 100644 vapi/Cogl-18.metadata
- create mode 100644 vapi/Meta-18.metadata
- create mode 100644 vapi/Mtk-18.metadata
- create mode 120000 vapi/libmutter-18.deps
- create mode 120000 vapi/libmutter-18.vapi
- create mode 100644 vapi/mutter-clutter-18.deps
- create mode 120000 vapi/mutter-clutter-18.vapi
- create mode 100644 vapi/mutter-cogl-18.deps
- create mode 120000 vapi/mutter-cogl-18.vapi
- create mode 120000 vapi/mutter-mtk-18.vapi
-
 diff --git a/vapi/Clutter-18.metadata b/vapi/Clutter-18.metadata
 new file mode 100644
-index 00000000..f7f42051
+index 0000000..f7f4205
 --- /dev/null
 +++ b/vapi/Clutter-18.metadata
 @@ -0,0 +1,145 @@
@@ -193,7 +151,7 @@ index 00000000..f7f42051
 +EVENT_PROPAGATE skip=false type="bool"
 diff --git a/vapi/Cogl-18-custom.vala b/vapi/Cogl-18-custom.vala
 new file mode 100644
-index 00000000..90d46b33
+index 0000000..90d46b3
 --- /dev/null
 +++ b/vapi/Cogl-18-custom.vala
 @@ -0,0 +1,66 @@
@@ -265,7 +223,7 @@ index 00000000..90d46b33
 +}
 diff --git a/vapi/Cogl-18.metadata b/vapi/Cogl-18.metadata
 new file mode 100644
-index 00000000..f66d6f40
+index 0000000..f66d6f4
 --- /dev/null
 +++ b/vapi/Cogl-18.metadata
 @@ -0,0 +1,40 @@
@@ -311,7 +269,7 @@ index 00000000..f66d6f40
 +PIXEL_FORMAT_MAX_PLANES parent = "Cogl.PixelFormat" name="MAX_PLANES"
 diff --git a/vapi/Meta-18.metadata b/vapi/Meta-18.metadata
 new file mode 100644
-index 00000000..04355e74
+index 0000000..04355e7
 --- /dev/null
 +++ b/vapi/Meta-18.metadata
 @@ -0,0 +1,176 @@
@@ -493,7 +451,7 @@ index 00000000..04355e74
 +X11Display sealed
 diff --git a/vapi/Mtk-18.metadata b/vapi/Mtk-18.metadata
 new file mode 100644
-index 00000000..f804d1bc
+index 0000000..f804d1b
 --- /dev/null
 +++ b/vapi/Mtk-18.metadata
 @@ -0,0 +1,6 @@
@@ -505,7 +463,7 @@ index 00000000..f804d1bc
 +MONITOR_N_TRANSFORMS skip
 diff --git a/vapi/libmutter-18.deps b/vapi/libmutter-18.deps
 new file mode 120000
-index 00000000..18c721de
+index 0000000..18c721d
 --- /dev/null
 +++ b/vapi/libmutter-18.deps
 @@ -0,0 +1 @@
@@ -513,14 +471,14 @@ index 00000000..18c721de
 \ No newline at end of file
 diff --git a/vapi/libmutter-18.vapi b/vapi/libmutter-18.vapi
 new file mode 120000
-index 00000000..ff0e578a
+index 0000000..ff0e578
 --- /dev/null
 +++ b/vapi/libmutter-18.vapi
 @@ -0,0 +1 @@
 +libmutter-17.vapi
 \ No newline at end of file
 diff --git a/vapi/libmutter.vapi b/vapi/libmutter.vapi
-index d825594e..922c6959 100644
+index d825594..922c695 100644
 --- a/vapi/libmutter.vapi
 +++ b/vapi/libmutter.vapi
 @@ -105,8 +105,10 @@ namespace Meta {
@@ -988,7 +946,7 @@ index d825594e..922c6959 100644
 +#endif
  }
 diff --git a/vapi/meson.build b/vapi/meson.build
-index 408feaec..464346fa 100644
+index 408feae..464346f 100644
 --- a/vapi/meson.build
 +++ b/vapi/meson.build
 @@ -414,3 +414,72 @@ if mutter49_dep.found()
@@ -1066,7 +1024,7 @@ index 408feaec..464346fa 100644
 +endif
 diff --git a/vapi/mutter-clutter-18.deps b/vapi/mutter-clutter-18.deps
 new file mode 100644
-index 00000000..b3056877
+index 0000000..b305687
 --- /dev/null
 +++ b/vapi/mutter-clutter-18.deps
 @@ -0,0 +1,6 @@
@@ -1078,14 +1036,14 @@ index 00000000..b3056877
 +graphene-gobject-1.0
 diff --git a/vapi/mutter-clutter-18.vapi b/vapi/mutter-clutter-18.vapi
 new file mode 120000
-index 00000000..ee388ea5
+index 0000000..ee388ea
 --- /dev/null
 +++ b/vapi/mutter-clutter-18.vapi
 @@ -0,0 +1 @@
 +mutter-clutter-17.vapi
 \ No newline at end of file
 diff --git a/vapi/mutter-clutter.vapi b/vapi/mutter-clutter.vapi
-index 780e379f..ae1a0b08 100644
+index 780e379..ae1a0b0 100644
 --- a/vapi/mutter-clutter.vapi
 +++ b/vapi/mutter-clutter.vapi
 @@ -5235,6 +5235,9 @@ namespace Clutter {
@@ -1557,7 +1515,7 @@ index 780e379f..ae1a0b08 100644
  	[CCode (cheader_filename = "clutter/clutter.h")]
  	public static void remove_debug_flags (Clutter.DebugFlag debug_flags, Clutter.DrawDebugFlag draw_flags, Clutter.PickDebugFlag pick_flags);
 diff --git a/vapi/mutter-cogl-14.vapi b/vapi/mutter-cogl-14.vapi
-index 55a4088c..c234e7b6 100644
+index 55a4088..c234e7b 100644
 --- a/vapi/mutter-cogl-14.vapi
 +++ b/vapi/mutter-cogl-14.vapi
 @@ -122,16 +122,24 @@ namespace Cogl {
@@ -2032,7 +1990,7 @@ index 55a4088c..c234e7b6 100644
  	public static void set_tracing_disabled_on_thread (void* data);
 diff --git a/vapi/mutter-cogl-18.deps b/vapi/mutter-cogl-18.deps
 new file mode 100644
-index 00000000..8f69f28a
+index 0000000..8f69f28
 --- /dev/null
 +++ b/vapi/mutter-cogl-18.deps
 @@ -0,0 +1,5 @@
@@ -2043,14 +2001,14 @@ index 00000000..8f69f28a
 +x11
 diff --git a/vapi/mutter-cogl-18.vapi b/vapi/mutter-cogl-18.vapi
 new file mode 120000
-index 00000000..dca44a1c
+index 0000000..dca44a1
 --- /dev/null
 +++ b/vapi/mutter-cogl-18.vapi
 @@ -0,0 +1 @@
 +mutter-cogl-17.vapi
 \ No newline at end of file
 diff --git a/vapi/mutter-mtk-13.vapi b/vapi/mutter-mtk-13.vapi
-index c588368b..1f1981ac 100644
+index c588368..1f1981a 100644
 --- a/vapi/mutter-mtk-13.vapi
 +++ b/vapi/mutter-mtk-13.vapi
 @@ -27,6 +27,9 @@ namespace Mtk {
@@ -2081,14 +2039,14 @@ index c588368b..1f1981ac 100644
  	[Version (replacement = "Rectangle.from_graphene_rect")]
 diff --git a/vapi/mutter-mtk-18.vapi b/vapi/mutter-mtk-18.vapi
 new file mode 120000
-index 00000000..efd075ab
+index 0000000..efd075a
 --- /dev/null
 +++ b/vapi/mutter-mtk-18.vapi
 @@ -0,0 +1 @@
 +mutter-mtk-17.vapi
 \ No newline at end of file
 diff --git a/wingpanel-interface/meson.build b/wingpanel-interface/meson.build
-index 24a49c48..fcda54d6 100644
+index 24a49c4..fcda54d 100644
 --- a/wingpanel-interface/meson.build
 +++ b/wingpanel-interface/meson.build
 @@ -60,6 +60,17 @@ if mutter49_dep.found()
