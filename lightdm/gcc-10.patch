@@ -1,0 +1,11 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -30,6 +30,7 @@
+                  -Werror=init-self \
+                  -Werror=format-security \
+                  -Werror=format=2 \
++                 -Wno-error=format-overflow= \
+                  -Werror=missing-include-dirs"
+     WARN_CXXFLAGS="-Wall"
+ fi
+

@@ -1,0 +1,76 @@
+From 15722c7b2cb41dbe612d6b4c51c3dba11f5fe4c4 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Bj=C3=B6rn=20Esser?= <besser82@fedoraproject.org>
+Date: Thu, 18 Jan 2018 17:40:50 +0100
+Subject: [PATCH 1/2] configure: Add option to disable writing dmrc files
+
+---
+ configure.ac | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/configure.ac b/configure.ac
+index 711db441..3a20c84f 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -170,8 +170,18 @@ AC_MSG_CHECKING(whether to build tests)
+ AC_ARG_ENABLE(tests,
+         AS_HELP_STRING([--disable-tests], [Disable tests building]),
+         [], [enable_tests="yes"])
++AC_MSG_RESULT([$enable_tests])
+ AM_CONDITIONAL(COMPILE_TESTS, test x"$enable_tests" != "xno")
+ 
++AC_MSG_CHECKING(whether to enable writing dmrc files)
++AC_ARG_ENABLE(dmrc,
++        AS_HELP_STRING([--disable-dmrc], [Disable writing .dmrc in user home]),
++        [], [enable_dmrc="yes"])
++AC_MSG_RESULT([$enable_dmrc])
++if test x"$enable_dmrc" != "xno"; then
++  AC_DEFINE([WRITE_DMRC], [1], [Enable writing .dmrc in user home])
++fi
++
+ dnl ###########################################################################
+ dnl Configurable values
+ dnl ###########################################################################
+@@ -270,4 +270,5 @@
+         liblightdm-qt6:           $compile_liblightdm_qt6
+         libaudit support:         $use_libaudit
+         Enable tests:             $enable_tests
++        Write .dmrc files:        $enable_dmrc
+ "
+
+From 1072c1b0fe917358c4bdb9ee8bb23fd3c19e349c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Bj=C3=B6rn=20Esser?= <besser82@fedoraproject.org>
+Date: Thu, 18 Jan 2018 17:41:30 +0100
+Subject: [PATCH 2/2] dmrc: Implement new configuration option
+
+---
+ common/dmrc.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/common/dmrc.c b/common/dmrc.c
+index 9b92a52b..795ec2aa 100644
+--- a/common/dmrc.c
++++ b/common/dmrc.c
+@@ -13,6 +13,7 @@
+ #include <string.h>
+ #include <unistd.h>
+ 
++#include "config.h"
+ #include "dmrc.h"
+ #include "configuration.h"
+ #include "privileges.h"
+@@ -54,6 +55,7 @@ dmrc_save (GKeyFile *dmrc_file, CommonUser *user)
+     gsize length;
+     g_autofree gchar *data = g_key_file_to_data (dmrc_file, &length, NULL);
+ 
++#ifdef WRITE_DMRC
+     /* Update the users .dmrc */
+     g_autofree gchar *path = g_build_filename (common_user_get_home_directory (user), ".dmrc", NULL);
+ 
+@@ -65,6 +67,7 @@ dmrc_save (GKeyFile *dmrc_file, CommonUser *user)
+     g_file_set_contents (path, data, length, NULL);
+     if (drop_privileges)
+         privileges_reclaim ();
++#endif
+ 
+     /* Update the .dmrc cache */
+     g_autofree gchar *cache_dir = config_get_string (config_get_instance (), "LightDM", "cache-directory");

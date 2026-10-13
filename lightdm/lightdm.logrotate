@@ -1,0 +1,8 @@
+#/var/log/lightdm/*.log {
+#    copytruncate
+#    create 0660 lightdm lightdm 
+#    maxsize 10M
+#    missingok
+#    notifempty
+#    weekly
+#}
