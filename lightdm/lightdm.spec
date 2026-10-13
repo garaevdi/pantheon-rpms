@@ -65,7 +65,7 @@ BuildRequires:	pkgconfig(xdmcp)
 BuildRequires:	systemd-rpm-macros
 BuildRequires:	vala
 
-Requires:	%{name}-gobject%{?_isa} = %{version}-%{release}
+Requires:	%{name}-gobject%{?_isa} = %{epoch}:%{version}-%{release}
 Requires:	accountsservice
 Requires:	dbus
 Requires:	polkit-js-engine
@@ -77,8 +77,8 @@ Requires:   lightdm-greeter = 1.2
 Suggests:   slick-greeter
 %{?systemd_requires}
 
-Obsoletes: lightdm-qt < %{version}-%{release}
-Obsoletes: lightdm-qt-devel < %{version}-%{release}
+Obsoletes: lightdm-qt < %{epoch}:%{version}-%{release}
+Obsoletes: lightdm-qt-devel < %{epoch}:%{version}-%{release}
 
 Requires(post):	psmisc dbus-daemon
 
