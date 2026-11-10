@@ -1,19 +1,18 @@
 %global srcname greeter
 %global appname io.elementary.greeter
 
-%global commit      2b47a17ccbb0f6820999ce6139201b28bb11b3bf
+%global commit      9821a44e7d471393ac65a15ccf8414793323c0fb
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
-%global gitdate     20260727
+%global gitdate     20261110
 
 Name:           elementary-greeter
 Summary:        LightDM Login Screen for the elementary desktop
 Version:        8.1.2^%{gitdate}.git%{shortcommit}
-Release:        %autorelease -b2
+Release:        %autorelease
 License:        GPL-3.0-only AND GPL-3.0-or-later AND GPL-2.0-or-later
 
 URL:            https://github.com/elementary/greeter
 Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
-Patch1:         0001-Remove-greeter-compositor.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
@@ -24,8 +23,6 @@ BuildRequires:  vala
 
 BuildRequires:  pkgconfig(accountsservice)
 BuildRequires:  pkgconfig(gdk-pixbuf-2.0)
-BuildRequires:  pkgconfig(gtk4-wayland)
-BuildRequires:  pkgconfig(gtk4-x11)
 BuildRequires:  pkgconfig(gee-0.8)
 BuildRequires:  pkgconfig(gio-2.0)
 BuildRequires:  pkgconfig(gio-unix-2.0)
@@ -34,6 +31,7 @@ BuildRequires:  pkgconfig(gmodule-2.0)
 BuildRequires:  pkgconfig(gnome-desktop-3.0)
 BuildRequires:  pkgconfig(granite-7)
 BuildRequires:  pkgconfig(gtk4)
+BuildRequires:  pkgconfig(gtk4-wayland)
 BuildRequires:  pkgconfig(libadwaita-1)
 BuildRequires:  pkgconfig(liblightdm-gobject-1)
 
@@ -43,7 +41,7 @@ Requires:       gala
 
 # requirements for default artwork
 Suggests:       elementary-icon-theme
-Suggests:       elementary-theme-gtk3
+Suggests:       elementary-theme
 Suggests:       elementary-wallpapers
 
 # requirements for accountsservice extension
@@ -61,11 +59,14 @@ The elementary Greeter is a styled Login Screen for LightDM.
 
 
 %prep
-%autosetup -n %{srcname}-%{commit} -p1
+%autosetup -n %{srcname}-%{commit}
+
+
+%conf
+%meson
 
 
 %build
-%meson
 %meson_build
 
 
@@ -90,7 +91,7 @@ appstream-util validate-relax --nonet \
 %{_sbindir}/%{appname}
 
 %{_datadir}/applications/%{appname}.desktop
-%{_datadir}/glib-2.0/schemas/%{appname}-compositor.gschema.xml
+%{_datadir}/glib-2.0/schemas/%{appname}.gschema.xml
 %{_datadir}/lightdm/lightdm.conf.d/40-io.elementary.greeter.conf
 %{_datadir}/metainfo/%{appname}.metainfo.xml
 %{_datadir}/xgreeters/%{appname}.desktop
