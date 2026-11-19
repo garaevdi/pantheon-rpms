@@ -26,6 +26,9 @@ BuildRequires:  pkgconfig(gobject-introspection-1.0)
 BuildRequires:  pkgconfig(gtk4) >= 4.4.0
 BuildRequires:  pkgconfig(shumate-1.0)
 
+Suggests:       elementary-theme
+Suggests:       elementary-icon-theme
+
 %description %{_description}
 
 
@@ -44,8 +47,11 @@ This package contains the development headers.
 %autosetup -n granite-%{version} -p1
 
 
-%build
+%conf
 %meson
+
+
+%build
 %meson_build
 
 
