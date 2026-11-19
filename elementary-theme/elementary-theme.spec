@@ -17,11 +17,6 @@ BuildRequires:  libappstream-glib
 BuildRequires:  meson
 BuildRequires:  sassc
 
-# gtk-version-specific subpackages were dropped in Fedora 34
-Obsoletes:      %{name}-gtk2 < 5.4.2-4.20210216.gitf0c3b7f
-Obsoletes:      %{name}-gtk3 < 5.4.2-4.20210216.gitf0c3b7f
-Provides:       %{name}-gtk3 = %{version}-%{release}
-
 %description
 An original Gtk.CSS stylesheet designed specifically for elementary OS
 and its desktop environment: Pantheon.
@@ -46,8 +41,11 @@ This package contains the plank theme.
 %autosetup -n %{srcname}-%{version} -p1
 
 
-%build
+%conf
 %meson
+
+
+%build
 %meson_build
 
 
