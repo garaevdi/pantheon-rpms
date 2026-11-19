@@ -1,15 +1,17 @@
 %global glib_version 2.74.0
 
+%global commit      2d737fb8657285aae1a82d2038f012485e8a6451
+%global shortcommit %(c=%{commit}; echo ${c:0:7})
+%global gitdate     20261119
+
 Name:           gala
 Summary:        Gala Window Manager for elementary OS and Pantheon
-Version:        8.6.2
+Version:        8.6.2^%{gitdate}.git%{shortcommit}
 Release:        %autorelease
 License:        GPL-3.0-or-later
 
 URL:            https://github.com/elementary/%{name}
-Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
-
-Patch0:         mutter51.patch
+Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gcc
@@ -84,19 +86,6 @@ Provides:       firstboot(windowmanager) = gala
 %description
 %{summary}
 
-%package        x11
-Summary:        Gala window manager X11 support
-BuildArch:      noarch
-
-Requires:       %{name} = %{version}-%{release}
-Requires:       gnome-session
-Requires:       xorg-x11-server-Xorg
-
-%description        x11
-Gala is Pantheon's Window Manager, part of the elementary project
-
-This package contains the support files for running gala on X11
-
 %package        wayland
 Summary:        Gala window manager Wayland support
 BuildArch:      noarch
@@ -122,11 +111,14 @@ This package contains the development headers
 
 
 %prep
-%autosetup -n %{name}-%{version} -p1
+%autosetup -n %{name}-%{commit} -p1
+
+
+%conf
+%meson
 
 
 %build
-%meson
 %meson_build
 
 
@@ -147,20 +139,11 @@ appstream-util validate-relax --nonet \
     %{buildroot}/%{_datadir}/metainfo/%{name}.metainfo.xml
 
 
-%post x11
-%systemd_user_post io.elementary.gala@x11.service
-
 %post wayland
 %systemd_user_post io.elementary.gala@wayland.service
 
-%preun x11
-%systemd_user_preun io.elementary.gala@x11.service
-
 %preun wayland
 %systemd_user_preun io.elementary.gala@wayland.service
-
-%postun x11
-%systemd_user_postun io.elementary.gala@x11.service
 
 %postun wayland
 %systemd_user_postun io.elementary.gala@wayland.service
@@ -174,7 +157,6 @@ appstream-util validate-relax --nonet \
 
 %{_bindir}/%{name}
 %{_bindir}/%{name}-daemon
-%{_bindir}/%{name}-daemon-gtk3
 
 %{_libdir}/gala/
 %{_libdir}/libgala.so.0*
@@ -187,9 +169,6 @@ appstream-util validate-relax --nonet \
 %{_sysconfdir}/xdg/io.elementary.desktop.wm.shell
 
 %{_userunitdir}/io.elementary.gala.target
-
-%files x11
-%{_userunitdir}/io.elementary.gala@x11.service
 
 %files wayland
 %{_userunitdir}/io.elementary.gala@wayland.service
