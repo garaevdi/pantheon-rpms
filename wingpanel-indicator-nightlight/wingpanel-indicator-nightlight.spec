@@ -3,9 +3,9 @@
 %global srcname panel-nightlight
 %global appname io.elementary.panel.nightlight
 
-%global commit      a448f173dfed86478944d4a03002b6eff8c322e8
+%global commit      fbe5a2a988da1240a4514908d649fd8e1899f097
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
-%global gitdate     20261020
+%global gitdate     20260912
 
 Name:           wingpanel-indicator-nightlight
 Summary:        Night Light Indicator for wingpanel

@@ -3,9 +3,9 @@
 %global srcname panel-notifications
 %global appname io.elementary.panel.notifications
 
-%global commit      944be02eaaa867b10066074005dd94e8c251868d
+%global commit      a448f173dfed86478944d4a03002b6eff8c322e8
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
-%global gitdate     20260925
+%global gitdate     20261020
 
 Name:           wingpanel-indicator-notifications
 Summary:        Notifications Indicator for wingpanel
