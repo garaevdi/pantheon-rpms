@@ -10,7 +10,7 @@
 Name:           wingpanel-indicator-bluetooth
 Summary:        Bluetooth Indicator for wingpanel
 Version:        8.0.0^%{gitdate}.git%{shortcommit}
-Release:        %autorelease
+Release:        %autorelease -b2
 License:        GPL-3.0-or-later AND GPL-2.0-or-later AND LGPL-2.1-or-later
 
 URL:            https://github.com/elementary/%{name}
@@ -26,6 +26,7 @@ BuildRequires:  pkgconfig(granite-7)
 BuildRequires:  pkgconfig(gtk4)
 BuildRequires:  pkgconfig(wingpanel-9)
 
+Requires:       elementary-bluetooth-daemon
 Requires:       bluez
 Requires:       wingpanel%{?_isa}
 
