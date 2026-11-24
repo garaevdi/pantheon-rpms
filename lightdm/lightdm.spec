@@ -7,7 +7,7 @@
 Name:		lightdm
 Summary:	A cross-desktop Display Manager
 Version:	1.33.1
-Release:	%autorelease
+Release:	%autorelease -b2
 # So the copr version will always be prefered over the fedora one
 Epoch:		1
 
@@ -34,9 +34,14 @@ Source24:	50-xserver-command.conf
 Source25:	50-disable-guest.conf
 Source26:	50-run-directory.conf
 
-Patch0:		gcc-10.patch
-Patch1:		remove_bin_path.patch
-Patch2:		lightdm-1.33-fix_wayland_session.patch
+Patch0:		0001-gcc-10.patch
+Patch1:		0002-remove_bin_path.patch
+# https://github.com/ubuntu/lightdm/pull/483
+Patch2:		0003-fix_wayland_session.patch
+# https://github.com/ubuntu/lightdm/pull/502
+Patch3:		0004-wait_for_wayland_greeter.patch
+# https://github.com/ubuntu/lightdm/pull/476
+Patch4:		0005-keep_vt_file_descriptor_open.patch
 
 # Pending
 
